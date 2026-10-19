@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#173b32">
+  <title>ALFIK | Animal Reunification</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7f5;
+      color: #20352e;
+    }
+    header {
+      background: #173b32;
+      color: white;
+      padding: 25px 20px;
+      text-align: center;
+    }
+    header h1 { margin: 0; font-size: 32px; letter-spacing: 3px; }
+    header p { margin-bottom: 0; }
+    main { max-width: 600px; margin: auto; padding: 20px; }
+    .intro { text-align: center; padding: 12px 0; }
+    .intro h2 { font-size: 25px; }
+    .actions { display: grid; gap: 12px; }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 17px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .lost { background: #c62836; color: white; }
+    .found { background: #23834a; color: white; }
+    .deceased { background: white; color: #333; border: 1px solid #bbb; }
+    .panel {
+      background: white;
+      padding: 20px;
+      margin-top: 22px;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px #0000000c;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 7px 0 14px;
+      border: 1px solid #cbd5d0;
+      border-radius: 8px;
+      font: inherit;
+    }
+    label { font-weight: bold; font-size: 14px; }
+    .submit { background: #173b32; color: white; width: 100%; }
+    .hidden { display: none; }
+    .note { font-size: 13px; color: #65756e; line-height: 1.5; }
+    footer { text-align: center; padding: 25px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ALFIK</h1>
+    <p>Animal Lost, Found, Information Keeper</p>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h2>Let's bring them home.</h2>
+      <p>Helping lost animals find their way back to the people who love them.</p>
+    </section>
+
+    <section class="actions">
+      <button class="lost" onclick="openReport('Lost')">🔴 Report a Lost Animal</button>
+      <button class="found" onclick="openReport('Found')">🟢 Report a Found Animal</button>
+      <button class="deceased" onclick="openReport('Found Deceased')">⚪ Report an Animal Found Deceased</button>
+    </section>
+
+    <section class="panel">
+      <h3>Search animal reports</h3>
+      <input id="search" placeholder="Search by animal, breed or location">
+      <p class="note">Search will become available when reports are connected to the ALFIK database.</p>
+    </section>
+
+    <section class="panel hidden" id="reportPanel">
+      <h3 id="formTitle">Report an animal</h3>
+      <form id="reportForm">
+        <label for="animal">Animal type</label>
+        <select id="animal" required>
+          <option value="">Choose an animal</option>
+          <option>Cat</option>
+          <option>Dog</option>
+          <option>Other</option>
+        </select>
+
+        <label for="name">Animal's name (if known)</label>
+        <input id="name" placeholder="e.g. Luna">
+
+        <label for="description">Description</label>
+        <textarea id="description" rows="3" placeholder="Colour, breed, collar and other identifying details" required></textarea>
+
+        <label for="location">Town or last-seen location</label>
+        <input id="location" placeholder="Town or postcode area" required>
+
+        <label for="date">Date last seen or found</label>
+        <input id="date" type="date" required>
+
+        <label for="email">Your email address</label>
+        <input id="email" type="email" placeholder="you@example.com" required>
+
+        <p class="note">Prototype only: this form does not yet send reports, store information or email you.</p>
+        <button class="submit" type="submit">Preview report</button>
+        <button type="button" class="deceased" onclick="closeReport()" style="width:100%;margin-top:8px">Cancel</button>
+      </form>
+      <div id="preview" class="hidden"></div>
+    </section>
+
+    <section class="panel">
+      <h3>Every animal matters.</h3>
+      <p>ALFIK supports pet owners, rescuers and animal welfare organisations across the UK.</p>
+      <p class="note">Never publish your home address or private contact details in a public report.</p>
+    </section>
+  </main>
+
+  <footer>ALFIK · Animal Lost, Found, Information Keeper</footer>
+
+  <script>
+    let reportStatus = "";
+
+    function openReport(status) {
+      reportStatus = status;
+      document.getElementById("formTitle").textContent = status + " Animal Report";
+      document.getElementById("reportPanel").classList.remove("hidden");
+      document.getElementById("reportForm").classList.remove("hidden");
+      document.getElementById("preview").classList.add("hidden");
+      document.getElementById("reportPanel").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function closeReport() {
+      document.getElementById("reportPanel").classList.add("hidden");
+    }
+
+    document.getElementById("reportForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const animal = document.getElementById("animal").value;
+      const name = document.getElementById("name").value || "Unknown";
+      const description = document.getElementById("description").value;
+      const location = document.getElementById("location").value;
+      const date = document.getElementById("date").value;
+
+      document.getElementById("preview").innerHTML =
+        "<h3>Report preview</h3>" +
+        "<p><strong>Status:</strong> " + reportStatus + "</p>" +
+        "<p><strong>Animal:</strong> " + animal + "</p>" +
+        "<p><strong>Name:</strong> " + name.replace(/</g, "&lt;") + "</p>" +
+        "<p><strong>Description:</strong> " + description.replace(/</g, "&lt;") + "</p>" +
+        "<p><strong>Location:</strong> " + location.replace(/</g, "&lt;") + "</p>" +
+        "<p><strong>Date:</strong> " + date + "</p>" +
+        "<p class='note'>This is only a preview. Nothing has been submitted or emailed.</p>";
+
+      document.getElementById("reportForm").classList.add("hidden");
+      document.getElementById("preview").classList.remove("hidden");
+    });
+  </script>
+</body>
+</html>
