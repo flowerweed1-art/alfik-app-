@@ -60,8 +60,11 @@
   </style>
 </head>
 <body>
-  <header>
-
+<header>
+ <h1>ALFIK</h1>
+    <p>Animal Lost, Found, Information Keeper</p>
+  </header>
+<section id="accountSection" class="panel">
 
   <h2>Your ALFIK Account</h2>
   <p>Create a free account to help reunite animals with their families.</p>
@@ -78,11 +81,8 @@
   <p id="accountMessage" role="status"></p>
 </section>
 
-    <h1>ALFIK</h1>
-    <p>Animal Lost, Found, Information Keeper</p>
-  </header>
-<section id="accountSection">
-  <main>
+   
+  <main id="siteContent" class="hidden">
     <section class="intro">
       <h2>Let's bring them home.</h2>
       <p>Helping lost animals find their way back to the people who love them.</p>
@@ -232,11 +232,22 @@ document.getElementById("signInBtn").addEventListener("click", async function ()
     password: password
   });
 
-  message.textContent = error
-    ? error.message
-    : "You're signed in to ALFIK!";
+  if (error) {
+  message.textContent = error.message;
+  return;
+}
+
+message.textContent = "You're signed in to ALFIK!";
+document.getElementById("accountSection").classList.add("hidden");
+document.getElementById("siteContent").classList.remove("hidden");
 });
 
+supabaseClient.auth.getSession().then(({ data }) => {
+  if (data.session) {
+    document.getElementById("accountSection").classList.add("hidden");
+    document.getElementById("siteContent").classList.remove("hidden");
+  }
+});
   </script>
 </body>
 </html>
