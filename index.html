@@ -61,6 +61,23 @@
 </head>
 <body>
   <header>
+
+<section id="accountSection">
+  <h2>Your ALFIK Account</h2>
+  <p>Create a free account to help reunite animals with their families.</p>
+
+  <label for="accountEmail">Email address</label>
+  <input type="email" id="accountEmail" placeholder="Your email address" required>
+
+  <label for="accountPassword">Password</label>
+  <input type="password" id="accountPassword" placeholder="Choose a password" required>
+
+  <button type="button" id="signUpBtn">Create Free Account</button>
+  <button type="button" id="signInBtn">Log In</button>
+
+  <p id="accountMessage" role="status"></p>
+</section>
+
     <h1>ALFIK</h1>
     <p>Animal Lost, Found, Information Keeper</p>
   </header>
@@ -171,6 +188,56 @@ const supabaseClient = supabase.createClient(
       document.getElementById("reportForm").classList.add("hidden");
       document.getElementById("preview").classList.remove("hidden");
     });
+
+document.getElementById("signUpBtn").addEventListener("click", async function () {
+  const email = document.getElementById("accountEmail").value.trim();
+  const password = document.getElementById("accountPassword").value;
+  const message = document.getElementById("accountMessage");
+
+  if (!email || !password) {
+    message.textContent = "Please enter your email and password.";
+    return;
+  }
+
+  message.textContent = "Creating your account...";
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email: email,
+    password: password
+  });
+
+  if (error) {
+    message.textContent = error.message;
+    return;
+  }
+
+  message.textContent = data.session
+    ? "Account created! You're signed in."
+    : "Account created! Check your email to confirm your account.";
+});
+
+document.getElementById("signInBtn").addEventListener("click", async function () {
+  const email = document.getElementById("accountEmail").value.trim();
+  const password = document.getElementById("accountPassword").value;
+  const message = document.getElementById("accountMessage");
+
+  if (!email || !password) {
+    message.textContent = "Please enter your email and password.";
+    return;
+  }
+
+  message.textContent = "Signing in...";
+
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+
+  message.textContent = error
+    ? error.message
+    : "You're signed in to ALFIK!";
+});
+
   </script>
 </body>
 </html>
