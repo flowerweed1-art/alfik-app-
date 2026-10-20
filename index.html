@@ -210,10 +210,13 @@ document.getElementById("signUpBtn").addEventListener("click", async function ()
     return;
   }
 
-  message.textContent = data.session
-    ? "Account created! You're signed in."
-    : "Account created! Check your email to confirm your account.";
-});
+  if (data.session) {
+  message.textContent = "Account created! You're signed in.";
+  document.getElementById("accountSection").classList.add("hidden");
+  document.getElementById("siteContent").classList.remove("hidden");
+} else {
+  message.textContent = "Account created! Check your email to confirm your account.";
+}
 
 document.getElementById("signInBtn").addEventListener("click", async function () {
   const email = document.getElementById("accountEmail").value.trim();
