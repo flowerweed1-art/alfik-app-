@@ -4,254 +4,613 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#173b32">
+  <meta name="theme-color" content="#1769aa">
   <title>ALFIK | Animal Reunification</title>
+
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f7f5;
-      color: #20352e;
+      background: #f2f7fc;
+      color: #183047;
+      line-height: 1.5;
     }
+
     header {
-      background: #173b32;
+      background: #1769aa;
       color: white;
-      padding: 25px 20px;
       text-align: center;
+      padding: 26px 16px;
     }
-    header h1 { margin: 0; font-size: 32px; letter-spacing: 3px; }
-    header p { margin-bottom: 0; }
-    main { max-width: 600px; margin: auto; padding: 20px; }
-    .intro { text-align: center; padding: 12px 0; }
-    .intro h2 { font-size: 25px; }
-    .actions { display: grid; gap: 12px; }
+
+    header h1 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: 2px;
+    }
+
+    header p { margin: 6px 0 0; }
+
+    main {
+      width: 100%;
+      max-width: 760px;
+      margin: auto;
+      padding: 18px;
+    }
+
+    section, .panel {
+      background: white;
+      border: 1px solid #d6e5f2;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px #163d5b0d;
+    }
+
+    h2 { color: #1769aa; margin-top: 0; }
+
     button {
       border: 0;
-      border-radius: 12px;
-      padding: 17px;
+      border-radius: 8px;
+      padding: 12px 16px;
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+      margin: 4px 0;
     }
-    .lost { background: #c62836; color: white; }
-    .found { background: #23834a; color: white; }
-    .deceased { background: white; color: #333; border: 1px solid #bbb; }
-    .panel {
+
+    .primary {
+      background: #1769aa;
+      color: white;
+    }
+
+    .secondary {
+      background: #e7f1fa;
+      color: #14558b;
+      border: 1px solid #c4dcee;
+    }
+
+    .lost { background: #c93434; color: white; }
+    .found { background: #238451; color: white; }
+    .deceased {
       background: white;
-      padding: 20px;
-      margin-top: 22px;
-      border-radius: 14px;
-      box-shadow: 0 2px 10px #0000000c;
+      color: #183047;
+      border: 2px solid #9aabba;
     }
+
+    .wide { width: 100%; }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 12px 0 5px;
+    }
+
     input, select, textarea {
       width: 100%;
       padding: 12px;
-      margin: 7px 0 14px;
-      border: 1px solid #cbd5d0;
-      border-radius: 8px;
+      border: 1px solid #bdcedd;
+      border-radius: 7px;
       font: inherit;
+      background: white;
+      color: #183047;
     }
-    label { font-weight: bold; font-size: 14px; }
-    .submit { background: #173b32; color: white; width: 100%; }
-    .hidden { display: none; }
-    .note { font-size: 13px; color: #65756e; line-height: 1.5; }
-    footer { text-align: center; padding: 25px; font-size: 13px; }
+
+    textarea { resize: vertical; }
+
+    .hidden { display: none !important; }
+
+    .note {
+      font-size: 14px;
+      color: #52697c;
+    }
+
+    .message {
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .report-card {
+      border: 1px solid #d6e5f2;
+      border-left: 5px solid #1769aa;
+      border-radius: 8px;
+      padding: 14px;
+      margin: 12px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .report-card h3 { margin: 0 0 8px; }
+
+    .status-lost { border-left-color: #c93434; }
+    .status-found { border-left-color: #238451; }
+    .status-found_deceased { border-left-color: #9aabba; }
+
+    footer {
+      text-align: center;
+      color: #52697c;
+      padding: 18px;
+      font-size: 13px;
+    }
   </style>
 </head>
+
 <body>
-<header>
- <h1>ALFIK</h1>
-    <p>Animal Lost, Found, Information Keeper</p>
+  <header>
+    <h1>ALFIK</h1>
+    <p>Animals Lost and Found Information Keeper</p>
+    <p>Helping animals find their way home 🐾</p>
   </header>
-<section id="accountSection" class="panel">
 
-  <h2>Your ALFIK Account</h2>
-  <p>Create a free account to help reunite animals with their families.</p>
+  <main>
+    <section id="accountSection">
+      <h2>Your ALFIK account</h2>
+      <p>Sign in or create an account to report a lost or found animal.</p>
 
-  <label for="accountEmail">Email address</label>
-  <input type="email" id="accountEmail" placeholder="Your email address" required>
+      <form id="accountForm">
+        <label for="accountEmail">Email address</label>
+        <input id="accountEmail" type="email"
+          autocomplete="email" required>
 
-  <label for="accountPassword">Password</label>
-  <input type="password" id="accountPassword" placeholder="Choose a password" required>
+        <label for="accountPassword">Password</label>
+        <input id="accountPassword" type="password"
+          autocomplete="current-password" minlength="6" required>
 
-  <button type="button" id="signUpBtn">Create Free Account</button>
-  <button type="button" id="signInBtn">Log In</button>
+        <button class="primary wide" type="button" id="signInBtn">
+          Sign in
+        </button>
 
-  <p id="accountMessage" role="status"></p>
-</section>
-
-   
-  <main id="siteContent" class="hidden">
-    <section class="intro">
-      <h2>Let's bring them home.</h2>
-      <p>Helping lost animals find their way back to the people who love them.</p>
-    </section>
-
-    <section class="actions">
-      <button class="lost" onclick="openReport('Lost')">🔴 Report a Lost Animal</button>
-      <button class="found" onclick="openReport('Found')">🟢 Report a Found Animal</button>
-      <button class="deceased" onclick="openReport('Found Deceased')">⚪ Report an Animal Found Deceased</button>
-    </section>
-
-    <section class="panel">
-      <h3>Search animal reports</h3>
-      <input id="search" placeholder="Search by animal, breed or location">
-      <p class="note">Search will become available when reports are connected to the ALFIK database.</p>
-    </section>
-
-    <section class="panel hidden" id="reportPanel">
-      <h3 id="formTitle">Report an animal</h3>
-      <form id="reportForm">
-        <label for="animal">Animal type</label>
-        <select id="animal" required>
-          <option value="">Choose an animal</option>
-          <option>Cat</option>
-          <option>Dog</option>
-          <option>Other</option>
-        </select>
-
-        <label for="name">Animal's name (if known)</label>
-        <input id="name" placeholder="e.g. Luna">
-
-        <label for="description">Description</label>
-        <textarea id="description" rows="3" placeholder="Colour, breed, collar and other identifying details" required></textarea>
-
-        <label for="location">Town or last-seen location</label>
-        <input id="location" placeholder="Town or postcode area" required>
-
-        <label for="date">Date last seen or found</label>
-        <input id="date" type="date" required>
-
-        <label for="email">Your email address</label>
-        <input id="email" type="email" placeholder="you@example.com" required>
-
-        <p class="note">Prototype only: this form does not yet send reports, store information or email you.</p>
-        <button class="submit" type="submit">Preview report</button>
-        <button type="button" class="deceased" onclick="closeReport()" style="width:100%;margin-top:8px">Cancel</button>
+        <button class="secondary wide" type="button" id="signUpBtn">
+          Create account
+        </button>
       </form>
-      <div id="preview" class="hidden"></div>
+
+      <p id="accountMessage" class="message" role="status"></p>
     </section>
 
-    <section class="panel">
-      <h3>Every animal matters.</h3>
-      <p>ALFIK supports pet owners, rescuers and animal welfare organisations across the UK.</p>
-      <p class="note">Never publish your home address or private contact details in a public report.</p>
-    </section>
+    <div id="siteContent" class="hidden">
+      <section>
+        <h2>Report an animal</h2>
+        <p>Choose the report that best describes the situation.</p>
+
+        <button class="lost wide" type="button"
+          onclick="openReport('lost')">
+          Report a Lost Animal
+        </button>
+
+        <button class="found wide" type="button"
+          onclick="openReport('found')">
+          Report a Found Animal
+        </button>
+
+        <button class="deceased wide" type="button"
+          onclick="openReport('found_deceased')">
+          Report an Animal Found Deceased
+        </button>
+
+        <p class="note">
+          Reports are published immediately after successful submission.
+          Please do not include private contact details in the description.
+        </p>
+      </section>
+
+      <section id="reportPanel" class="hidden">
+        <h2 id="reportTitle">Animal report</h2>
+
+        <form id="reportForm">
+          <label for="animal">Animal type</label>
+          <select id="animal" required>
+            <option value="">Choose an animal</option>
+            <option value="cat">Cat</option>
+            <option value="dog">Dog</option>
+            <option value="other">Other</option>
+          </select>
+
+          <label for="name">Animal's name, if known</label>
+          <input id="name" maxlength="100"
+            placeholder="e.g. Luna">
+
+          <label for="description">Description</label>
+          <textarea id="description" rows="4" maxlength="4000"
+            placeholder="Colour, breed, collar and identifying details"
+            required></textarea>
+
+          <label for="location">Town or last-seen location</label>
+          <input id="location" maxlength="250"
+            placeholder="Town or general location" required>
+
+          <label for="date">Date last seen or found</label>
+          <input id="date" type="date" required>
+
+          <button class="primary wide" type="submit" id="submitReportBtn">
+            Publish report
+          </button>
+
+          <button class="secondary wide" type="button"
+            onclick="closeReport()">
+            Cancel
+          </button>
+        </form>
+
+        <p id="reportMessage" class="message" role="status"></p>
+      </section>
+
+      <section>
+        <h2>Animal reports</h2>
+        <p>Browse currently active reports.</p>
+
+        <label for="searchInput">Search reports</label>
+        <input id="searchInput"
+          placeholder="Search by town, animal or description">
+
+        <button class="secondary wide" id="searchBtn" type="button">
+          Search
+        </button>
+
+        <div id="reportsList" aria-live="polite">
+          Loading reports...
+        </div>
+      </section>
+
+      <section>
+        <h2>Your account</h2>
+        <p id="signedInAs" class="note"></p>
+        <button class="secondary wide" id="signOutBtn" type="button">
+          Sign out
+        </button>
+      </section>
+    </div>
   </main>
 
-  <footer>ALFIK · Animal Lost, Found, Information Keeper</footer>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <footer>
+    ALFIK | Animals Lost and Found Information Keeper
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    let reportStatus = "";
-const SUPABASE_URL = "https://rrsccsswluacuvymuheo.supabase.co";
-const SUPABASE_KEY = "sb_publishable_krU5ZaSiuDwCniAycXr0cw_ZfTosBJ8";
+    const SUPABASE_URL =
+      "https://rrsccsswluacuvymuheo.supabase.co";
 
-const supabaseClient = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+    const SUPABASE_KEY =
+      "sb_publishable_krU5ZaSiuDwCniAycXr0cw_ZfTosBJ8";
 
-    function openReport(status) {
+    const supabaseClient = supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    let reportStatus = "lost";
+
+    const accountSection = document.getElementById("accountSection");
+    const siteContent = document.getElementById("siteContent");
+    const accountMessage = document.getElementById("accountMessage");
+    const reportMessage = document.getElementById("reportMessage");
+    const reportForm = document.getElementById("reportForm");
+    const reportPanel = document.getElementById("reportPanel");
+    const submitReportBtn = document.getElementById("submitReportBtn");
+
+    function showMessage(element, message) {
+      element.textContent = message;
+    }
+
+    function showSignedIn(session) {
+      const signedIn = Boolean(session);
+
+      accountSection.classList.toggle("hidden", signedIn);
+      siteContent.classList.toggle("hidden", !signedIn);
+
+      if (session) {
+        document.getElementById("signedInAs").textContent =
+          "Signed in as " + session.user.email;
+
+        loadReports();
+      } else {
+        document.getElementById("signedInAs").textContent = "";
+      }
+    }
+
+    async function refreshSession() {
+      const { data, error } =
+        await supabaseClient.auth.getSession();
+
+      if (error) {
+        showMessage(accountMessage, error.message);
+        return null;
+      }
+
+      showSignedIn(data.session);
+      return data.session;
+    }
+
+    document.getElementById("signUpBtn").addEventListener(
+      "click", async function() {
+        const email =
+          document.getElementById("accountEmail").value.trim();
+        const password =
+          document.getElementById("accountPassword").value;
+
+        if (!email || !password) {
+          showMessage(accountMessage,
+            "Please enter your email address and password.");
+          return;
+        }
+
+        showMessage(accountMessage, "Creating your account...");
+
+        const { data, error } = await supabaseClient.auth.signUp({
+          email: email,
+          password: password
+        });
+
+        if (error) {
+          showMessage(accountMessage, error.message);
+          return;
+        }
+
+        if (data.session) {
+          showMessage(accountMessage, "Account created.");
+          showSignedIn(data.session);
+        } else {
+          showMessage(accountMessage,
+            "Account created. Check your email to confirm your account, " +
+            "then return here and sign in.");
+        }
+      }
+    );
+
+    document.getElementById("signInBtn").addEventListener(
+      "click", async function() {
+        const email =
+          document.getElementById("accountEmail").value.trim();
+        const password =
+          document.getElementById("accountPassword").value;
+
+        if (!email || !password) {
+          showMessage(accountMessage,
+            "Please enter your email address and password.");
+          return;
+        }
+
+        showMessage(accountMessage, "Signing in...");
+
+        const { data, error } =
+          await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+          });
+
+        if (error) {
+          showMessage(accountMessage, error.message);
+          return;
+        }
+
+        showMessage(accountMessage, "");
+        showSignedIn(data.session);
+      }
+    );
+
+    document.getElementById("signOutBtn").addEventListener(
+      "click", async function() {
+        const { error } = await supabaseClient.auth.signOut();
+
+        if (error) {
+          alert("Could not sign out: " + error.message);
+          return;
+        }
+
+        closeReport();
+        showSignedIn(null);
+        showMessage(accountMessage, "You have signed out.");
+      }
+    );
+
+    supabaseClient.auth.onAuthStateChange(function(event, session) {
+      showSignedIn(session);
+    });
+
+    async function openReport(status) {
+      const session = await refreshSession();
+
+      if (!session) {
+        showMessage(accountMessage,
+          "Please sign in before submitting a report.");
+        return;
+      }
+
       reportStatus = status;
-      document.getElementById("formTitle").textContent = status + " Animal Report";
-      document.getElementById("reportPanel").classList.remove("hidden");
-      document.getElementById("reportForm").classList.remove("hidden");
-      document.getElementById("preview").classList.add("hidden");
-      document.getElementById("reportPanel").scrollIntoView({ behavior: "smooth" });
+
+      const titles = {
+        lost: "Report a Lost Animal",
+        found: "Report a Found Animal",
+        found_deceased: "Report an Animal Found Deceased"
+      };
+
+      document.getElementById("reportTitle").textContent =
+        titles[status];
+
+      reportForm.reset();
+      showMessage(reportMessage, "");
+      reportPanel.classList.remove("hidden");
+      reportPanel.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function closeReport() {
-      document.getElementById("reportPanel").classList.add("hidden");
+      reportPanel.classList.add("hidden");
+      showMessage(reportMessage, "");
     }
 
-    document.getElementById("reportForm").addEventListener("submit", function(event) {
+    reportForm.addEventListener("submit", async function(event) {
       event.preventDefault();
+
+      const session = await refreshSession();
+
+      if (!session) {
+        showMessage(reportMessage,
+          "Your session has expired. Please sign in again.");
+        return;
+      }
+
       const animal = document.getElementById("animal").value;
-      const name = document.getElementById("name").value || "Unknown";
-      const description = document.getElementById("description").value;
-      const location = document.getElementById("location").value;
+      const name = document.getElementById("name").value.trim();
+      const description =
+        document.getElementById("description").value.trim();
+      const location =
+        document.getElementById("location").value.trim();
       const date = document.getElementById("date").value;
 
-      document.getElementById("preview").innerHTML =
-        "<h3>Report preview</h3>" +
-        "<p><strong>Status:</strong> " + reportStatus + "</p>" +
-        "<p><strong>Animal:</strong> " + animal + "</p>" +
-        "<p><strong>Name:</strong> " + name.replace(/</g, "&lt;") + "</p>" +
-        "<p><strong>Description:</strong> " + description.replace(/</g, "&lt;") + "</p>" +
-        "<p><strong>Location:</strong> " + location.replace(/</g, "&lt;") + "</p>" +
-        "<p><strong>Date:</strong> " + date + "</p>" +
-        "<p class='note'>This is only a preview. Nothing has been submitted or emailed.</p>";
+      if (!animal || !description || !location || !date) {
+        showMessage(reportMessage,
+          "Please complete all required fields.");
+        return;
+      }
 
-      document.getElementById("reportForm").classList.add("hidden");
-      document.getElementById("preview").classList.remove("hidden");
+      submitReportBtn.disabled = true;
+      submitReportBtn.textContent = "Publishing...";
+      showMessage(reportMessage, "Publishing your report...");
+
+      const report = {
+        report_type: reportStatus,
+        animal_type: animal,
+        animal_name: name || null,
+        description: description,
+        location_text: location,
+        date_seen: date,
+        status: "active",
+        owner_id: session.user.id
+      };
+
+      const { error } = await supabaseClient
+        .from("animal_reports")
+        .insert([report]);
+
+      submitReportBtn.disabled = false;
+      submitReportBtn.textContent = "Publish report";
+
+      if (error) {
+        console.error("Report submission error:", error);
+        showMessage(reportMessage,
+          "The report could not be published. " + error.message);
+        return;
+      }
+
+      reportForm.reset();
+      showMessage(reportMessage,
+        "Your report has been published successfully.");
+
+      await loadReports();
+
+      document.getElementById("reportsList").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
     });
 
-document.getElementById("signUpBtn").addEventListener("click", async function () {
-  const email = document.getElementById("accountEmail").value.trim();
-  const password = document.getElementById("accountPassword").value;
-  const message = document.getElementById("accountMessage");
+    function addReportCard(report) {
+      const card = document.createElement("article");
+      card.className = "report-card status-" + report.report_type;
 
-  if (!email || !password) {
-    message.textContent = "Please enter your email and password.";
-    return;
-  }
+      const heading = document.createElement("h3");
+      const types = {
+        lost: "🔴 LOST",
+        found: "🟢 FOUND",
+        found_deceased: "⚪ FOUND DECEASED"
+      };
 
-  message.textContent = "Creating your account...";
+      heading.textContent =
+        (types[report.report_type] || "ANIMAL REPORT") +
+        " | " + (report.animal_type || "Animal").toUpperCase();
 
-  const { data, error } = await supabaseClient.auth.signUp({
-    email: email,
-    password: password
-  });
+      card.appendChild(heading);
 
-  if (error) {
-    message.textContent = error.message;
-    return;
-  }
+      const details = [
+        ["Name", report.animal_name || "Unknown"],
+        ["Description", report.description],
+        ["Location", report.location_text],
+        ["Date", report.date_seen]
+      ];
 
-  if (data.session) {
-  message.textContent = "Account created! You're signed in.";
-  document.getElementById("accountSection").classList.add("hidden");
-  document.getElementById("siteContent").classList.remove("hidden");
-} else {
-  message.textContent = "Account created! Check your email to confirm your account.";
-}
-});
+      details.forEach(function(item) {
+        const paragraph = document.createElement("p");
+        const label = document.createElement("strong");
+        label.textContent = item[0] + ": ";
+        paragraph.appendChild(label);
+        paragraph.appendChild(document.createTextNode(item[1] || ""));
+        card.appendChild(paragraph);
+      });
 
-document.getElementById("signInBtn").addEventListener("click", async function () {
-  const email = document.getElementById("accountEmail").value.trim();
-  const password = document.getElementById("accountPassword").value;
-  const message = document.getElementById("accountMessage");
+      document.getElementById("reportsList").appendChild(card);
+    }
 
-  if (!email || !password) {
-    message.textContent = "Please enter your email and password.";
-    return;
-  }
+    async function loadReports() {
+      const list = document.getElementById("reportsList");
+      list.replaceChildren();
 
-  message.textContent = "Signing in...";
+      const loading = document.createElement("p");
+      loading.textContent = "Loading reports...";
+      list.appendChild(loading);
 
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email: email,
-    password: password
-  });
+      const { data, error } = await supabaseClient
+        .from("animal_reports")
+        .select(
+          "report_type, animal_type, animal_name, description, location_text, date_seen"
+        )
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(100);
 
-  if (error) {
-  message.textContent = error.message;
-  return;
-}
+      list.replaceChildren();
 
-message.textContent = "You're signed in to ALFIK!";
-document.getElementById("accountSection").classList.add("hidden");
-document.getElementById("siteContent").classList.remove("hidden");
-});
+      if (error) {
+        const message = document.createElement("p");
+        message.textContent =
+          "Reports could not be loaded. " + error.message;
+        list.appendChild(message);
+        return;
+      }
 
-supabaseClient.auth.getSession().then(({ data }) => {
-  if (data.session) {
-    document.getElementById("accountSection").classList.add("hidden");
-    document.getElementById("siteContent").classList.remove("hidden");
-  }
-});
+      const query = document.getElementById("searchInput")
+        .value.trim().toLowerCase();
+
+      const filtered = (data || []).filter(function(report) {
+        const searchable = [
+          report.animal_type,
+          report.animal_name,
+          report.description,
+          report.location_text,
+          report.report_type
+        ].join(" ").toLowerCase();
+
+        return searchable.includes(query);
+      });
+
+      if (!filtered.length) {
+        const empty = document.createElement("p");
+        empty.textContent = query
+          ? "No matching active reports found."
+          : "There are no active reports yet.";
+        list.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach(addReportCard);
+    }
+
+    document.getElementById("searchBtn").addEventListener(
+      "click", loadReports
+    );
+
+    document.getElementById("searchInput").addEventListener(
+      "keydown", function(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          loadReports();
+        }
+      }
+    );
+
+    refreshSession();
   </script>
 </body>
 </html>
