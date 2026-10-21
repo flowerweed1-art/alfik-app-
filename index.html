@@ -19,7 +19,7 @@
     }
 
     header {
-      background: #1769aa;
+      background: #123b63;
       color: white;
       text-align: center;
       padding: 26px 16px;
@@ -28,7 +28,7 @@
     header h1 {
       margin: 0;
       font-size: 32px;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
     }
 
     header p { margin: 6px 0 0; }
@@ -40,7 +40,7 @@
       padding: 18px;
     }
 
-    section, .panel {
+    section {
       background: white;
       border: 1px solid #d6e5f2;
       border-radius: 12px;
@@ -49,7 +49,8 @@
       box-shadow: 0 3px 12px #163d5b0d;
     }
 
-    h2 { color: #1769aa; margin-top: 0; }
+    h2, h3 { color: #1769aa; }
+    h2 { margin-top: 0; }
 
     button {
       border: 0;
@@ -61,11 +62,12 @@
       margin: 4px 0;
     }
 
-    .primary {
-      background: #1769aa;
-      color: white;
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
     }
 
+    .primary { background: #1769aa; color: white; }
     .secondary {
       background: #e7f1fa;
       color: #14558b;
@@ -74,6 +76,7 @@
 
     .lost { background: #c93434; color: white; }
     .found { background: #238451; color: white; }
+
     .deceased {
       background: white;
       color: #183047;
@@ -119,13 +122,37 @@
       padding: 14px;
       margin: 12px 0;
       overflow-wrap: anywhere;
+      background: white;
     }
 
     .report-card h3 { margin: 0 0 8px; }
+    .report-card p { margin: 7px 0; }
 
     .status-lost { border-left-color: #c93434; }
     .status-found { border-left-color: #238451; }
     .status-found_deceased { border-left-color: #9aabba; }
+
+    .match-card {
+      border: 1px solid #b8d8ef;
+      border-radius: 9px;
+      background: #f0f8ff;
+      padding: 14px;
+      margin: 12px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .match-card h3 { margin-top: 0; }
+
+    .match-label {
+      display: inline-block;
+      background: #dceefe;
+      color: #174d78;
+      border-radius: 20px;
+      padding: 4px 9px;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
 
     footer {
       text-align: center;
@@ -137,8 +164,7 @@
 </head>
 
 <body>
- 
-<header>
+  <header>
     <img
       src="Screenshot_20261021_113202_Gallery.jpg"
       alt="ALFIK moon logo"
@@ -147,13 +173,12 @@
     <h1>ALFIK</h1>
     <p>Animals Lost and Found Information Keeper</p>
     <p>Helping animals find their way home 🐾</p>
-</header>
-
+  </header>
 
   <main>
     <section id="accountSection">
       <h2>Your ALFIK account</h2>
-      <p>Sign in or create an account to report a lost or found animal.</p>
+      <p>Sign in or create an account to report an animal.</p>
 
       <form id="accountForm">
         <label for="accountEmail">Email address</label>
@@ -183,22 +208,22 @@
 
         <button class="lost wide" type="button"
           onclick="openReport('lost')">
-          Report a Lost Animal
+          🔴 Report a Lost Animal
         </button>
 
         <button class="found wide" type="button"
           onclick="openReport('found')">
-          Report a Found Animal
+          🟢 Report a Found Animal
         </button>
 
         <button class="deceased wide" type="button"
           onclick="openReport('found_deceased')">
-          Report an Animal Found Deceased
+          ⚪ Report an Animal Found Deceased
         </button>
 
         <p class="note">
           Reports are published immediately after successful submission.
-          Please do not include private contact details in the description.
+          Do not put private contact details in public descriptions.
         </p>
       </section>
 
@@ -244,19 +269,47 @@
       </section>
 
       <section>
-        <h2>Animal reports</h2>
-        <p>Browse currently active reports.</p>
+        <h2>Find an Animal</h2>
+        <p>Search lost and found reports across ALFIK.</p>
 
-        <label for="searchInput">Search reports</label>
-        <input id="searchInput"
-          placeholder="Search by town, animal or description">
+        <label for="searchInput">Search by name, town or description</label>
+        <input id="searchInput" type="search"
+          placeholder="e.g. black cat, Buckhaven">
 
-        <button class="secondary wide" id="searchBtn" type="button">
-          Search
+        <label for="animalFilter">Animal type</label>
+        <select id="animalFilter">
+          <option value="">All animals</option>
+          <option value="cat">Cats</option>
+          <option value="dog">Dogs</option>
+          <option value="other">Other animals</option>
+        </select>
+
+        <label for="statusFilter">Report type</label>
+        <select id="statusFilter">
+          <option value="">All reports</option>
+          <option value="lost">🔴 Lost animals</option>
+          <option value="found">🟢 Found animals</option>
+          <option value="found_deceased">⚪ Found deceased</option>
+        </select>
+
+        <button class="primary wide" id="searchBtn" type="button">
+          Search reports
         </button>
 
+        <button class="secondary wide" id="clearSearchBtn" type="button">
+          Clear filters
+        </button>
+
+        <h3>Possible matches</h3>
+        <p class="note">
+          These are suggestions based on similar details, not confirmed matches.
+          Please compare descriptions and dates carefully.
+        </p>
+        <div id="matchResults" aria-live="polite"></div>
+
+        <h3>Animal reports</h3>
         <div id="reportsList" aria-live="polite">
-          Loading reports...
+          Sign in to view active reports.
         </div>
       </section>
 
@@ -289,6 +342,8 @@
     );
 
     let reportStatus = "lost";
+    let activeReports = [];
+    let sessionReady = false;
 
     const accountSection = document.getElementById("accountSection");
     const siteContent = document.getElementById("siteContent");
@@ -307,14 +362,18 @@
 
       accountSection.classList.toggle("hidden", signedIn);
       siteContent.classList.toggle("hidden", !signedIn);
+      sessionReady = true;
 
       if (session) {
         document.getElementById("signedInAs").textContent =
           "Signed in as " + session.user.email;
-
         loadReports();
       } else {
         document.getElementById("signedInAs").textContent = "";
+        activeReports = [];
+        document.getElementById("reportsList").textContent =
+          "Please sign in to view reports.";
+        document.getElementById("matchResults").replaceChildren();
       }
     }
 
@@ -434,13 +493,14 @@
         found_deceased: "Report an Animal Found Deceased"
       };
 
-      document.getElementById("reportTitle").textContent =
-        titles[status];
-
+      document.getElementById("reportTitle").textContent = titles[status];
       reportForm.reset();
       showMessage(reportMessage, "");
       reportPanel.classList.remove("hidden");
-      reportPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      reportPanel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
     }
 
     function closeReport() {
@@ -514,22 +574,30 @@
       });
     });
 
-    function addReportCard(report) {
-      const card = document.createElement("article");
-      card.className = "report-card status-" + report.report_type;
+    function createTextElement(tag, text) {
+      const element = document.createElement(tag);
+      element.textContent = text || "";
+      return element;
+    }
 
-      const heading = document.createElement("h3");
-      const types = {
+    function reportTypeLabel(type) {
+      const labels = {
         lost: "🔴 LOST",
         found: "🟢 FOUND",
         found_deceased: "⚪ FOUND DECEASED"
       };
+      return labels[type] || "ANIMAL REPORT";
+    }
 
-      heading.textContent =
-        (types[report.report_type] || "ANIMAL REPORT") +
-        " | " + (report.animal_type || "Animal").toUpperCase();
+    function createReportCard(report) {
+      const card = document.createElement("article");
+      card.className = "report-card status-" + report.report_type;
 
-      card.appendChild(heading);
+      const animal = (report.animal_type || "animal").toUpperCase();
+      card.appendChild(createTextElement(
+        "h3",
+        reportTypeLabel(report.report_type) + " | " + animal
+      ));
 
       const details = [
         ["Name", report.animal_name || "Unknown"],
@@ -543,25 +611,246 @@
         const label = document.createElement("strong");
         label.textContent = item[0] + ": ";
         paragraph.appendChild(label);
-        paragraph.appendChild(document.createTextNode(item[1] || ""));
+        paragraph.appendChild(
+          document.createTextNode(item[1] || "")
+        );
         card.appendChild(paragraph);
       });
 
-      document.getElementById("reportsList").appendChild(card);
+      return card;
+    }
+
+    function normalise(value) {
+      return (value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function getSearchText(report) {
+      return normalise([
+        report.animal_type,
+        report.animal_name,
+        report.description,
+        report.location_text,
+        report.report_type
+      ].join(" "));
+    }
+
+    function tokenSet(value) {
+      const ignored = new Set([
+        "the", "and", "with", "from", "this", "that",
+        "was", "were", "has", "have", "near", "found",
+        "lost", "animal", "cat", "dog", "other"
+      ]);
+
+      return new Set(
+        normalise(value)
+          .split(" ")
+          .filter(function(word) {
+            return word.length > 2 && !ignored.has(word);
+          })
+      );
+    }
+
+    function similarityScore(first, second) {
+      let score = 0;
+
+      if (first.animal_type === second.animal_type) {
+        score += 4;
+      }
+
+      const firstLocation = normalise(first.location_text);
+      const secondLocation = normalise(second.location_text);
+
+      if (firstLocation && secondLocation) {
+        if (firstLocation === secondLocation) {
+          score += 5;
+        } else if (
+          firstLocation.includes(secondLocation) ||
+          secondLocation.includes(firstLocation)
+        ) {
+          score += 3;
+        } else {
+          const locationWords = tokenSet(firstLocation);
+          const otherLocationWords = tokenSet(secondLocation);
+
+          locationWords.forEach(function(word) {
+            if (otherLocationWords.has(word)) score += 2;
+          });
+        }
+      }
+
+      const firstWords = tokenSet(
+        (first.animal_name || "") + " " + first.description
+      );
+      const secondWords = tokenSet(
+        (second.animal_name || "") + " " + second.description
+      );
+
+      firstWords.forEach(function(word) {
+        if (secondWords.has(word)) score += 1;
+      });
+
+      if (first.date_seen && second.date_seen) {
+        const dateA = new Date(first.date_seen + "T00:00:00Z");
+        const dateB = new Date(second.date_seen + "T00:00:00Z");
+        const days = Math.abs(dateA - dateB) / 86400000;
+
+        if (days <= 3) score += 3;
+        else if (days <= 7) score += 2;
+        else if (days <= 14) score += 1;
+      }
+
+      return score;
+    }
+
+    function findPossibleMatches(reports) {
+      const results = [];
+      const lostReports = reports.filter(function(report) {
+        return report.report_type === "lost";
+      });
+      const foundReports = reports.filter(function(report) {
+        return report.report_type === "found";
+      });
+
+      lostReports.forEach(function(lost) {
+        foundReports.forEach(function(found) {
+          if (lost.animal_type !== found.animal_type) return;
+
+          const score = similarityScore(lost, found);
+
+          // Require a reasonable similarity before suggesting a match.
+          if (score >= 7) {
+            results.push({
+              lost: lost,
+              found: found,
+              score: score
+            });
+          }
+        });
+      });
+
+      return results.sort(function(a, b) {
+        return b.score - a.score;
+      }).slice(0, 10);
+    }
+
+    function renderPossibleMatches(reports) {
+      const container = document.getElementById("matchResults");
+      container.replaceChildren();
+
+      const matches = findPossibleMatches(reports);
+
+      if (!matches.length) {
+        container.appendChild(createTextElement(
+          "p",
+          "No possible matches found yet. New reports may create a match."
+        ));
+        return;
+      }
+
+      matches.forEach(function(match) {
+        const card = document.createElement("article");
+        card.className = "match-card";
+
+        const badge = document.createElement("span");
+        badge.className = "match-label";
+        badge.textContent = "Possible match";
+        card.appendChild(badge);
+
+        card.appendChild(createTextElement(
+          "h3",
+          match.lost.animal_type.toUpperCase() +
+          ": lost and found reports"
+        ));
+
+        const lostTitle = document.createElement("strong");
+        lostTitle.textContent = "🔴 Lost report";
+        card.appendChild(lostTitle);
+        card.appendChild(createTextElement(
+          "p",
+          "Location: " + (match.lost.location_text || "Not specified")
+        ));
+        card.appendChild(createTextElement(
+          "p",
+          "Date: " + (match.lost.date_seen || "Not specified")
+        ));
+        card.appendChild(createTextElement(
+          "p",
+          "Description: " + (match.lost.description || "Not provided")
+        ));
+
+        const foundTitle = document.createElement("strong");
+        foundTitle.textContent = "🟢 Found report";
+        card.appendChild(foundTitle);
+        card.appendChild(createTextElement(
+          "p",
+          "Location: " + (match.found.location_text || "Not specified")
+        ));
+        card.appendChild(createTextElement(
+          "p",
+          "Date: " + (match.found.date_seen || "Not specified")
+        ));
+        card.appendChild(createTextElement(
+          "p",
+          "Description: " + (match.found.description || "Not provided")
+        ));
+
+        card.appendChild(createTextElement(
+          "p",
+          "Compare these details carefully. This is an automated suggestion, not a confirmed match."
+        ));
+
+        container.appendChild(card);
+      });
+    }
+
+    function applyFilters() {
+      const query = normalise(
+        document.getElementById("searchInput").value
+      );
+      const animal = document.getElementById("animalFilter").value;
+      const type = document.getElementById("statusFilter").value;
+
+      const filtered = activeReports.filter(function(report) {
+        const matchesAnimal = !animal || report.animal_type === animal;
+        const matchesType = !type || report.report_type === type;
+        const matchesText =
+          !query || getSearchText(report).includes(query);
+
+        return matchesAnimal && matchesType && matchesText;
+      });
+
+      const list = document.getElementById("reportsList");
+      list.replaceChildren();
+
+      if (!filtered.length) {
+        list.appendChild(createTextElement(
+          "p",
+          "No active reports match those filters."
+        ));
+      } else {
+        filtered.forEach(function(report) {
+          list.appendChild(createReportCard(report));
+        });
+      }
+
+      // Suggestions always compare all active lost and found reports,
+      // so filtering the list does not hide a potential match.
+      renderPossibleMatches(activeReports);
     }
 
     async function loadReports() {
       const list = document.getElementById("reportsList");
       list.replaceChildren();
-
-      const loading = document.createElement("p");
-      loading.textContent = "Loading reports...";
-      list.appendChild(loading);
+      list.appendChild(createTextElement("p", "Loading reports..."));
 
       const { data, error } = await supabaseClient
         .from("animal_reports")
         .select(
-          "report_type, animal_type, animal_name, description, location_text, date_seen"
+          "report_type, animal_type, animal_name, description, location_text, date_seen, created_at"
         )
         .eq("status", "active")
         .order("created_at", { ascending: false })
@@ -570,51 +859,50 @@
       list.replaceChildren();
 
       if (error) {
-        const message = document.createElement("p");
-        message.textContent =
-          "Reports could not be loaded. " + error.message;
-        list.appendChild(message);
+        activeReports = [];
+        list.appendChild(createTextElement(
+          "p",
+          "Reports could not be loaded. " + error.message
+        ));
+        document.getElementById("matchResults").replaceChildren();
         return;
       }
 
-      const query = document.getElementById("searchInput")
-        .value.trim().toLowerCase();
-
-      const filtered = (data || []).filter(function(report) {
-        const searchable = [
-          report.animal_type,
-          report.animal_name,
-          report.description,
-          report.location_text,
-          report.report_type
-        ].join(" ").toLowerCase();
-
-        return searchable.includes(query);
-      });
-
-      if (!filtered.length) {
-        const empty = document.createElement("p");
-        empty.textContent = query
-          ? "No matching active reports found."
-          : "There are no active reports yet.";
-        list.appendChild(empty);
-        return;
-      }
-
-      filtered.forEach(addReportCard);
+      activeReports = data || [];
+      applyFilters();
     }
 
     document.getElementById("searchBtn").addEventListener(
-      "click", loadReports
+      "click",
+      applyFilters
+    );
+
+    document.getElementById("clearSearchBtn").addEventListener(
+      "click",
+      function() {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("animalFilter").value = "";
+        document.getElementById("statusFilter").value = "";
+        applyFilters();
+      }
     );
 
     document.getElementById("searchInput").addEventListener(
-      "keydown", function(event) {
+      "keydown",
+      function(event) {
         if (event.key === "Enter") {
           event.preventDefault();
-          loadReports();
+          applyFilters();
         }
       }
+    );
+
+    document.getElementById("animalFilter").addEventListener(
+      "change", applyFilters
+    );
+
+    document.getElementById("statusFilter").addEventListener(
+      "change", applyFilters
     );
 
     refreshSession();
