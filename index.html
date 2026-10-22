@@ -23,7 +23,7 @@
     }
     header h1 { margin: 0; font-size: 32px; letter-spacing: 3px; }
     header p { margin: 6px 0 0; }
-    main { width: 100%; max-width: 760px; margin: auto; padding: 18px; }
+    main { max-width: 760px; margin: auto; padding: 18px; }
     section {
       background: white;
       border: 1px solid #d6e5f2;
@@ -45,11 +45,7 @@
     }
     button:disabled { opacity: .6; cursor: wait; }
     .primary { background: #1769aa; color: white; }
-    .secondary {
-      background: #e7f1fa;
-      color: #14558b;
-      border: 1px solid #c4dcee;
-    }
+    .secondary { background: #e7f1fa; color: #14558b; border: 1px solid #c4dcee; }
     .lost { background: #c93434; color: white; }
     .found { background: #238451; color: white; }
     .deceased { background: white; color: #183047; border: 2px solid #9aabba; }
@@ -141,7 +137,8 @@
         <label for="accountEmail">Email address</label>
         <input id="accountEmail" type="email" autocomplete="email" required>
         <label for="accountPassword">Password</label>
-        <input id="accountPassword" type="password" autocomplete="current-password" minlength="6" required>
+        <input id="accountPassword" type="password"
+          autocomplete="current-password" minlength="6" required>
         <button class="primary wide" type="button" id="signInBtn">Sign in</button>
         <button class="secondary wide" type="button" id="signUpBtn">Create account</button>
       </form>
@@ -173,17 +170,21 @@
           <input id="name" maxlength="100" placeholder="e.g. Luna">
 
           <label for="description">Description</label>
-          <textarea id="description" rows="4" maxlength="4000" placeholder="Colour, breed, collar and identifying details" required></textarea>
+          <textarea id="description" rows="4" maxlength="4000"
+            placeholder="Colour, breed, collar and identifying details" required></textarea>
 
           <label for="location">Town or last-seen location</label>
-          <input id="location" maxlength="250" placeholder="Town or general location" required>
+          <input id="location" maxlength="250"
+            placeholder="Town or general location" required>
 
           <label for="date">Date last seen or found</label>
           <input id="date" type="date" required>
 
           <label for="photo">Animal photo (optional)</label>
-          <input type="file" accept="image/*">
-          <p class="note">Choose a photo from your gallery or use your camera. JPG, PNG or WebP, up to 5 MB. Only upload a photo you are happy to share publicly.</p>
+          <!-- FIXED: the ID connects the photo picker to the JavaScript. -->
+          <!-- Without capture, the phone can offer existing gallery photos. -->
+          <input id="photo" type="file" accept="image/jpeg,image/png,image/webp">
+          <p class="note">Choose a photo from your gallery or use your camera if offered. JPG, PNG or WebP, up to 5 MB. Photos are publicly viewable with the report.</p>
           <img id="photoPreview" class="animal-photo hidden" alt="Preview of selected animal photo">
           <button class="secondary wide hidden" type="button" id="removePhotoBtn">Remove selected photo</button>
 
@@ -261,6 +262,7 @@
     let reportStatus = "lost";
     let activeReports = [];
     let currentUserId = null;
+    let previewObjectUrl = null;
 
     const accountSection = document.getElementById("accountSection");
     const siteContent = document.getElementById("siteContent");
@@ -272,13 +274,14 @@
     const emailAlertsEnabled = document.getElementById("emailAlertsEnabled");
     const saveEmailPreferenceBtn = document.getElementById("saveEmailPreferenceBtn");
     const emailPreferenceMessage = document.getElementById("emailPreferenceMessage");
+
+    // IMPORTANT: this element must have id="photo" in the HTML.
     const photoInput = document.getElementById("photo");
     const photoPreview = document.getElementById("photoPreview");
     const removePhotoBtn = document.getElementById("removePhotoBtn");
-    let previewObjectUrl = null;
 
     function showMessage(element, message) {
-      element.textContent = message;
+      element.textContent = message || "";
     }
 
     function clearPhotoPreview() {
@@ -332,13 +335,13 @@
         throw new Error("The photo must be 5 MB or smaller.");
       }
 
-      const extensionByType = {
+      const extensions = {
         "image/jpeg": "jpg",
         "image/png": "png",
         "image/webp": "webp"
       };
 
-      const extension = extensionByType[file.type];
+      const extension = extensions[file.type];
       const path = userId + "/" + crypto.randomUUID() + "." + extension;
 
       const { error: uploadError } = await supabaseClient.storage
@@ -371,7 +374,9 @@
       siteContent.classList.toggle("hidden", !signedIn);
 
       if (user) {
-        document.getElementById("signedInAs").textContent = "Signed in as " + user.email;
+        document.getElementById("signedInAs").textContent =
+          "Signed in as " + user.email;
+
         if (userChanged) {
           loadReports();
           loadEmailPreference(user.id);
@@ -380,7 +385,8 @@
         activeReports = [];
         emailAlertsEnabled.checked = false;
         document.getElementById("signedInAs").textContent = "";
-        document.getElementById("reportsList").textContent = "Please sign in to view reports.";
+        document.getElementById("reportsList").textContent =
+          "Please sign in to view reports.";
         document.getElementById("matchResults").replaceChildren();
         showMessage(emailPreferenceMessage, "");
       }
@@ -388,10 +394,12 @@
 
     async function refreshSession() {
       const { data, error } = await supabaseClient.auth.getSession();
+
       if (error) {
         showMessage(accountMessage, error.message);
         return null;
       }
+
       showSignedIn(data.session);
       return data.session;
     }
@@ -405,24 +413,30 @@
         return;
       }
 
+      const button = document.getElementById("signUpBtn");
+      button.disabled = true;
       showMessage(accountMessage, "Creating your account...");
 
-      const { data, error } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: ALFIK_URL }
-      });
+      try {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: ALFIK_URL }
+        });
 
-      if (error) {
-        showMessage(accountMessage, error.message);
-        return;
-      }
+        if (error) throw error;
 
-      if (data.session) {
-        showMessage(accountMessage, "Account created.");
-        showSignedIn(data.session);
-      } else {
-        showMessage(accountMessage, "Account created. Check your email to confirm your account, then return here and sign in.");
+        if (data.session) {
+          showMessage(accountMessage, "Account created.");
+          showSignedIn(data.session);
+        } else {
+          showMessage(accountMessage,
+            "Account created. Check your email to confirm your account, then return here and sign in.");
+        }
+      } catch (error) {
+        showMessage(accountMessage, error.message || "Could not create your account. Please try again.");
+      } finally {
+        button.disabled = false;
       }
     });
 
@@ -435,20 +449,25 @@
         return;
       }
 
+      const button = document.getElementById("signInBtn");
+      button.disabled = true;
       showMessage(accountMessage, "Signing in...");
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      });
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email,
+          password
+        });
 
-      if (error) {
-        showMessage(accountMessage, error.message);
-        return;
+        if (error) throw error;
+
+        showMessage(accountMessage, "");
+        showSignedIn(data.session);
+      } catch (error) {
+        showMessage(accountMessage, error.message || "Sign-in failed. Please try again.");
+      } finally {
+        button.disabled = false;
       }
-
-      showMessage(accountMessage, "");
-      showSignedIn(data.session);
     });
 
     document.getElementById("signOutBtn").addEventListener("click", async function() {
@@ -504,25 +523,26 @@
       saveEmailPreferenceBtn.disabled = true;
       showMessage(emailPreferenceMessage, "Saving your preference...");
 
-      const { error } = await supabaseClient
-        .from("email_alert_preferences")
-        .upsert({
-          user_id: user.id,
-          enabled: emailAlertsEnabled.checked,
-          updated_at: new Date().toISOString()
-        }, { onConflict: "user_id" });
+      try {
+        const { error } = await supabaseClient
+          .from("email_alert_preferences")
+          .upsert({
+            user_id: user.id,
+            enabled: emailAlertsEnabled.checked,
+            updated_at: new Date().toISOString()
+          }, { onConflict: "user_id" });
 
-      saveEmailPreferenceBtn.disabled = false;
+        if (error) throw error;
 
-      if (error) {
+        showMessage(emailPreferenceMessage, emailAlertsEnabled.checked
+          ? "Your email match alerts are switched on."
+          : "Your email match alerts are switched off.");
+      } catch (error) {
         console.error("Email preference save error:", error);
         showMessage(emailPreferenceMessage, "Could not save your preference. " + error.message);
-        return;
+      } finally {
+        saveEmailPreferenceBtn.disabled = false;
       }
-
-      showMessage(emailPreferenceMessage, emailAlertsEnabled.checked
-        ? "Your email match alerts are switched on."
-        : "Your email match alerts are switched off.");
     });
 
     async function openReport(status) {
@@ -580,7 +600,7 @@
 
       if (selectedPhoto &&
           (!ALLOWED_PHOTO_TYPES.includes(selectedPhoto.type) ||
-          selectedPhoto.size > MAX_PHOTO_BYTES)) {
+           selectedPhoto.size > MAX_PHOTO_BYTES)) {
         showMessage(reportMessage, "Please choose a JPG, PNG or WebP photo no larger than 5 MB.");
         return;
       }
@@ -634,7 +654,8 @@
 
         if (alertError) {
           console.error("Match alert function error:", alertError);
-          showMessage(reportMessage, "Your report is published, but the automatic match check could not run. You can still view your report.");
+          showMessage(reportMessage,
+            "Your report is published, but the automatic match check could not run. You can still view your report.");
         } else {
           const count = Number(alertResult?.possible_matches || 0);
           showMessage(reportMessage, count > 0
@@ -754,10 +775,10 @@
                    secondLocation.includes(firstLocation)) {
           score += 3;
         } else {
-          const locationWords = tokenSet(firstLocation);
-          const otherLocationWords = tokenSet(secondLocation);
-          locationWords.forEach(function(word) {
-            if (otherLocationWords.has(word)) score += 2;
+          const firstWords = tokenSet(firstLocation);
+          const secondWords = tokenSet(secondLocation);
+          firstWords.forEach(function(word) {
+            if (secondWords.has(word)) score += 2;
           });
         }
       }
@@ -929,7 +950,11 @@
     document.getElementById("animalFilter").addEventListener("change", applyFilters);
     document.getElementById("statusFilter").addEventListener("change", applyFilters);
 
-    refreshSession();
+    refreshSession().catch(function(error) {
+      console.error("ALFIK initialisation error:", error);
+      showMessage(accountMessage,
+        "ALFIK could not initialise. Please refresh the page and try again.");
+    });
   </script>
 </body>
 </html>
