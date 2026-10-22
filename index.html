@@ -190,6 +190,8 @@
     const SUPABASE_KEY = "sb_publishable_krU5ZaSiuDwCniAycXr0cw_ZfTosBJ8";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    const ALFIK_URL = "https://flowerweed1-art.github.io/alfik-app-/";
+
     let reportStatus = "lost";
     let activeReports = [];
     let currentUserId = null;
@@ -254,7 +256,14 @@
       }
 
       showMessage(accountMessage, "Creating your account...");
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: ALFIK_URL
+        }
+      });
+
       if (error) {
         showMessage(accountMessage, error.message);
         return;
@@ -434,7 +443,6 @@
       reportForm.reset();
       showMessage(reportMessage, "Your report is published. Checking for possible matches...");
 
-      // The report stays published even if the alert check fails.
       const { data: alertResult, error: alertError } =
         await supabaseClient.functions.invoke("alfik-match-alerts", {
           body: { report_id: savedReport.id }
