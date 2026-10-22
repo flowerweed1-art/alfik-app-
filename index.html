@@ -6,13 +6,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1769aa">
 <title>ALFIK | Animal Reunification</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f2f7fc;color:#183047;line-height:1.5}
 header{background:#123b63;color:white;text-align:center;padding:26px 16px}
 header h1{margin:0;font-size:32px;letter-spacing:3px}
 header p{margin:6px 0 0}
-main{max-width:760px;margin:auto;padding:18px}
+main{max-width:900px;margin:auto;padding:18px}
 section{background:white;border:1px solid #d6e5f2;border-radius:12px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px #163d5b0d}
 h2,h3{color:#1769aa}
 h2{margin-top:0}
@@ -43,10 +46,29 @@ input[type=checkbox]{width:auto;margin-right:8px}
 .consent-row input{width:auto;margin-top:5px}
 .animal-photo{display:block;width:100%;max-width:420px;max-height:360px;object-fit:contain;border-radius:8px;margin:10px 0;background:#edf3f8}
 #photoPreview{max-width:100%;max-height:280px;object-fit:contain}
+.map{width:100%;height:390px;border-radius:10px;border:1px solid #d6e5f2;z-index:1}
+#pickerMap{height:350px;margin-top:10px}
+.map-legend{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;font-size:14px}
+.legend-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;border:1px solid #687989}
+.map-marker{width:22px;height:22px;border:3px solid white;border-radius:50%;box-shadow:0 1px 5px #0008}
+.map-marker.lost{background:#c93434}
+.map-marker.found{background:#238451}
+.map-marker.found_deceased{background:#fff;border:3px solid #697b8b}
+.map-tools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.map-tools button{width:100%}
+.map-popup-title{font-weight:bold;margin-bottom:5px}
 footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
+@media(max-width:560px){
+ main{padding:10px}
+ section{padding:15px}
+ .map{height:330px}
+ .map-tools{grid-template-columns:1fr}
+ header h1{font-size:28px}
+}
 </style>
 </head>
 <body>
+
 <header>
 <img src="Screenshot_20261021_113202_Gallery.jpg" alt="ALFIK logo" style="width:180px;max-width:80%;height:auto;display:block;margin:0 auto 15px;border-radius:50%">
 <h1>ALFIK</h1>
@@ -70,6 +92,7 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 </section>
 
 <div id="siteContent" class="hidden">
+
 <section>
 <h2>Report an animal</h2>
 <p>Choose the report that best describes the situation.</p>
@@ -108,6 +131,20 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <img id="photoPreview" class="animal-photo hidden" alt="Preview of selected animal photo">
 <button class="secondary wide hidden" type="button" id="removePhotoBtn">Remove selected photo</button>
 
+<hr style="border:0;border-top:1px solid #d6e5f2;margin:20px 0">
+
+<h3>Map location (optional)</h3>
+<p class="note">Choose an approximate public location near where the animal was lost or found. For privacy, do not place the marker on someone's home.</p>
+<button class="secondary wide" type="button" id="togglePickerBtn">📍 Choose location on map</button>
+<div id="pickerArea" class="hidden">
+<p id="pickerMessage" class="note">Move the map and tap the approximate location. You can zoom in or out.</p>
+<div id="pickerMap" class="map"></div>
+<p id="selectedCoordinates" class="note">No map location selected.</p>
+<button class="secondary wide" type="button" id="clearPinBtn">Clear map location</button>
+</div>
+<input type="hidden" id="reportLatitude">
+<input type="hidden" id="reportLongitude">
+
 <button class="primary wide" type="submit" id="submitReportBtn">Publish report</button>
 <button class="secondary wide" type="button" onclick="closeReport()">Cancel</button>
 </form>
@@ -117,8 +154,10 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <section>
 <h2>Find an Animal</h2>
 <p>Search lost and found reports across ALFIK.</p>
+
 <label for="searchInput">Search by name, town or description</label>
 <input id="searchInput" type="search" placeholder="e.g. black cat, Buckhaven">
+
 <label for="animalFilter">Animal type</label>
 <select id="animalFilter">
 <option value="">All animals</option>
@@ -126,6 +165,7 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <option value="dog">Dogs</option>
 <option value="other">Other animals</option>
 </select>
+
 <label for="statusFilter">Report type</label>
 <select id="statusFilter">
 <option value="">All reports</option>
@@ -133,11 +173,40 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <option value="found">🟢 Found animals</option>
 <option value="found_deceased">⚪ Found deceased</option>
 </select>
+
 <button class="primary wide" id="searchBtn" type="button">Search reports</button>
 <button class="secondary wide" id="clearSearchBtn" type="button">Clear filters</button>
+
+<h3>Animal report map</h3>
+<p class="note">Markers are approximate report locations selected by the person submitting the report. Reports without map coordinates still appear in the list below.</p>
+<div class="map-legend">
+<span><span class="legend-dot" style="background:#c93434"></span>Lost</span>
+<span><span class="legend-dot" style="background:#238451"></span>Found</span>
+<span><span class="legend-dot" style="background:#fff"></span>Found deceased</span>
+</div>
+<div id="reportsMap" class="map"></div>
+<p id="mapMessage" class="message note" role="status">Loading map...</p>
+
+<hr style="border:0;border-top:1px solid #d6e5f2;margin:20px 0">
+
+<h3>Find nearby reports</h3>
+<p class="note">Allow location access to find reports near you. Your current location is used for this search only and is not saved to your account.</p>
+<label for="radiusSelect">Search radius</label>
+<select id="radiusSelect">
+<option value="5">Within 5 miles</option>
+<option value="10" selected>Within 10 miles</option>
+<option value="25">Within 25 miles</option>
+<option value="50">Within 50 miles</option>
+</select>
+<button class="primary wide" id="nearbyBtn" type="button">📍 Find reports near me</button>
+<button class="secondary wide hidden" id="clearNearbyBtn" type="button">Show all map reports</button>
+<p id="nearbyMessage" class="message" role="status"></p>
+<div id="nearbyResults"></div>
+
 <h3>Possible matches</h3>
 <p class="note">These are suggestions based on similar details, not confirmed matches. Please compare descriptions and dates carefully.</p>
 <div id="matchResults" aria-live="polite"></div>
+
 <h3>Animal reports</h3>
 <div id="reportsList" aria-live="polite">Sign in to view active reports.</div>
 </section>
@@ -159,11 +228,15 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <p id="signedInAs" class="note"></p>
 <button class="secondary wide" id="signOutBtn" type="button">Sign out</button>
 </section>
+
 </div>
 </main>
+
 <footer>ALFIK | Animals Lost and Found Information Keeper</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
 const SUPABASE_URL="https://rrsccsswluacuvymuheo.supabase.co";
 const SUPABASE_KEY="sb_publishable_krU5ZaSiuDwCniAycXr0cw_ZfTosBJ8";
@@ -174,11 +247,20 @@ const MAX_ORIGINAL_PHOTO_BYTES=25*1024*1024;
 const MAX_COMPRESSED_PHOTO_BYTES=5*1024*1024;
 const MAX_IMAGE_DIMENSION=1600;
 const ALLOWED_PHOTO_TYPES=["image/jpeg","image/png","image/webp","image/gif"];
+const DEFAULT_MAP_CENTER=[56.2,-3.2];
+const MILES_PER_KM=0.621371;
 
 let reportStatus="lost";
 let activeReports=[];
 let currentUserId=null;
 let previewObjectUrl=null;
+let reportsMap=null;
+let pickerMap=null;
+let pickerMarker=null;
+let reportsMarkers=null;
+let nearbyLocation=null;
+let nearbyReportIds=null;
+let mapSizeTimer=null;
 
 const accountSection=document.getElementById("accountSection");
 const siteContent=document.getElementById("siteContent");
@@ -194,10 +276,15 @@ const photoInput=document.getElementById("photo");
 const photoPreview=document.getElementById("photoPreview");
 const removePhotoBtn=document.getElementById("removePhotoBtn");
 
-function showMessage(element,message){element.textContent=message||"";}
+function showMessage(element,message){
+  element.textContent=message||"";
+}
 
 function clearPhotoPreview(){
-  if(previewObjectUrl){URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null;}
+  if(previewObjectUrl){
+    URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl=null;
+  }
   photoPreview.removeAttribute("src");
   photoPreview.classList.add("hidden");
   removePhotoBtn.classList.add("hidden");
@@ -236,10 +323,6 @@ photoInput.addEventListener("change",function(){
 
 removePhotoBtn.addEventListener("click",resetPhotoPicker);
 
-/*
-  Resize large images in the browser.
-  The uploaded result is JPEG, which is smaller and widely supported.
-*/
 async function compressAnimalPhoto(file){
   if(!file)return null;
 
@@ -249,7 +332,6 @@ async function compressAnimalPhoto(file){
   if(file.size>MAX_ORIGINAL_PHOTO_BYTES){
     throw new Error("The original photo is over 25 MB. Please choose a smaller image.");
   }
-
   if(file.type==="image/gif"){
     throw new Error("Please choose a JPG, PNG or WebP photo. GIF images are not supported for upload.");
   }
@@ -286,10 +368,7 @@ async function compressAnimalPhoto(file){
     blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality));
   }
 
-  if(!blob){
-    throw new Error("The photo could not be compressed. Please try another image.");
-  }
-
+  if(!blob)throw new Error("The photo could not be compressed. Please try another image.");
   if(blob.size>MAX_COMPRESSED_PHOTO_BYTES){
     throw new Error("This photo is still too large after compression. Please choose a smaller image.");
   }
@@ -322,6 +401,168 @@ async function uploadAnimalPhoto(file,userId){
   return data.publicUrl;
 }
 
+/* ---------- MAP SETUP ---------- */
+
+function initReportsMap(){
+  if(reportsMap||!window.L)return;
+
+  reportsMap=L.map("reportsMap").setView(DEFAULT_MAP_CENTER,6);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(reportsMap);
+
+  reportsMarkers=L.layerGroup().addTo(reportsMap);
+  renderMapMarkers();
+  setTimeout(()=>reportsMap.invalidateSize(),200);
+}
+
+function initPickerMap(){
+  if(pickerMap||!window.L)return;
+
+  pickerMap=L.map("pickerMap").setView(DEFAULT_MAP_CENTER,6);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(pickerMap);
+
+  pickerMap.on("click",function(event){
+    setPickerPin(event.latlng.lat,event.latlng.lng);
+  });
+
+  const existingLat=Number(document.getElementById("reportLatitude").value);
+  const existingLng=Number(document.getElementById("reportLongitude").value);
+  if(existingLat&&existingLng){
+    pickerMap.setView([existingLat,existingLng],14);
+    setPickerPin(existingLat,existingLng);
+  }
+
+  setTimeout(()=>pickerMap.invalidateSize(),200);
+}
+
+function createMarkerIcon(type){
+  return L.divIcon({
+    className:"",
+    html:'<div class="map-marker '+type+'"></div>',
+    iconSize:[22,22],
+    iconAnchor:[11,11],
+    popupAnchor:[0,-12]
+  });
+}
+
+function makePopup(report){
+  const box=document.createElement("div");
+  const title=document.createElement("div");
+  title.className="map-popup-title";
+  title.textContent=reportTypeLabel(report.report_type)+" | "+(report.animal_type||"animal").toUpperCase();
+  box.appendChild(title);
+
+  const details=[
+    ["Name",report.animal_name||"Unknown"],
+    ["Location",report.location_text||"Not specified"],
+    ["Date",report.date_seen||"Not specified"],
+    ["Description",report.description||"Not provided"]
+  ];
+
+  details.forEach(item=>{
+    const p=document.createElement("p");
+    p.style.margin="4px 0";
+    const strong=document.createElement("strong");
+    strong.textContent=item[0]+": ";
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(item[1]));
+    box.appendChild(p);
+  });
+
+  if(report.photo_url){
+    const link=document.createElement("a");
+    link.href=report.photo_url;
+    link.target="_blank";
+    link.rel="noopener noreferrer";
+    link.textContent="View animal photo";
+    box.appendChild(link);
+  }
+  return box;
+}
+
+function validCoordinates(report){
+  const lat=Number(report.latitude);
+  const lng=Number(report.longitude);
+  return report.latitude!==null&&report.latitude!==""&&
+    report.longitude!==null&&report.longitude!==""&&
+    Number.isFinite(lat)&&Number.isFinite(lng)&&
+    lat>=-90&&lat<=90&&lng>=-180&&lng<=180;
+}
+
+function renderMapMarkers(){
+  if(!reportsMap||!reportsMarkers)return;
+  reportsMarkers.clearLayers();
+
+  const mappable=activeReports.filter(validCoordinates).filter(report=>
+    !nearbyReportIds||nearbyReportIds.has(String(report.id))
+  );
+
+  mappable.forEach(report=>{
+    const marker=L.marker(
+      [Number(report.latitude),Number(report.longitude)],
+      {icon:createMarkerIcon(report.report_type)}
+    );
+    marker.bindPopup(makePopup(report));
+    marker.addTo(reportsMarkers);
+  });
+
+  if(nearbyLocation){
+    L.circleMarker([nearbyLocation.latitude,nearbyLocation.longitude],{
+      radius:8,color:"#14558b",fillColor:"#55a7ec",fillOpacity:0.9
+    }).bindPopup("Your search location. This location is not saved to your account.")
+      .addTo(reportsMarkers);
+  }
+
+  const count=mappable.length;
+  const mapMessage=document.getElementById("mapMessage");
+  if(!count){
+    showMessage(mapMessage,nearbyReportIds
+      ?"No reports with map pins were found within that radius."
+      :"No reports have map pins yet. Add a map location when submitting a new report.");
+  }else{
+    showMessage(mapMessage,count+" report(s) shown on the map.");
+  }
+}
+
+function setPickerPin(latitude,longitude){
+  document.getElementById("reportLatitude").value=latitude;
+  document.getElementById("reportLongitude").value=longitude;
+  document.getElementById("selectedCoordinates").textContent=
+    "Map location selected. Coordinates: "+latitude.toFixed(5)+", "+longitude.toFixed(5);
+
+  if(pickerMarker)pickerMarker.remove();
+  pickerMarker=L.marker([latitude,longitude]).addTo(pickerMap)
+    .bindPopup("Selected approximate location").openPopup();
+}
+
+function clearPickerPin(){
+  document.getElementById("reportLatitude").value="";
+  document.getElementById("reportLongitude").value="";
+  document.getElementById("selectedCoordinates").textContent="No map location selected.";
+  if(pickerMarker&&pickerMap){
+    pickerMap.removeLayer(pickerMarker);
+    pickerMarker=null;
+  }
+}
+
+document.getElementById("togglePickerBtn").addEventListener("click",function(){
+  const area=document.getElementById("pickerArea");
+  area.classList.toggle("hidden");
+  if(!area.classList.contains("hidden")){
+    initPickerMap();
+    setTimeout(()=>pickerMap&&pickerMap.invalidateSize(),200);
+  }
+});
+
+document.getElementById("clearPinBtn").addEventListener("click",clearPickerPin);
+
+/* ---------- ACCOUNTS ---------- */
+
 function showSignedIn(session){
   const user=session?.user||null;
   const signedIn=Boolean(user);
@@ -337,14 +578,23 @@ function showSignedIn(session){
     if(userChanged){
       loadReports();
       loadEmailPreference(user.id);
+      setTimeout(()=>{
+        initReportsMap();
+        if(reportsMap)reportsMap.invalidateSize();
+      },250);
     }
   }else{
     activeReports=[];
+    nearbyLocation=null;
+    nearbyReportIds=null;
     emailAlertsEnabled.checked=false;
     document.getElementById("signedInAs").textContent="";
     document.getElementById("reportsList").textContent="Please sign in to view reports.";
     document.getElementById("matchResults").replaceChildren();
+    document.getElementById("nearbyResults").replaceChildren();
+    showMessage(document.getElementById("nearbyMessage"),"");
     showMessage(emailPreferenceMessage,"");
+    if(reportsMarkers)reportsMarkers.clearLayers();
   }
 }
 
@@ -358,7 +608,10 @@ async function refreshSession(){
 document.getElementById("signUpBtn").addEventListener("click",async function(){
   const email=document.getElementById("accountEmail").value.trim();
   const password=document.getElementById("accountPassword").value;
-  if(!email||!password){showMessage(accountMessage,"Please enter your email address and password.");return;}
+  if(!email||!password){
+    showMessage(accountMessage,"Please enter your email address and password.");
+    return;
+  }
 
   const button=document.getElementById("signUpBtn");
   button.disabled=true;
@@ -383,7 +636,10 @@ document.getElementById("signUpBtn").addEventListener("click",async function(){
 document.getElementById("signInBtn").addEventListener("click",async function(){
   const email=document.getElementById("accountEmail").value.trim();
   const password=document.getElementById("accountPassword").value;
-  if(!email||!password){showMessage(accountMessage,"Please enter your email address and password.");return;}
+  if(!email||!password){
+    showMessage(accountMessage,"Please enter your email address and password.");
+    return;
+  }
 
   const button=document.getElementById("signInBtn");
   button.disabled=true;
@@ -410,6 +666,8 @@ document.getElementById("signOutBtn").addEventListener("click",async function(){
 supabaseClient.auth.onAuthStateChange(function(event,session){
   showSignedIn(session);
 });
+
+/* ---------- EMAIL ALERT PREFERENCES ---------- */
 
 async function loadEmailPreference(userId){
   emailAlertsEnabled.checked=false;
@@ -456,6 +714,8 @@ saveEmailPreferenceBtn.addEventListener("click",async function(){
   }finally{saveEmailPreferenceBtn.disabled=false;}
 });
 
+/* ---------- REPORT FORM ---------- */
+
 async function openReport(status){
   const session=await refreshSession();
   if(!session){
@@ -473,6 +733,8 @@ async function openReport(status){
   document.getElementById("reportTitle").textContent=titles[status];
   reportForm.reset();
   resetPhotoPicker();
+  clearPickerPin();
+  document.getElementById("pickerArea").classList.add("hidden");
   showMessage(reportMessage,"");
   reportPanel.classList.remove("hidden");
   reportPanel.scrollIntoView({behavior:"smooth",block:"start"});
@@ -482,6 +744,8 @@ function closeReport(){
   reportPanel.classList.add("hidden");
   reportForm.reset();
   resetPhotoPicker();
+  clearPickerPin();
+  document.getElementById("pickerArea").classList.add("hidden");
   showMessage(reportMessage,"");
 }
 
@@ -500,6 +764,8 @@ reportForm.addEventListener("submit",async function(event){
   const location=document.getElementById("location").value.trim();
   const date=document.getElementById("date").value;
   const selectedPhoto=photoInput.files&&photoInput.files[0];
+  const latitude=document.getElementById("reportLatitude").value;
+  const longitude=document.getElementById("reportLongitude").value;
 
   if(!animal||!description||!location||!date){
     showMessage(reportMessage,"Please complete all required fields.");
@@ -524,7 +790,9 @@ reportForm.addEventListener("submit",async function(event){
       date_seen:date,
       photo_url:photoUrl,
       status:"active",
-      owner_id:session.user.id
+      owner_id:session.user.id,
+      latitude:latitude!==""?Number(latitude):null,
+      longitude:longitude!==""?Number(longitude):null
     };
 
     const {data:savedReport,error}=await supabaseClient
@@ -539,6 +807,8 @@ reportForm.addEventListener("submit",async function(event){
 
     reportForm.reset();
     resetPhotoPicker();
+    clearPickerPin();
+    document.getElementById("pickerArea").classList.add("hidden");
     showMessage(reportMessage,"Your report is published. Checking for possible matches...");
 
     const {data:alertResult,error:alertError}=await supabaseClient.functions.invoke(
@@ -565,6 +835,8 @@ reportForm.addEventListener("submit",async function(event){
     submitReportBtn.textContent="Publish report";
   }
 });
+
+/* ---------- REPORT DISPLAY AND MATCHING ---------- */
 
 function createTextElement(tag,text){
   const element=document.createElement(tag);
@@ -605,6 +877,9 @@ function createReportCard(report){
     card.appendChild(paragraph);
   });
 
+  if(validCoordinates(report)){
+    card.appendChild(createTextElement("p","📍 Map location available"));
+  }
   return card;
 }
 
@@ -725,6 +1000,7 @@ function applyFilters(){
   }
 
   renderPossibleMatches(activeReports);
+  renderMapMarkers();
 }
 
 async function loadReports(){
@@ -733,7 +1009,7 @@ async function loadReports(){
   list.appendChild(createTextElement("p","Loading reports..."));
 
   const {data,error}=await supabaseClient.from("animal_reports")
-    .select("id, report_type, animal_type, animal_name, description, location_text, date_seen, photo_url, created_at")
+    .select("id, report_type, animal_type, animal_name, description, location_text, date_seen, photo_url, created_at, latitude, longitude")
     .eq("status","active").order("created_at",{ascending:false}).limit(100);
 
   list.replaceChildren();
@@ -742,12 +1018,109 @@ async function loadReports(){
     activeReports=[];
     list.appendChild(createTextElement("p","Reports could not be loaded. "+error.message));
     document.getElementById("matchResults").replaceChildren();
+    renderMapMarkers();
     return;
   }
 
   activeReports=data||[];
   applyFilters();
 }
+
+/* ---------- NEARBY REPORT SEARCH ---------- */
+
+function distanceMiles(lat1,lon1,lat2,lon2){
+  const radians=degrees=>degrees*Math.PI/180;
+  const dLat=radians(lat2-lat1);
+  const dLon=radians(lon2-lon1);
+  const a=Math.sin(dLat/2)**2+
+    Math.cos(radians(lat1))*Math.cos(radians(lat2))*Math.sin(dLon/2)**2;
+  return 3958.8*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function renderNearbyResults(reports){
+  const container=document.getElementById("nearbyResults");
+  container.replaceChildren();
+
+  if(!reports.length){
+    container.appendChild(createTextElement("p","No reports with map locations were found within your selected radius."));
+    return;
+  }
+
+  reports.forEach(item=>{
+    const card=createReportCard(item.report);
+    const distance=document.createElement("p");
+    const strong=document.createElement("strong");
+    strong.textContent="Distance: ";
+    distance.appendChild(strong);
+    distance.appendChild(document.createTextNode(item.distance.toFixed(1)+" miles from your search location"));
+    card.appendChild(distance);
+    container.appendChild(card);
+  });
+}
+
+document.getElementById("nearbyBtn").addEventListener("click",function(){
+  const message=document.getElementById("nearbyMessage");
+
+  if(!navigator.geolocation){
+    showMessage(message,"Your browser does not support location access. You can still use the map and report search.");
+    return;
+  }
+
+  const button=document.getElementById("nearbyBtn");
+  button.disabled=true;
+  showMessage(message,"Finding your location. Please allow location access if asked.");
+
+  navigator.geolocation.getCurrentPosition(function(position){
+    nearbyLocation={
+      latitude:position.coords.latitude,
+      longitude:position.coords.longitude
+    };
+
+    const radius=Number(document.getElementById("radiusSelect").value);
+    const nearby=activeReports.filter(validCoordinates).map(report=>({
+      report,
+      distance:distanceMiles(
+        nearbyLocation.latitude,nearbyLocation.longitude,
+        Number(report.latitude),Number(report.longitude)
+      )
+    })).filter(item=>item.distance<=radius)
+      .sort((a,b)=>a.distance-b.distance);
+
+    nearbyReportIds=new Set(nearby.map(item=>String(item.report.id)));
+    document.getElementById("clearNearbyBtn").classList.remove("hidden");
+    showMessage(message,nearby.length+" report(s) with map locations found within "+radius+" miles. Your current location has not been saved.");
+    renderNearbyResults(nearby);
+    renderMapMarkers();
+
+    if(reportsMap){
+      reportsMap.setView([nearbyLocation.latitude,nearbyLocation.longitude],11);
+      setTimeout(()=>reportsMap.invalidateSize(),100);
+    }
+
+    button.disabled=false;
+  },function(error){
+    const errors={
+      1:"Location permission was denied. Allow location access in your browser settings, or use the map manually.",
+      2:"Your location could not be determined. Please try again.",
+      3:"The location request timed out. Please try again."
+    };
+    showMessage(message,errors[error.code]||"Could not get your location. Please try again.");
+    button.disabled=false;
+  },{enableHighAccuracy:false,timeout:15000,maximumAge:60000});
+});
+
+document.getElementById("clearNearbyBtn").addEventListener("click",function(){
+  nearbyLocation=null;
+  nearbyReportIds=null;
+  document.getElementById("clearNearbyBtn").classList.add("hidden");
+  document.getElementById("nearbyResults").replaceChildren();
+  showMessage(document.getElementById("nearbyMessage"),"Showing all reports with map locations.");
+  renderMapMarkers();
+  if(reportsMap){
+    reportsMap.setView(DEFAULT_MAP_CENTER,6);
+    setTimeout(()=>reportsMap.invalidateSize(),100);
+  }
+});
 
 document.getElementById("searchBtn").addEventListener("click",applyFilters);
 
