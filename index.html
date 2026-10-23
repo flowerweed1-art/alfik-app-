@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,15 +72,10 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <input id="accountEmail" type="email" autocomplete="email" required>
 <label for="accountPassword">Password</label>
 <input id="accountPassword" type="password" autocomplete="current-password" minlength="6" required>
-
 <div id="turnstileContainer">
-<div
-  class="cf-turnstile"
-  data-sitekey="0x4AAAAAAFiK2Uh9rYAy9ril">
-</div>
+<div class="cf-turnstile" data-sitekey="0x4AAAAAAFiK2Uh9rYAy9ril"></div>
 </div>
 <p class="note">Complete the Cloudflare security check before signing in or creating an account.</p>
-
 <button class="primary wide" type="button" id="signInBtn">Sign in</button>
 <button class="secondary wide" type="button" id="signUpBtn">Create account</button>
 </form>
@@ -106,19 +102,14 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <option value="dog">Dog</option>
 <option value="other">Other</option>
 </select>
-
 <label for="name">Animal's name, if known</label>
 <input id="name" maxlength="100" placeholder="e.g. Luna">
-
 <label for="description">Description</label>
 <textarea id="description" rows="4" maxlength="4000" placeholder="Colour, breed, collar and identifying details" required></textarea>
-
 <label for="location">Town or last-seen location</label>
 <input id="location" maxlength="250" placeholder="Town or general location" required>
-
 <label for="date">Date last seen or found</label>
 <input id="date" type="date" required>
-
 <label for="photo">Animal photo (optional)</label>
 <input id="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
 <p class="note">Choose a photo from your gallery. ALFIK automatically reduces large photos before uploading them.</p>
@@ -134,7 +125,6 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <p id="pickerMessage" class="message" role="status">Tap the map to place a pin.</p>
 <button class="secondary wide" type="button" id="clearPinBtn">Remove map pin</button>
 </div>
-
 <button class="primary wide" type="submit" id="submitReportBtn">Publish report</button>
 <button class="secondary wide" type="button" onclick="closeReport()">Cancel</button>
 </form>
@@ -151,7 +141,6 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 </div>
 <div id="reportsMap" class="map"></div>
 <p class="note">Only reports with map coordinates appear on the map. Reports without a pin remain searchable below.</p>
-
 <label for="radiusSelect">Search radius</label>
 <select id="radiusSelect">
 <option value="5">Within 5 miles</option>
@@ -260,25 +249,17 @@ function getCaptchaToken(){
   if(!window.turnstile){
     throw new Error("The security check is still loading. Please wait a moment and try again.");
   }
-
-  const response=document.querySelector(
-    '#accountForm [name="cf-turnstile-response"]'
-  );
-
+  const response=document.querySelector('#accountForm [name="cf-turnstile-response"]');
   if(!response||!response.value){
     throw new Error("Please complete the Cloudflare security check before continuing.");
   }
-
   return response.value;
 }
 
 function resetCaptcha(){
   if(window.turnstile){
-    try{
-      window.turnstile.reset();
-    }catch(error){
-      console.error("Could not reset security check:",error);
-    }
+    try{window.turnstile.reset();}
+    catch(error){console.error("Could not reset security check:",error);}
   }
 }
 
@@ -308,7 +289,6 @@ photoInput.addEventListener("change",function(){
     photoInput.value="";
     return;
   }
-
   if(file.size>MAX_ORIGINAL_PHOTO_BYTES){
     showMessage(reportMessage,"This original photo is over 25 MB. Please choose a smaller photo.");
     photoInput.value="";
@@ -375,15 +355,13 @@ async function uploadAnimalPhoto(file,userId){
   if(!file)return null;
   const compressedFile=await compressAnimalPhoto(file);
   showMessage(reportMessage,"Uploading the optimised photo...");
-
   const path=userId+"/"+crypto.randomUUID()+".jpg";
-  const {error:uploadError}=await supabaseClient.storage.from(PHOTO_BUCKET).upload(path,compressedFile,{
-    cacheControl:"3600",
-    contentType:"image/jpeg",
-    upsert:false
-  });
 
+  const {error:uploadError}=await supabaseClient.storage.from(PHOTO_BUCKET).upload(path,compressedFile,{
+    cacheControl:"3600",contentType:"image/jpeg",upsert:false
+  });
   if(uploadError)throw new Error("Photo upload failed: "+uploadError.message);
+
   const {data}=supabaseClient.storage.from(PHOTO_BUCKET).getPublicUrl(path);
   return data.publicUrl;
 }
@@ -400,7 +378,6 @@ function initPickerMap(){
 
   if(!pickerMap){
     pickerMap=L.map("pickerMap").setView([56.3,-3.2],6);
-
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
       maxZoom:19,
       attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -427,20 +404,14 @@ function initPickerMap(){
       }
 
       const position=[selectedLatitude,selectedLongitude];
-
-      if(pickerMarker){
-        pickerMarker.setLatLng(position);
-      }else{
-        pickerMarker=L.marker(position).addTo(pickerMap);
-      }
+      if(pickerMarker)pickerMarker.setLatLng(position);
+      else pickerMarker=L.marker(position).addTo(pickerMap);
 
       showMessage(message,"Map pin selected. Coordinates: "+selectedLatitude+", "+selectedLongitude);
     });
   }
 
-  setTimeout(function(){
-    if(pickerMap)pickerMap.invalidateSize();
-  },250);
+  setTimeout(function(){if(pickerMap)pickerMap.invalidateSize();},250);
 }
 
 function initReportsMap(){
@@ -448,19 +419,14 @@ function initReportsMap(){
     document.getElementById("reportsMap").textContent="The map could not load. Please check your internet connection.";
     return;
   }
-
   if(reportsMap)return;
 
   reportsMap=L.map("reportsMap").setView([56.3,-3.2],6);
-
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
     maxZoom:19,
     attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }).addTo(reportsMap);
-
-  setTimeout(function(){
-    if(reportsMap)reportsMap.invalidateSize();
-  },250);
+  setTimeout(function(){if(reportsMap)reportsMap.invalidateSize();},250);
 }
 
 function reportPinStyle(type){
@@ -499,7 +465,6 @@ function makePopup(report){
     link.textContent="View animal photo";
     popup.appendChild(link);
   }
-
   return popup;
 }
 
@@ -509,7 +474,6 @@ function distanceMiles(lat1,lon1,lat2,lon2){
   const dLon=radians(lon2-lon1);
   const a=Math.sin(dLat/2)**2+
     Math.cos(radians(lat1))*Math.cos(radians(lat2))*Math.sin(dLon/2)**2;
-
   return 3958.8*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
@@ -521,6 +485,9 @@ function reportsWithCoordinates(){
       Math.abs(Number(report.latitude))<=90&&Math.abs(Number(report.longitude))<=180;
   });
 }
+
+/* FIXED: Only format a distance when it is a valid number.
+   Without a nearby search, the distance can be null. */
 
 function renderNearbyList(reports,distances){
   const container=document.getElementById("nearbyList");
@@ -539,8 +506,9 @@ function renderNearbyList(reports,distances){
     card.className="nearby-card";
     card.appendChild(createTextElement("h3",reportTypeLabel(report.report_type)+" | "+(report.animal_type||"animal").toUpperCase()));
 
-    const distance=distances&&distances.get(report.id);
-    if(distance!==undefined){
+    const distance=distances instanceof Map?distances.get(report.id):undefined;
+
+    if(typeof distance==="number"&&Number.isFinite(distance)){
       card.appendChild(createTextElement("p","📏 Approximately "+distance.toFixed(1)+" miles away"));
     }
 
@@ -563,7 +531,6 @@ function renderNearbyList(reports,distances){
       reportsMap.setView([lat,lng],13);
       const marker=reportMarkers.find(function(item){return item.reportId===report.id;});
       if(marker)marker.marker.openPopup();
-
       document.getElementById("reportsMap").scrollIntoView({behavior:"smooth",block:"start"});
     });
 
@@ -576,9 +543,7 @@ function renderReportMap(){
   initReportsMap();
   if(!reportsMap)return;
 
-  reportMarkers.forEach(function(item){
-    reportsMap.removeLayer(item.marker);
-  });
+  reportMarkers.forEach(function(item){reportsMap.removeLayer(item.marker);});
   reportMarkers=[];
 
   const mapped=reportsWithCoordinates();
@@ -589,7 +554,6 @@ function renderReportMap(){
   mapped.forEach(function(report){
     const lat=Number(report.latitude);
     const lon=Number(report.longitude);
-
     if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return;
 
     if(nearbyOrigin){
@@ -599,14 +563,9 @@ function renderReportMap(){
     }
 
     visible.push(report);
-
     const style=reportPinStyle(report.report_type);
     const marker=L.circleMarker([lat,lon],{
-      radius:9,
-      color:style.color,
-      fillColor:style.fillColor,
-      fillOpacity:1,
-      weight:2
+      radius:9,color:style.color,fillColor:style.fillColor,fillOpacity:1,weight:2
     }).addTo(reportsMap);
 
     marker.bindPopup(makePopup(report));
@@ -615,34 +574,32 @@ function renderReportMap(){
 
   if(nearbyOrigin){
     const userMarker=L.circleMarker([nearbyOrigin.latitude,nearbyOrigin.longitude],{
-      radius:7,
-      color:"#14558b",
-      fillColor:"#3d9be9",
-      fillOpacity:1,
-      weight:2
+      radius:7,color:"#14558b",fillColor:"#3d9be9",fillOpacity:1,weight:2
     }).addTo(reportsMap);
 
     userMarker.bindPopup("Your current search location. This location is not saved to ALFIK.");
     reportMarkers.push({reportId:null,marker:userMarker});
 
     if(visible.length){
-      const points=visible.map(function(report){
-        return [Number(report.latitude),Number(report.longitude)];
-      });
+      const points=visible.map(function(report){return [Number(report.latitude),Number(report.longitude)];});
       points.push([nearbyOrigin.latitude,nearbyOrigin.longitude]);
       reportsMap.fitBounds(points,{padding:[25,25],maxZoom:12});
     }else{
       reportsMap.setView([nearbyOrigin.latitude,nearbyOrigin.longitude],10);
     }
 
-    visible.sort(function(a,b){return distances.get(a.id)-distances.get(b.id);});
+    visible.sort(function(a,b){
+      const distanceA=distances.get(a.id);
+      const distanceB=distances.get(b.id);
+      return (Number.isFinite(distanceA)?distanceA:Infinity)-
+             (Number.isFinite(distanceB)?distanceB:Infinity);
+    });
+
     showMessage(document.getElementById("nearbyMessage"),
       visible.length+" mapped report(s) found within "+radius+" miles. Your location is only used for this search.");
   }else{
     if(visible.length){
-      const points=visible.map(function(report){
-        return [Number(report.latitude),Number(report.longitude)];
-      });
+      const points=visible.map(function(report){return [Number(report.latitude),Number(report.longitude)];});
       reportsMap.fitBounds(points,{padding:[25,25],maxZoom:12});
     }else{
       reportsMap.setView([56.3,-3.2],6);
@@ -676,7 +633,11 @@ document.getElementById("nearMeBtn").addEventListener("click",function(){
     }
 
     nearbyOrigin={latitude:lat,longitude:lng};
-    renderReportMap();
+    try{renderReportMap();}
+    catch(error){
+      console.error("Nearby map error:",error);
+      showMessage(document.getElementById("nearbyMessage"),"The map could not update. Please refresh and try again.");
+    }
     button.disabled=false;
   },function(error){
     const messages={
@@ -684,7 +645,6 @@ document.getElementById("nearMeBtn").addEventListener("click",function(){
       2:"Your location could not be determined. Try again or explore the map without it.",
       3:"The location request timed out. Please try again."
     };
-
     showMessage(document.getElementById("nearbyMessage"),messages[error.code]||"Could not get your location. Please try again.");
     button.disabled=false;
   },{enableHighAccuracy:false,timeout:15000,maximumAge:60000});
@@ -702,24 +662,22 @@ document.getElementById("radiusSelect").addEventListener("change",function(){
 document.getElementById("togglePickerBtn").addEventListener("click",function(){
   const container=document.getElementById("pickerContainer");
   const willShow=container.classList.contains("hidden");
-
   container.classList.toggle("hidden",!willShow);
   this.textContent=willShow?"Hide location map":"Show location map";
-
   if(willShow)initPickerMap();
 });
 
 document.getElementById("clearPinBtn").addEventListener("click",function(){
   selectedLatitude=null;
   selectedLongitude=null;
-
   if(pickerMarker&&pickerMap){
     pickerMap.removeLayer(pickerMarker);
     pickerMarker=null;
   }
-
   showMessage(document.getElementById("pickerMessage"),"Map pin removed. The report will not include map coordinates.");
 });
+
+/* ACCOUNT SESSION */
 
 function showSignedIn(session){
   const user=session?.user||null;
@@ -733,7 +691,6 @@ function showSignedIn(session){
 
   if(user){
     document.getElementById("signedInAs").textContent="Signed in as "+user.email;
-
     if(userChanged){
       loadReports();
       loadEmailPreference(user.id);
@@ -747,7 +704,6 @@ function showSignedIn(session){
     document.getElementById("matchResults").replaceChildren();
     document.getElementById("nearbyList").replaceChildren();
     showMessage(emailPreferenceMessage,"");
-
     if(reportsMap)renderReportMap();
   }
 }
@@ -774,13 +730,8 @@ document.getElementById("signUpBtn").addEventListener("click",async function(){
   }
 
   let captchaToken;
-
-  try{
-    captchaToken=getCaptchaToken();
-  }catch(error){
-    showMessage(accountMessage,error.message);
-    return;
-  }
+  try{captchaToken=getCaptchaToken();}
+  catch(error){showMessage(accountMessage,error.message);return;}
 
   const button=document.getElementById("signUpBtn");
   button.disabled=true;
@@ -788,14 +739,9 @@ document.getElementById("signUpBtn").addEventListener("click",async function(){
 
   try{
     const {data,error}=await supabaseClient.auth.signUp({
-      email,
-      password,
-      options:{
-        emailRedirectTo:ALFIK_URL,
-        captchaToken:captchaToken
-      }
+      email,password,
+      options:{emailRedirectTo:ALFIK_URL,captchaToken:captchaToken}
     });
-
     if(error)throw error;
 
     if(data.session){
@@ -824,13 +770,8 @@ document.getElementById("signInBtn").addEventListener("click",async function(){
   }
 
   let captchaToken;
-
-  try{
-    captchaToken=getCaptchaToken();
-  }catch(error){
-    showMessage(accountMessage,error.message);
-    return;
-  }
+  try{captchaToken=getCaptchaToken();}
+  catch(error){showMessage(accountMessage,error.message);return;}
 
   const button=document.getElementById("signInBtn");
   button.disabled=true;
@@ -838,11 +779,8 @@ document.getElementById("signInBtn").addEventListener("click",async function(){
 
   try{
     const {data,error}=await supabaseClient.auth.signInWithPassword({
-      email,
-      password,
-      options:{captchaToken:captchaToken}
+      email,password,options:{captchaToken:captchaToken}
     });
-
     if(error)throw error;
     showMessage(accountMessage,"");
     showSignedIn(data.session);
@@ -856,12 +794,10 @@ document.getElementById("signInBtn").addEventListener("click",async function(){
 
 document.getElementById("signOutBtn").addEventListener("click",async function(){
   const {error}=await supabaseClient.auth.signOut();
-
   if(error){
     alert("Could not sign out: "+error.message);
     return;
   }
-
   closeReport();
   showSignedIn(null);
   showMessage(accountMessage,"You have signed out.");
@@ -871,21 +807,20 @@ supabaseClient.auth.onAuthStateChange(function(event,session){
   showSignedIn(session);
 });
 
+/* EMAIL MATCH ALERT PREFERENCE */
+
 async function loadEmailPreference(userId){
   emailAlertsEnabled.checked=false;
   showMessage(emailPreferenceMessage,"Loading your email preference...");
 
   const {data,error}=await supabaseClient.from("email_alert_preferences")
-    .select("enabled")
-    .eq("user_id",userId)
-    .maybeSingle();
+    .select("enabled").eq("user_id",userId).maybeSingle();
 
   if(error){
     showMessage(emailPreferenceMessage,"Could not load preference. Please try again.");
     console.error("Email preference load error:",error);
     return;
   }
-
   if(currentUserId!==userId)return;
 
   emailAlertsEnabled.checked=data?.enabled===true;
@@ -910,7 +845,6 @@ saveEmailPreferenceBtn.addEventListener("click",async function(){
       enabled:emailAlertsEnabled.checked,
       updated_at:new Date().toISOString()
     },{onConflict:"user_id"});
-
     if(error)throw error;
 
     showMessage(emailPreferenceMessage,emailAlertsEnabled.checked
@@ -924,16 +858,16 @@ saveEmailPreferenceBtn.addEventListener("click",async function(){
   }
 });
 
+/* ANIMAL REPORT FORM */
+
 async function openReport(status){
   const session=await refreshSession();
-
   if(!session){
     showMessage(accountMessage,"Please sign in before submitting a report.");
     return;
   }
 
   reportStatus=status;
-
   const titles={
     lost:"Report a Lost Animal",
     found:"Report a Found Animal",
@@ -943,7 +877,6 @@ async function openReport(status){
   document.getElementById("reportTitle").textContent=titles[status];
   reportForm.reset();
   resetPhotoPicker();
-
   selectedLatitude=null;
   selectedLongitude=null;
 
@@ -956,7 +889,6 @@ async function openReport(status){
   document.getElementById("togglePickerBtn").textContent="Show location map";
   showMessage(document.getElementById("pickerMessage"),"Tap the map to place a pin.");
   showMessage(reportMessage,"");
-
   reportPanel.classList.remove("hidden");
   reportPanel.scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -965,7 +897,6 @@ function closeReport(){
   reportPanel.classList.add("hidden");
   reportForm.reset();
   resetPhotoPicker();
-
   selectedLatitude=null;
   selectedLongitude=null;
 
@@ -973,7 +904,6 @@ function closeReport(){
     pickerMap.removeLayer(pickerMarker);
     pickerMarker=null;
   }
-
   showMessage(reportMessage,"");
 }
 
@@ -981,7 +911,6 @@ reportForm.addEventListener("submit",async function(event){
   event.preventDefault();
 
   const session=await refreshSession();
-
   if(!session){
     showMessage(reportMessage,"Your session has expired. Please sign in again.");
     return;
@@ -1011,7 +940,6 @@ reportForm.addEventListener("submit",async function(event){
 
   try{
     const photoUrl=await uploadAnimalPhoto(selectedPhoto,session.user.id);
-
     const report={
       report_type:reportStatus,
       animal_type:animal,
@@ -1027,9 +955,7 @@ reportForm.addEventListener("submit",async function(event){
     };
 
     const {data:savedReport,error}=await supabaseClient.from("animal_reports")
-      .insert([report])
-      .select("id")
-      .single();
+      .insert([report]).select("id").single();
 
     if(error){
       console.error("Report submission error:",error);
@@ -1039,7 +965,6 @@ reportForm.addEventListener("submit",async function(event){
 
     reportForm.reset();
     resetPhotoPicker();
-
     selectedLatitude=null;
     selectedLongitude=null;
 
@@ -1053,8 +978,7 @@ reportForm.addEventListener("submit",async function(event){
     showMessage(reportMessage,"Your report is published. Checking for possible matches...");
 
     const {data:alertResult,error:alertError}=await supabaseClient.functions.invoke(
-      "alfik-match-alerts",
-      {body:{report_id:savedReport.id}}
+      "alfik-match-alerts",{body:{report_id:savedReport.id}}
     );
 
     if(alertError){
@@ -1078,6 +1002,8 @@ reportForm.addEventListener("submit",async function(event){
   }
 });
 
+/* REPORT DISPLAY AND MATCHING */
+
 function createTextElement(tag,text){
   const element=document.createElement(tag);
   element.textContent=text||"";
@@ -1085,17 +1011,12 @@ function createTextElement(tag,text){
 }
 
 function reportTypeLabel(type){
-  const labels={
-    lost:"🔴 LOST",
-    found:"🟢 FOUND",
-    found_deceased:"⚪ FOUND DECEASED"
-  };
+  const labels={lost:"🔴 LOST",found:"🟢 FOUND",found_deceased:"⚪ FOUND DECEASED"};
   return labels[type]||"ANIMAL REPORT";
 }
 
 function addReportPhoto(card,photoUrl,altText){
   if(!photoUrl)return;
-
   const image=document.createElement("img");
   image.className="animal-photo";
   image.src=photoUrl;
@@ -1135,22 +1056,18 @@ function createReportCard(report){
       mapButton.addEventListener("click",function(){
         initReportsMap();
         if(!reportsMap)return;
-
         document.getElementById("mapSection").scrollIntoView({behavior:"smooth",block:"start"});
 
         setTimeout(function(){
           reportsMap.invalidateSize();
           reportsMap.setView([lat,lng],13);
-
           const match=reportMarkers.find(function(item){return item.reportId===report.id;});
           if(match)match.marker.openPopup();
         },300);
       });
-
       card.appendChild(mapButton);
     }
   }
-
   return card;
 }
 
@@ -1169,7 +1086,6 @@ function tokenSet(value){
 
 function similarityScore(first,second){
   let score=0;
-
   if(first.animal_type===second.animal_type)score+=4;
 
   const firstLocation=normalise(first.location_text);
@@ -1193,12 +1109,10 @@ function similarityScore(first,second){
     const dateA=new Date(first.date_seen+"T00:00:00Z");
     const dateB=new Date(second.date_seen+"T00:00:00Z");
     const days=Math.abs(dateA-dateB)/86400000;
-
     if(days<=3)score+=3;
     else if(days<=7)score+=2;
     else if(days<=14)score+=1;
   }
-
   return score;
 }
 
@@ -1209,18 +1123,15 @@ function findPossibleMatches(reports){
 
   lostReports.forEach(lost=>foundReports.forEach(found=>{
     if(lost.animal_type!==found.animal_type)return;
-
     const score=similarityScore(lost,found);
     if(score>=7)results.push({lost,found,score});
   }));
-
   return results.sort((a,b)=>b.score-a.score).slice(0,10);
 }
 
 function renderPossibleMatches(reports){
   const container=document.getElementById("matchResults");
   container.replaceChildren();
-
   const matches=findPossibleMatches(reports);
 
   if(!matches.length){
@@ -1231,25 +1142,21 @@ function renderPossibleMatches(reports){
   matches.forEach(match=>{
     const card=document.createElement("article");
     card.className="match-card";
-
     const badge=document.createElement("span");
     badge.className="match-label";
     badge.textContent="Possible match";
     card.appendChild(badge);
-
     card.appendChild(createTextElement("h3",match.lost.animal_type.toUpperCase()+": lost and found reports"));
     card.appendChild(createTextElement("strong","🔴 Lost report"));
     addReportPhoto(card,match.lost.photo_url,"Photo for lost animal");
     card.appendChild(createTextElement("p","Location: "+(match.lost.location_text||"Not specified")));
     card.appendChild(createTextElement("p","Date: "+(match.lost.date_seen||"Not specified")));
     card.appendChild(createTextElement("p","Description: "+(match.lost.description||"Not provided")));
-
     card.appendChild(createTextElement("strong","🟢 Found report"));
     addReportPhoto(card,match.found.photo_url,"Photo for found animal");
     card.appendChild(createTextElement("p","Location: "+(match.found.location_text||"Not specified")));
     card.appendChild(createTextElement("p","Date: "+(match.found.date_seen||"Not specified")));
     card.appendChild(createTextElement("p","Description: "+(match.found.description||"Not provided")));
-
     card.appendChild(createTextElement("p","Compare these details carefully. This is an automated suggestion, not a confirmed match."));
     container.appendChild(card);
   });
@@ -1274,36 +1181,44 @@ function applyFilters(){
   }else{
     filtered.forEach(report=>list.appendChild(createReportCard(report)));
   }
-
   renderPossibleMatches(activeReports);
 }
+
+/* LOAD REPORTS SAFELY */
 
 async function loadReports(){
   const list=document.getElementById("reportsList");
   list.replaceChildren();
   list.appendChild(createTextElement("p","Loading reports..."));
 
-  const {data,error}=await supabaseClient.from("animal_reports")
-    .select("id, report_type, animal_type, animal_name, description, location_text, date_seen, photo_url, latitude, longitude, created_at")
-    .eq("status","active")
-    .order("created_at",{ascending:false})
-    .limit(100);
+  try{
+    const {data,error}=await supabaseClient.from("animal_reports")
+      .select("id, report_type, animal_type, animal_name, description, location_text, date_seen, photo_url, latitude, longitude, created_at")
+      .eq("status","active")
+      .order("created_at",{ascending:false})
+      .limit(100);
 
-  list.replaceChildren();
+    list.replaceChildren();
 
-  if(error){
-    activeReports=[];
-    list.appendChild(createTextElement("p","Reports could not be loaded. "+error.message));
-    document.getElementById("matchResults").replaceChildren();
-    showMessage(document.getElementById("nearbyMessage"),"Reports could not be loaded. "+error.message);
+    if(error)throw error;
+
+    activeReports=Array.isArray(data)?data:[];
+    applyFilters();
     renderReportMap();
-    return;
-  }
+  }catch(error){
+    console.error("Report loading error:",error);
+    activeReports=[];
+    list.replaceChildren();
+    list.appendChild(createTextElement("p","Reports could not be loaded. "+(error.message||"Please try again.")));
+    document.getElementById("matchResults").replaceChildren();
+    showMessage(document.getElementById("nearbyMessage"),"Reports could not be loaded. Please refresh and try again.");
 
-  activeReports=data||[];
-  applyFilters();
-  renderReportMap();
+    try{renderReportMap();}
+    catch(mapError){console.error("Map rendering error:",mapError);}
+  }
 }
+
+/* SEARCH CONTROLS */
 
 document.getElementById("searchBtn").addEventListener("click",applyFilters);
 
@@ -1323,6 +1238,8 @@ document.getElementById("searchInput").addEventListener("keydown",function(event
 
 document.getElementById("animalFilter").addEventListener("change",applyFilters);
 document.getElementById("statusFilter").addEventListener("change",applyFilters);
+
+/* STARTUP */
 
 initReportsMap();
 
