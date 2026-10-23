@@ -188,6 +188,11 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <button class="primary wide" id="searchBtn" type="button">Search reports</button>
 <button class="secondary wide" id="clearSearchBtn" type="button">Clear filters</button>
 
+<!-- ANIMAL REPORTS NOW APPEAR BEFORE POSSIBLE MATCHES -->
+<h3>Animal reports</h3>
+<div id="reportsList" aria-live="polite">Sign in to view active reports.</div>
+
+<!-- COLLAPSED BY DEFAULT; MATCHES FOLLOW THE ACTIVE SEARCH FILTERS -->
 <details id="possibleMatchesDetails">
 <summary id="possibleMatchesSummary">
 <span>🔎 Possible Matches <span id="matchCount" class="match-count">0</span></span>
@@ -195,9 +200,6 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <p class="note">These are suggestions based on similar details, not confirmed matches. Please compare descriptions and dates carefully.</p>
 <div id="matchResults" aria-live="polite"></div>
 </details>
-
-<h3>Animal reports</h3>
-<div id="reportsList" aria-live="polite">Sign in to view active reports.</div>
 </section>
 
 <section>
@@ -1157,7 +1159,7 @@ function renderPossibleMatches(reports){
   matchCount.setAttribute("aria-label",matches.length+" possible matches");
 
   if(!matches.length){
-    container.appendChild(createTextElement("p","No possible matches found yet. New reports may create a match."));
+    container.appendChild(createTextElement("p","No possible matches found among the reports matching your current filters."));
     return;
   }
 
@@ -1204,8 +1206,8 @@ function applyFilters(){
     filtered.forEach(report=>list.appendChild(createReportCard(report)));
   }
 
-  /* Update match suggestions without opening the collapsible section. */
-  renderPossibleMatches(activeReports);
+  /* FIX: possible matches now use the filtered reports, not every active report. */
+  renderPossibleMatches(filtered);
 }
 
 /* LOAD REPORTS SAFELY */
