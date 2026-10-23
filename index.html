@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +6,7 @@
 <meta name="theme-color" content="#1769aa">
 <title>ALFIK | Animal Reunification</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f2f7fc;color:#183047;line-height:1.5}
@@ -51,6 +51,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 .nearby-card{padding:12px;border:1px solid #d6e5f2;border-radius:8px;margin:10px 0;overflow-wrap:anywhere}
 .nearby-card p{margin:4px 0}
 footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
+#turnstileContainer{margin:16px 0;display:flex;justify-content:center;min-height:65px}
 </style>
 </head>
 <body>
@@ -70,6 +71,15 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <input id="accountEmail" type="email" autocomplete="email" required>
 <label for="accountPassword">Password</label>
 <input id="accountPassword" type="password" autocomplete="current-password" minlength="6" required>
+
+<div id="turnstileContainer">
+<div
+  class="cf-turnstile"
+  data-sitekey="0x4AAAAAAFiK2Uh9rYAy9ril">
+</div>
+</div>
+<p class="note">Complete the Cloudflare security check before signing in or creating an account.</p>
+
 <button class="primary wide" type="button" id="signInBtn">Sign in</button>
 <button class="secondary wide" type="button" id="signUpBtn">Create account</button>
 </form>
@@ -244,6 +254,34 @@ const photoInput=document.getElementById("photo");
 const photoPreview=document.getElementById("photoPreview");
 const removePhotoBtn=document.getElementById("removePhotoBtn");
 
+/* CLOUDFLARE TURNSTILE SECURITY */
+
+function getCaptchaToken(){
+  if(!window.turnstile){
+    throw new Error("The security check is still loading. Please wait a moment and try again.");
+  }
+
+  const response=document.querySelector(
+    '#accountForm [name="cf-turnstile-response"]'
+  );
+
+  if(!response||!response.value){
+    throw new Error("Please complete the Cloudflare security check before continuing.");
+  }
+
+  return response.value;
+}
+
+function resetCaptcha(){
+  if(window.turnstile){
+    try{
+      window.turnstile.reset();
+    }catch(error){
+      console.error("Could not reset security check:",error);
+    }
+  }
+}
+
 function showMessage(element,message){
   if(element)element.textContent=message||"";
 }
@@ -369,10 +407,6 @@ function initPickerMap(){
     }).addTo(pickerMap);
 
     pickerMap.on("click",function(event){
-      /*
-       * FIX: validate Leaflet's click coordinates before using them.
-       * This avoids calling toFixed() on null or undefined values.
-       */
       const clickedLat=event&&event.latlng?event.latlng.lat:null;
       const clickedLng=event&&event.latlng?event.latlng.lng:null;
 
@@ -672,9 +706,7 @@ document.getElementById("togglePickerBtn").addEventListener("click",function(){
   container.classList.toggle("hidden",!willShow);
   this.textContent=willShow?"Hide location map":"Show location map";
 
-  if(willShow){
-    initPickerMap();
-  }
+  if(willShow)initPickerMap();
 });
 
 document.getElementById("clearPinBtn").addEventListener("click",function(){
@@ -730,12 +762,23 @@ async function refreshSession(){
   return data.session;
 }
 
+/* SIGN UP WITH CAPTCHA */
+
 document.getElementById("signUpBtn").addEventListener("click",async function(){
   const email=document.getElementById("accountEmail").value.trim();
   const password=document.getElementById("accountPassword").value;
 
   if(!email||!password){
     showMessage(accountMessage,"Please enter your email address and password.");
+    return;
+  }
+
+  let captchaToken;
+
+  try{
+    captchaToken=getCaptchaToken();
+  }catch(error){
+    showMessage(accountMessage,error.message);
     return;
   }
 
@@ -747,7 +790,10 @@ document.getElementById("signUpBtn").addEventListener("click",async function(){
     const {data,error}=await supabaseClient.auth.signUp({
       email,
       password,
-      options:{emailRedirectTo:ALFIK_URL}
+      options:{
+        emailRedirectTo:ALFIK_URL,
+        captchaToken:captchaToken
+      }
     });
 
     if(error)throw error;
@@ -761,9 +807,12 @@ document.getElementById("signUpBtn").addEventListener("click",async function(){
   }catch(error){
     showMessage(accountMessage,error.message||"Could not create your account. Please try again.");
   }finally{
+    resetCaptcha();
     button.disabled=false;
   }
 });
+
+/* SIGN IN WITH CAPTCHA */
 
 document.getElementById("signInBtn").addEventListener("click",async function(){
   const email=document.getElementById("accountEmail").value.trim();
@@ -774,18 +823,33 @@ document.getElementById("signInBtn").addEventListener("click",async function(){
     return;
   }
 
+  let captchaToken;
+
+  try{
+    captchaToken=getCaptchaToken();
+  }catch(error){
+    showMessage(accountMessage,error.message);
+    return;
+  }
+
   const button=document.getElementById("signInBtn");
   button.disabled=true;
   showMessage(accountMessage,"Signing in...");
 
   try{
-    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+    const {data,error}=await supabaseClient.auth.signInWithPassword({
+      email,
+      password,
+      options:{captchaToken:captchaToken}
+    });
+
     if(error)throw error;
     showMessage(accountMessage,"");
     showSignedIn(data.session);
   }catch(error){
     showMessage(accountMessage,error.message||"Sign-in failed. Please try again.");
   }finally{
+    resetCaptcha();
     button.disabled=false;
   }
 });
