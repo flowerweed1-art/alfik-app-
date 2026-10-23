@@ -53,6 +53,18 @@ input[type=checkbox]{width:auto;margin-right:8px}
 .nearby-card p{margin:4px 0}
 footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 #turnstileContainer{margin:16px 0;display:flex;justify-content:center;min-height:65px}
+
+/* COLLAPSIBLE POSSIBLE MATCHES */
+#possibleMatchesDetails{margin:18px 0;border:1px solid #c9dfef;border-radius:9px;background:#f8fbff;overflow:hidden}
+#possibleMatchesSummary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;color:#14558b;font-weight:bold;font-size:17px;cursor:pointer;list-style:none}
+#possibleMatchesSummary::-webkit-details-marker{display:none}
+#possibleMatchesSummary::after{content:"＋";font-size:21px;flex-shrink:0}
+#possibleMatchesDetails[open] #possibleMatchesSummary::after{content:"−"}
+#possibleMatchesSummary:hover{background:#edf6fd}
+.match-count{display:inline-block;background:#dceefe;color:#174d78;border-radius:20px;padding:2px 9px;font-size:13px;margin-left:5px}
+#matchResults{padding:0 12px 12px}
+#matchResults:empty{padding:0}
+#matchResults .match-card:first-child{margin-top:4px}
 </style>
 </head>
 <body>
@@ -115,7 +127,6 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <p class="note">Choose a photo from your gallery. ALFIK automatically reduces large photos before uploading them.</p>
 <img id="photoPreview" class="animal-photo hidden" alt="Preview of selected animal photo">
 <button class="secondary wide hidden" type="button" id="removePhotoBtn">Remove selected photo</button>
-
 <hr style="border:0;border-top:1px solid #d6e5f2;margin:20px 0">
 <h3>📍 Add a map location (optional)</h3>
 <p class="note">Tap the map to mark approximately where the animal was lost or found. For privacy, choose a nearby public place or approximate area, not a home address. You can still publish without adding a pin.</p>
@@ -155,7 +166,7 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <div id="nearbyList" aria-live="polite"><p class="note">Mapped reports will appear here.</p></div>
 </section>
 
-<section>
+<section id="animalSearchSection">
 <h2>Find an Animal</h2>
 <p>Search lost and found reports across ALFIK.</p>
 <label for="searchInput">Search by name, town or description</label>
@@ -176,9 +187,15 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 </select>
 <button class="primary wide" id="searchBtn" type="button">Search reports</button>
 <button class="secondary wide" id="clearSearchBtn" type="button">Clear filters</button>
-<h3>Possible matches</h3>
+
+<details id="possibleMatchesDetails">
+<summary id="possibleMatchesSummary">
+<span>🔎 Possible Matches <span id="matchCount" class="match-count">0</span></span>
+</summary>
 <p class="note">These are suggestions based on similar details, not confirmed matches. Please compare descriptions and dates carefully.</p>
 <div id="matchResults" aria-live="polite"></div>
+</details>
+
 <h3>Animal reports</h3>
 <div id="reportsList" aria-live="polite">Sign in to view active reports.</div>
 </section>
@@ -242,6 +259,8 @@ const emailPreferenceMessage=document.getElementById("emailPreferenceMessage");
 const photoInput=document.getElementById("photo");
 const photoPreview=document.getElementById("photoPreview");
 const removePhotoBtn=document.getElementById("removePhotoBtn");
+const possibleMatchesDetails=document.getElementById("possibleMatchesDetails");
+const matchCount=document.getElementById("matchCount");
 
 /* CLOUDFLARE TURNSTILE SECURITY */
 
@@ -486,9 +505,6 @@ function reportsWithCoordinates(){
   });
 }
 
-/* FIXED: Only format a distance when it is a valid number.
-   Without a nearby search, the distance can be null. */
-
 function renderNearbyList(reports,distances){
   const container=document.getElementById("nearbyList");
   container.replaceChildren();
@@ -507,7 +523,6 @@ function renderNearbyList(reports,distances){
     card.appendChild(createTextElement("h3",reportTypeLabel(report.report_type)+" | "+(report.animal_type||"animal").toUpperCase()));
 
     const distance=distances instanceof Map?distances.get(report.id):undefined;
-
     if(typeof distance==="number"&&Number.isFinite(distance)){
       card.appendChild(createTextElement("p","📏 Approximately "+distance.toFixed(1)+" miles away"));
     }
@@ -612,6 +627,8 @@ function renderReportMap(){
   renderNearbyList(visible,nearbyOrigin?distances:null);
 }
 
+/* NEARBY SEARCH */
+
 document.getElementById("nearMeBtn").addEventListener("click",function(){
   if(!navigator.geolocation){
     showMessage(document.getElementById("nearbyMessage"),"Your browser does not support location sharing. You can still explore the map.");
@@ -702,6 +719,8 @@ function showSignedIn(session){
     document.getElementById("signedInAs").textContent="";
     document.getElementById("reportsList").textContent="Please sign in to view reports.";
     document.getElementById("matchResults").replaceChildren();
+    matchCount.textContent="0";
+    possibleMatchesDetails.open=false;
     document.getElementById("nearbyList").replaceChildren();
     showMessage(emailPreferenceMessage,"");
     if(reportsMap)renderReportMap();
@@ -1132,7 +1151,10 @@ function findPossibleMatches(reports){
 function renderPossibleMatches(reports){
   const container=document.getElementById("matchResults");
   container.replaceChildren();
+
   const matches=findPossibleMatches(reports);
+  matchCount.textContent=String(matches.length);
+  matchCount.setAttribute("aria-label",matches.length+" possible matches");
 
   if(!matches.length){
     container.appendChild(createTextElement("p","No possible matches found yet. New reports may create a match."));
@@ -1181,6 +1203,8 @@ function applyFilters(){
   }else{
     filtered.forEach(report=>list.appendChild(createReportCard(report)));
   }
+
+  /* Update match suggestions without opening the collapsible section. */
   renderPossibleMatches(activeReports);
 }
 
@@ -1211,6 +1235,8 @@ async function loadReports(){
     list.replaceChildren();
     list.appendChild(createTextElement("p","Reports could not be loaded. "+(error.message||"Please try again.")));
     document.getElementById("matchResults").replaceChildren();
+    matchCount.textContent="0";
+    possibleMatchesDetails.open=false;
     showMessage(document.getElementById("nearbyMessage"),"Reports could not be loaded. Please refresh and try again.");
 
     try{renderReportMap();}
