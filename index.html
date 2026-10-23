@@ -77,6 +77,7 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <button class="secondary" data-view="myView">My ALFIK</button>
 <button class="secondary" data-view="reportView">Report an animal</button>
 <button class="secondary" data-view="emailView">Email alerts</button>
+<button class="secondary" data-view="accountView">Account</button>
 </nav>
 
 <section id="homeView">
@@ -85,7 +86,7 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <button class="primary wide" data-view="reportsView">🔎 View all animal reports</button>
 <button class="found wide" data-view="reportView">📝 Report a lost or found animal</button>
 <button class="secondary wide" data-view="myView">👤 My ALFIK and my reports</button>
-<p class="note">Please don't include private contact details in public report descriptions. Possible matches are suggestions, not confirmed identifications.</p>
+<p class="note">Please don't include private contact details in public descriptions. Possible matches are suggestions, not confirmed identifications.</p>
 </section>
 
 <section id="reportView" class="hidden">
@@ -103,19 +104,24 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <option value="dog">Dog</option>
 <option value="other">Other</option>
 </select>
+
 <label for="animalName">Animal's name, if known</label>
 <input id="animalName" maxlength="100" placeholder="e.g. Luna">
+
 <label for="description">Description</label>
 <textarea id="description" rows="4" maxlength="4000" required placeholder="Colour, breed, collar and identifying details"></textarea>
+
 <label for="location">Town or general location</label>
 <input id="location" maxlength="250" required placeholder="Town or general location">
+
 <label for="dateSeen">Date last seen or found</label>
 <input id="dateSeen" type="date" required>
+
 <label for="photo">Animal photo (optional)</label>
 <input id="photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
 <p class="note">JPG, PNG or WebP, maximum 5 MB. Photos are publicly viewable with the report.</p>
 <img id="photoPreview" class="animal-photo hidden" alt="Selected photo preview">
-<button id="removePhotoBtn" class="secondary wide hidden" type="button">Remove photo</button>
+<button id="removePhotoBtn" class="secondary wide hidden" type="button">Remove selected photo</button>
 <button id="submitReportBtn" class="primary wide" type="submit">Publish report</button>
 <button id="cancelReportBtn" class="secondary wide" type="button">Cancel</button>
 </form>
@@ -125,21 +131,33 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <section id="reportsView" class="hidden">
 <h2>Community animal reports</h2>
 <p>Search active reports shared on ALFIK.</p>
+
 <label for="searchInput">Search name, town or description</label>
 <input id="searchInput" type="search" placeholder="e.g. black cat, Buckhaven">
+
 <label for="animalFilter">Animal type</label>
 <select id="animalFilter">
-<option value="">All animals</option><option value="cat">Cats</option><option value="dog">Dogs</option><option value="other">Other animals</option>
+<option value="">All animals</option>
+<option value="cat">Cats</option>
+<option value="dog">Dogs</option>
+<option value="other">Other animals</option>
 </select>
+
 <label for="typeFilter">Report type</label>
 <select id="typeFilter">
-<option value="">All reports</option><option value="lost">Lost animals</option><option value="found">Found animals</option><option value="found_deceased">Found deceased</option>
+<option value="">All reports</option>
+<option value="lost">Lost animals</option>
+<option value="found">Found animals</option>
+<option value="found_deceased">Found deceased</option>
 </select>
+
 <button class="primary wide" id="searchBtn" type="button">Search reports</button>
 <button class="secondary wide" id="clearBtn" type="button">Clear filters</button>
+
 <h3>Possible text matches</h3>
-<p class="note">Suggestions based on similar animal types, locations, descriptions and dates. These are not confirmed matches.</p>
+<p class="note">Suggestions based on animal type, location, descriptions and dates. These are not confirmed matches.</p>
 <div id="matchResults" aria-live="polite"></div>
+
 <h3>Animal reports</h3>
 <div id="reportsList" aria-live="polite">Loading reports...</div>
 </section>
@@ -160,13 +178,14 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <p id="emailMessage" class="message" role="status"></p>
 </section>
 
-<section id="accountView">
+<section id="accountView" class="hidden">
 <h2>Your account</h2>
 <p id="signedInAs" class="note">Signed in to ALFIK</p>
 <button class="secondary wide" id="signOutBtn" type="button">Sign out</button>
 </section>
 </div>
 </main>
+
 <footer>ALFIK | Animals Lost and Found Information Keeper</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -185,9 +204,9 @@ let currentUserId=null;
 let reportStatus="lost";
 let editingReportId=null;
 let editingPhotoUrl=null;
+let editingOriginalStatus="active";
 let activeReports=[];
 let myReports=[];
-let ownReportIds=new Set();
 let previewUrl=null;
 
 const $=id=>document.getElementById(id);
@@ -196,7 +215,9 @@ const siteContent=$("siteContent");
 const reportForm=$("reportForm");
 const photoInput=$("photo");
 
-function message(id,text){$(id).textContent=text||"";}
+function message(id,text){
+  $(id).textContent=text||"";
+}
 
 function element(tag,text){
   const e=document.createElement(tag);
@@ -208,9 +229,11 @@ function showView(id){
   ["homeView","reportView","reportsView","myView","emailView","accountView"].forEach(view=>{
     $(view).classList.toggle("hidden",view!==id);
   });
-  if(id==="reportsView"){loadReports();}
-  if(id==="myView"){loadMyReports();}
-  if(id==="emailView"){loadEmailPreference();}
+
+  if(id==="reportsView")loadReports();
+  if(id==="myView")loadMyReports();
+  if(id==="emailView")loadEmailPreference();
+
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
@@ -219,7 +242,10 @@ document.querySelectorAll("[data-view]").forEach(button=>{
 });
 
 function clearPhotoPreview(){
-  if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null;}
+  if(previewUrl){
+    URL.revokeObjectURL(previewUrl);
+    previewUrl=null;
+  }
   $("photoPreview").removeAttribute("src");
   $("photoPreview").classList.add("hidden");
   $("removePhotoBtn").classList.add("hidden");
@@ -234,66 +260,92 @@ photoInput.addEventListener("change",()=>{
   clearPhotoPreview();
   const file=photoInput.files&&photoInput.files[0];
   if(!file)return;
+
   if(!ALLOWED_PHOTO_TYPES.includes(file.type)){
     message("reportMessage","Choose a JPG, PNG or WebP image.");
     photoInput.value="";
     return;
   }
+
   if(file.size>MAX_PHOTO_BYTES){
     message("reportMessage","The photo must be 5 MB or smaller.");
     photoInput.value="";
     return;
   }
+
   previewUrl=URL.createObjectURL(file);
   $("photoPreview").src=previewUrl;
   $("photoPreview").classList.remove("hidden");
   $("removePhotoBtn").classList.remove("hidden");
   message("reportMessage","");
 });
+
 $("removePhotoBtn").addEventListener("click",resetPhoto);
 
 async function uploadAnimalPhoto(file,userId){
   if(!file)return null;
+
   if(!ALLOWED_PHOTO_TYPES.includes(file.type)||file.size>MAX_PHOTO_BYTES){
     throw new Error("Choose a JPG, PNG or WebP photo no larger than 5 MB.");
   }
-  const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"}[file.type];
+
+  const ext={
+    "image/jpeg":"jpg",
+    "image/png":"png",
+    "image/webp":"webp"
+  }[file.type];
+
   const path=userId+"/"+crypto.randomUUID()+"."+ext;
-  const {error}=await supabaseClient.storage.from(PHOTO_BUCKET).upload(path,file,{
-    cacheControl:"3600",contentType:file.type,upsert:false
-  });
+
+  const {error}=await supabaseClient.storage
+    .from(PHOTO_BUCKET)
+    .upload(path,file,{
+      cacheControl:"3600",
+      contentType:file.type,
+      upsert:false
+    });
+
   if(error)throw new Error("Photo upload failed: "+error.message);
+
   return supabaseClient.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 function startNewReport(type){
   editingReportId=null;
   editingPhotoUrl=null;
+  editingOriginalStatus="active";
   reportStatus=type;
+
   reportForm.reset();
   resetPhoto();
   reportForm.classList.remove("hidden");
+
   $("reportHeading").textContent="Create a new report";
   $("submitReportBtn").textContent="Publish report";
   message("reportMessage","");
+
   showView("reportView");
-  $("reportForm").scrollIntoView({behavior:"smooth",block:"start"});
+  reportForm.scrollIntoView({behavior:"smooth",block:"start"});
 }
 
 function editReport(report){
   editingReportId=report.id;
   editingPhotoUrl=report.photo_url||null;
+  editingOriginalStatus=report.status||"active";
   reportStatus=report.report_type;
+
   $("animal").value=report.animal_type||"";
   $("animalName").value=report.animal_name||"";
   $("description").value=report.description||"";
   $("location").value=report.location_text||"";
   $("dateSeen").value=report.date_seen||"";
+
   resetPhoto();
   reportForm.classList.remove("hidden");
   $("reportHeading").textContent="Edit your report";
   $("submitReportBtn").textContent="Save changes";
   message("reportMessage","Leave the photo blank to keep your existing photo.");
+
   showView("reportView");
   reportForm.scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -304,14 +356,20 @@ $("cancelReportBtn").addEventListener("click",()=>{
   reportForm.classList.add("hidden");
   editingReportId=null;
   editingPhotoUrl=null;
+  editingOriginalStatus="active";
   message("reportMessage","");
 });
 
 $("reportForm").addEventListener("submit",async event=>{
   event.preventDefault();
+
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-  if(!user){message("reportMessage","Please sign in again.");return;}
+
+  if(!user){
+    message("reportMessage","Please sign in again.");
+    return;
+  }
 
   const animal=$("animal").value;
   const animalName=$("animalName").value.trim();
@@ -319,9 +377,11 @@ $("reportForm").addEventListener("submit",async event=>{
   const location=$("location").value.trim();
   const dateSeen=$("dateSeen").value;
   const file=photoInput.files?.[0];
+  const wasEditing=Boolean(editingReportId);
 
   if(!animal||!description||!location||!dateSeen){
-    message("reportMessage","Please complete all required fields.");return;
+    message("reportMessage","Please complete all required fields.");
+    return;
   }
 
   const button=$("submitReportBtn");
@@ -341,48 +401,89 @@ $("reportForm").addEventListener("submit",async event=>{
       location_text:location,
       date_seen:dateSeen,
       photo_url:photoUrl,
-      status:"active",
+      status:wasEditing?editingOriginalStatus:"active",
       owner_id:user.id
     };
 
-    let error;
-    if(editingReportId){
-      const result=await supabaseClient.from("animal_reports")
+    let savedReportId=null;
+
+    if(wasEditing){
+      const result=await supabaseClient
+        .from("animal_reports")
         .update(report)
         .eq("id",editingReportId)
-        .eq("owner_id",user.id);
-      error=result.error;
+        .eq("owner_id",user.id)
+        .select("id")
+        .maybeSingle();
+
+      if(result.error)throw result.error;
+
+      if(!result.data){
+        throw new Error("No report was updated. Check your report ownership and Supabase permissions.");
+      }
+
+      savedReportId=result.data.id;
     }else{
-      const result=await supabaseClient.from("animal_reports").insert([report]);
-      error=result.error;
+      const result=await supabaseClient
+        .from("animal_reports")
+        .insert([report])
+        .select("id")
+        .single();
+
+      if(result.error)throw result.error;
+      savedReportId=result.data.id;
     }
 
-    if(error)throw error;
-
-    message("reportMessage",editingReportId?"Your report has been updated.":"Your report has been published.");
     reportForm.reset();
     resetPhoto();
     reportForm.classList.add("hidden");
     editingReportId=null;
     editingPhotoUrl=null;
+    editingOriginalStatus="active";
+
+    if(!wasEditing){
+      message("reportMessage","Your report has been published.");
+
+      // Email-alert function only. This does not call OpenAI.
+      try{
+        const alertResult=await supabaseClient.functions.invoke("alfik-match-alerts",{
+          body:{report_id:savedReportId}
+        });
+
+        if(alertResult.error){
+          console.warn("Email alert function reported an issue:",alertResult.error);
+        }
+      }catch(alertError){
+        console.warn("Email alerts could not be triggered:",alertError);
+      }
+    }else{
+      message("reportMessage","Your report has been updated.");
+    }
+
     await loadReports();
     await loadMyReports();
     showView("myView");
+
   }catch(error){
     console.error("Report save error:",error);
     message("reportMessage","Could not save the report. "+(error.message||"Please try again."));
   }finally{
     button.disabled=false;
-    button.textContent=editingReportId?"Save changes":"Publish report";
+    button.textContent="Publish report";
   }
 });
 
 function reportTypeLabel(type){
-  return {lost:"🔴 LOST",found:"🟢 FOUND",found_deceased:"⚪ FOUND DECEASED"}[type]||"ANIMAL REPORT";
+  return {
+    lost:"🔴 LOST",
+    found:"🟢 FOUND",
+    found_deceased:"⚪ FOUND DECEASED"
+  }[type]||"ANIMAL REPORT";
 }
 
 function addPhoto(card,url,alt){
   if(!url)return;
+
   const img=document.createElement("img");
   img.className="animal-photo";
   img.src=url;
@@ -403,10 +504,16 @@ function addField(card,label,value){
 function makeReportCard(report,isOwn){
   const card=document.createElement("article");
   card.className="report-card status-"+report.report_type;
+
   const badge=element("span",isOwn?"YOUR REPORT":"COMMUNITY REPORT");
   badge.className="badge"+(isOwn?" own":"");
   card.appendChild(badge);
-  card.appendChild(element("h3",reportTypeLabel(report.report_type)+" | "+(report.animal_type||"animal").toUpperCase()));
+
+  card.appendChild(element(
+    "h3",
+    reportTypeLabel(report.report_type)+" | "+(report.animal_type||"animal").toUpperCase()
+  ));
+
   addPhoto(card,report.photo_url,"Photo of "+(report.animal_name||"reported animal"));
   addField(card,"Name",report.animal_name||"Unknown");
   addField(card,"Description",report.description);
@@ -417,29 +524,35 @@ function makeReportCard(report,isOwn){
   if(isOwn){
     const actions=document.createElement("div");
     actions.className="actions";
+
     const edit=element("button","✏️ Edit report");
     edit.className="secondary";
     edit.onclick=()=>editReport(report);
     actions.appendChild(edit);
 
-    const statusButton=element("button",report.status==="resolved"?"Reopen report":"Mark resolved / reunited");
+    const statusButton=element(
+      "button",
+      report.status==="resolved"?"Reopen report":"Mark resolved / reunited"
+    );
     statusButton.className="secondary";
     statusButton.onclick=()=>changeReportStatus(report);
     actions.appendChild(statusButton);
 
     if(report.photo_url&&report.report_type!=="found_deceased"&&report.status!=="resolved"){
-      const ai=element("button","🤖 Find visual matches with AI");
-      ai.className="primary";
-      ai.onclick=()=>runAiMatch(report,ai,card);
-      actions.appendChild(ai);
+      const visual=element("button","🆓 Compare photos for possible matches");
+      visual.className="primary";
+      visual.onclick=()=>runFreePhotoMatch(report,visual,card);
+      actions.appendChild(visual);
     }
 
     const del=element("button","Delete report");
     del.className="danger";
     del.onclick=()=>deleteReport(report);
     actions.appendChild(del);
+
     card.appendChild(actions);
   }
+
   return card;
 }
 
@@ -448,148 +561,342 @@ async function changeReportStatus(report){
   const promptText=next==="resolved"
     ?"Mark this report as resolved or reunited?"
     :"Reopen this report?";
+
   if(!confirm(promptText))return;
 
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-  if(!user){alert("Please sign in again.");return;}
 
-  const {error}=await supabaseClient.from("animal_reports")
-    .update({status:next})
-    .eq("id",report.id)
-    .eq("owner_id",user.id);
-
-  if(error){
-    alert("Could not change the status. Check your Supabase permissions. "+error.message);
+  if(!user){
+    alert("Please sign in again.");
     return;
   }
+
+  const {data,error}=await supabaseClient
+    .from("animal_reports")
+    .update({status:next})
+    .eq("id",report.id)
+    .eq("owner_id",user.id)
+    .select("id")
+    .maybeSingle();
+
+  if(error||!data){
+    alert("Could not change the status. Check your Supabase permissions."+(error?" "+error.message:""));
+    return;
+  }
+
   await loadReports();
   await loadMyReports();
 }
 
 async function deleteReport(report){
   if(!confirm("Permanently delete this report? This cannot be undone."))return;
+
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-  if(!user){alert("Please sign in again.");return;}
 
-  const {error}=await supabaseClient.from("animal_reports")
-    .delete()
-    .eq("id",report.id)
-    .eq("owner_id",user.id);
-
-  if(error){
-    alert("Could not delete the report. Check your Supabase permissions. "+error.message);
+  if(!user){
+    alert("Please sign in again.");
     return;
   }
+
+  const {data,error}=await supabaseClient
+    .from("animal_reports")
+    .delete()
+    .eq("id",report.id)
+    .eq("owner_id",user.id)
+    .select("id")
+    .maybeSingle();
+
+  if(error||!data){
+    alert("Could not delete the report. Check your Supabase permissions."+(error?" "+error.message:""));
+    return;
+  }
+
   await loadReports();
   await loadMyReports();
 }
 
-async function runAiMatch(report,button,card){
+/* FREE PHOTO COMPARISON
+   This works locally in the browser.
+   It does not call OpenAI or another paid AI API.
+   It compares coarse image brightness and colour patterns.
+   Similar colours do not prove that two photos show the same animal.
+*/
+
+function getImageSignature(url){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.crossOrigin="anonymous";
+
+    img.onload=()=>{
+      try{
+        const canvas=document.createElement("canvas");
+        canvas.width=16;
+        canvas.height=16;
+
+        const ctx=canvas.getContext("2d",{willReadFrequently:true});
+        if(!ctx)throw new Error("Image processing is unavailable in this browser.");
+
+        ctx.drawImage(img,0,0,16,16);
+        const pixels=ctx.getImageData(0,0,16,16).data;
+
+        const grey=[];
+        const histogram=new Array(12).fill(0);
+
+        for(let i=0;i<pixels.length;i+=4){
+          const r=pixels[i]/255;
+          const g=pixels[i+1]/255;
+          const b=pixels[i+2]/255;
+
+          grey.push(0.299*r+0.587*g+0.114*b);
+
+          const ri=Math.min(3,Math.floor(r*4));
+          const gi=Math.min(3,Math.floor(g*4));
+          const bi=Math.min(3,Math.floor(b*4));
+
+          histogram[ri]+=1/256;
+          histogram[4+gi]+=1/256;
+          histogram[8+bi]+=1/256;
+        }
+
+        resolve({grey,histogram});
+      }catch(error){
+        reject(error);
+      }
+    };
+
+    img.onerror=()=>reject(new Error("This photo could not be analysed. The image may block browser access."));
+    img.src=url;
+  });
+}
+
+function compareSignatures(a,b){
+  let greyDifference=0;
+
+  for(let i=0;i<a.grey.length;i++){
+    greyDifference+=Math.abs(a.grey[i]-b.grey[i]);
+  }
+
+  greyDifference/=a.grey.length;
+
+  let colourDifference=0;
+  for(let i=0;i<a.histogram.length;i++){
+    colourDifference+=Math.abs(a.histogram[i]-b.histogram[i]);
+  }
+
+  colourDifference/=2;
+
+  const score=Math.max(
+    0,
+    Math.min(100,Math.round(100*(1-(greyDifference*0.7+colourDifference*0.3))))
+  );
+
+  return score;
+}
+
+async function runFreePhotoMatch(report,button,card){
   const {data:sessionData}=await supabaseClient.auth.getSession();
-  if(!sessionData.session?.user){alert("Please sign in again.");return;}
+  const user=sessionData.session?.user;
+
+  if(!user||user.id!==report.owner_id){
+    alert("Please sign in to the account that owns this report.");
+    return;
+  }
+
+  if(!report.photo_url){
+    alert("Add a photo to your report first.");
+    return;
+  }
 
   button.disabled=true;
   button.textContent="Comparing photos...";
+
   let results=card.querySelector(".ai-results");
-  if(!results){results=document.createElement("div");results.className="ai-results";card.appendChild(results);}
-  results.replaceChildren(element("p","AI is comparing this photo with other active reports."));
+  if(!results){
+    results=document.createElement("div");
+    results.className="ai-results";
+    card.appendChild(results);
+  }
+
+  results.replaceChildren(
+    element("p","Checking other active reports with photos. This runs in your browser and uses no paid AI API.")
+  );
 
   try{
-    const {data,error}=await supabaseClient.functions.invoke("alfik-photo-match",{
-      body:{report_id:report.id}
-    });
-    if(error)throw error;
-    results.replaceChildren();
-    const matches=Array.isArray(data?.matches)?data.matches:[];
-    if(!matches.length){
-      results.appendChild(element("p",data?.message||"No visual matches found this time."));
+    const baseSignature=await getImageSignature(report.photo_url);
+    const candidates=activeReports.filter(other=>
+      other.id!==report.id &&
+      other.status==="active" &&
+      other.animal_type===report.animal_type &&
+      other.photo_url &&
+      (
+        (report.report_type==="lost"&&other.report_type==="found") ||
+        (report.report_type==="found"&&other.report_type==="lost")
+      )
+    );
+
+    if(!candidates.length){
+      results.replaceChildren(
+        element("p","No opposite-type active reports with photos are currently available to compare.")
+      );
       return;
     }
-    results.appendChild(element("h4","Possible visual matches"));
-    results.appendChild(element("p","AI suggestions are not confirmed identifications."));
-    matches.forEach((match,index)=>{
-      const item=document.createElement("div");
-      item.className="ai-card";
-      item.appendChild(element("strong","Possible match "+(index+1)));
-      addField(item,"Location",match.location);
-      addField(item,"Date",match.date);
-      addField(item,"Reason",match.reason);
-      if(match.score!==undefined)addField(item,"Similarity score",String(match.score));
-      const related=activeReports.find(r=>r.id===match.report_id);
-      if(related){
-        addField(item,"Report type",reportTypeLabel(related.report_type));
-        addField(item,"Description",related.description);
-        addPhoto(item,related.photo_url,"Possible matching animal");
+
+    const comparisons=[];
+
+    for(const other of candidates){
+      try{
+        const signature=await getImageSignature(other.photo_url);
+        comparisons.push({
+          report:other,
+          score:compareSignatures(baseSignature,signature)
+        });
+      }catch(error){
+        console.warn("Could not compare one report photo:",error);
       }
-      results.appendChild(item);
+    }
+
+    comparisons.sort((a,b)=>b.score-a.score);
+    results.replaceChildren();
+
+    results.appendChild(element("h4","Free photo comparison results"));
+    results.appendChild(element(
+      "p",
+      "Higher scores mean the sampled colours and brightness patterns were more similar. This is not animal recognition, and backgrounds can affect the scores."
+    ));
+
+    if(!comparisons.length){
+      results.appendChild(element(
+        "p",
+        "The other photos could not be analysed. This can happen when image access is restricted by the storage settings."
+      ));
+      return;
+    }
+
+    comparisons.slice(0,5).forEach((item,index)=>{
+      const match=item.report;
+      const box=document.createElement("div");
+      box.className="ai-card";
+
+      box.appendChild(element("strong","Comparison "+(index+1)));
+      addField(box,"Visual similarity score",item.score+"%");
+      addField(box,"Report type",reportTypeLabel(match.report_type));
+      addField(box,"Animal",match.animal_type);
+      addField(box,"Location",match.location_text);
+      addField(box,"Date",match.date_seen);
+      addField(box,"Description",match.description);
+      addPhoto(box,match.photo_url,"Photo from possible matching report");
+
+      box.appendChild(element(
+        "p",
+        "Please inspect both photos yourself. This score does not establish that the animals are the same."
+      ));
+
+      results.appendChild(box);
     });
+
   }catch(error){
-    console.error("AI match error:",error);
-    results.replaceChildren(element("p","AI matching failed: "+(error.message||"Please try again later.")));
+    console.error("Free photo comparison error:",error);
+    results.replaceChildren(
+      element("p","Could not compare this photo. "+(error.message||"Please try again."))
+    );
   }finally{
     button.disabled=false;
-    button.textContent="🤖 Find visual matches with AI";
+    button.textContent="🆓 Compare photos for possible matches";
   }
 }
 
 function normalise(value){
-  return (value||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
+  return (value||"")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g," ")
+    .replace(/\s+/g," ")
+    .trim();
 }
 
 function similarity(a,b){
   let score=a.animal_type===b.animal_type?4:0;
-  const la=normalise(a.location_text),lb=normalise(b.location_text);
+
+  const la=normalise(a.location_text);
+  const lb=normalise(b.location_text);
+
   if(la&&lb){
     if(la===lb)score+=5;
     else if(la.includes(lb)||lb.includes(la))score+=3;
   }
-  const wordsA=new Set(normalise((a.description||"")+" "+(a.animal_name||"")).split(" "));
-  normalise((b.description||"")+" "+(b.animal_name||"")).split(" ").forEach(w=>{
-    if(w.length>2&&wordsA.has(w))score++;
-  });
+
+  const wordsA=new Set(
+    normalise((a.description||"")+" "+(a.animal_name||"")).split(" ")
+  );
+
+  normalise((b.description||"")+" "+(b.animal_name||""))
+    .split(" ")
+    .forEach(word=>{
+      if(word.length>2&&wordsA.has(word))score++;
+    });
+
   if(a.date_seen&&b.date_seen){
     const days=Math.abs(new Date(a.date_seen)-new Date(b.date_seen))/86400000;
-    if(days<=3)score+=3;else if(days<=7)score+=2;else if(days<=14)score++;
+    if(days<=3)score+=3;
+    else if(days<=7)score+=2;
+    else if(days<=14)score++;
   }
+
   return score;
 }
 
 function renderMatches(){
   const box=$("matchResults");
   box.replaceChildren();
+
   const lost=activeReports.filter(r=>r.report_type==="lost");
   const found=activeReports.filter(r=>r.report_type==="found");
   const matches=[];
-  lost.forEach(a=>found.forEach(b=>{
-    if(a.animal_type===b.animal_type){
-      const score=similarity(a,b);
-      if(score>=7)matches.push({a,b,score});
-    }
-  }));
-  matches.sort((a,b)=>b.score-a.score).slice(0,10).forEach(m=>{
+
+  lost.forEach(a=>{
+    found.forEach(b=>{
+      if(a.animal_type===b.animal_type){
+        const score=similarity(a,b);
+        if(score>=7)matches.push({a,b,score});
+      }
+    });
+  });
+
+  matches.sort((a,b)=>b.score-a.score).slice(0,10).forEach(match=>{
     const card=document.createElement("article");
     card.className="report-card";
-    card.appendChild(element("h3","Possible match: "+m.a.animal_type));
-    addField(card,"Lost location",m.a.location_text);
-    addField(card,"Lost date",m.a.date_seen);
-    addField(card,"Lost description",m.a.description);
-    addPhoto(card,m.a.photo_url,"Lost animal");
-    addField(card,"Found location",m.b.location_text);
-    addField(card,"Found date",m.b.date_seen);
-    addField(card,"Found description",m.b.description);
-    addPhoto(card,m.b.photo_url,"Found animal");
-    card.appendChild(element("p","Automated suggestion only, not a confirmed match."));
+
+    card.appendChild(element("h3","Possible match: "+match.a.animal_type));
+    addField(card,"Lost location",match.a.location_text);
+    addField(card,"Lost date",match.a.date_seen);
+    addField(card,"Lost description",match.a.description);
+    addPhoto(card,match.a.photo_url,"Lost animal");
+
+    addField(card,"Found location",match.b.location_text);
+    addField(card,"Found date",match.b.date_seen);
+    addField(card,"Found description",match.b.description);
+    addPhoto(card,match.b.photo_url,"Found animal");
+
+    card.appendChild(element(
+      "p",
+      "Automated text suggestion only. This is not a confirmed match."
+    ));
+
     box.appendChild(card);
   });
-  if(!box.children.length)box.appendChild(element("p","No possible text matches found yet."));
+
+  if(!box.children.length){
+    box.appendChild(element("p","No possible text matches found yet."));
+  }
 }
 
 async function loadReports(){
   const box=$("reportsList");
   box.replaceChildren(element("p","Loading community reports..."));
-  const {data,error}=await supabaseClient.from("animal_reports")
+
+  const {data,error}=await supabaseClient
+    .from("animal_reports")
     .select("id,report_type,animal_type,animal_name,description,location_text,date_seen,photo_url,status,owner_id,created_at")
     .eq("status","active")
     .order("created_at",{ascending:false})
@@ -599,8 +906,8 @@ async function loadReports(){
     box.replaceChildren(element("p","Could not load reports: "+error.message));
     return;
   }
+
   activeReports=data||[];
-  ownReportIds=new Set(activeReports.filter(r=>r.owner_id===currentUserId).map(r=>r.id));
   applyFilters();
 }
 
@@ -609,55 +916,83 @@ function applyFilters(){
   const animal=$("animalFilter").value;
   const type=$("typeFilter").value;
   const list=$("reportsList");
+
   list.replaceChildren();
 
-  const filtered=activeReports.filter(r=>
-    (!animal||r.animal_type===animal)&&
-    (!type||r.report_type===type)&&
-    (!query||normalise([r.animal_name,r.animal_type,r.description,r.location_text].join(" ")).includes(query))
+  const filtered=activeReports.filter(report=>
+    (!animal||report.animal_type===animal) &&
+    (!type||report.report_type===type) &&
+    (!query||normalise([
+      report.animal_name,
+      report.animal_type,
+      report.description,
+      report.location_text
+    ].join(" ")).includes(query))
   );
 
-  if(!filtered.length)list.appendChild(element("p","No active reports match your search."));
-  filtered.forEach(r=>list.appendChild(makeReportCard(r,r.owner_id===currentUserId)));
+  if(!filtered.length){
+    list.appendChild(element("p","No active reports match your search."));
+  }
+
+  filtered.forEach(report=>{
+    list.appendChild(makeReportCard(report,report.owner_id===currentUserId));
+  });
+
   renderMatches();
 }
 
 async function loadMyReports(){
   const box=$("myReportsList");
   box.replaceChildren(element("p","Loading your reports..."));
+
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-  if(!user){box.replaceChildren(element("p","Please sign in to view your reports."));return;}
 
-  const {data,error}=await supabaseClient.from("animal_reports")
+  if(!user){
+    box.replaceChildren(element("p","Please sign in to view your reports."));
+    return;
+  }
+
+  const {data,error}=await supabaseClient
+    .from("animal_reports")
     .select("id,report_type,animal_type,animal_name,description,location_text,date_seen,photo_url,status,owner_id,created_at")
     .eq("owner_id",user.id)
     .order("created_at",{ascending:false})
     .limit(200);
 
   box.replaceChildren();
+
   if(error){
     box.appendChild(element("p","Could not load your reports: "+error.message));
     return;
   }
+
   myReports=data||[];
+
   if(!myReports.length){
     box.appendChild(element("p","You haven't submitted any reports yet."));
     return;
   }
-  myReports.forEach(r=>box.appendChild(makeReportCard(r,true)));
+
+  myReports.forEach(report=>box.appendChild(makeReportCard(report,true)));
 }
 
 $("searchBtn").addEventListener("click",applyFilters);
+
 $("clearBtn").addEventListener("click",()=>{
   $("searchInput").value="";
   $("animalFilter").value="";
   $("typeFilter").value="";
   applyFilters();
 });
-$("searchInput").addEventListener("keydown",e=>{
-  if(e.key==="Enter"){e.preventDefault();applyFilters();}
+
+$("searchInput").addEventListener("keydown",event=>{
+  if(event.key==="Enter"){
+    event.preventDefault();
+    applyFilters();
+  }
 });
+
 $("animalFilter").addEventListener("change",applyFilters);
 $("typeFilter").addEventListener("change",applyFilters);
 
@@ -665,15 +1000,22 @@ async function loadEmailPreference(){
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
   if(!user)return;
+
   $("emailAlertsEnabled").checked=false;
   message("emailMessage","Loading preference...");
-  const {data,error}=await supabaseClient.from("email_alert_preferences")
-    .select("enabled").eq("user_id",user.id).maybeSingle();
+
+  const {data,error}=await supabaseClient
+    .from("email_alert_preferences")
+    .select("enabled")
+    .eq("user_id",user.id)
+    .maybeSingle();
+
   if(error){
-    message("emailMessage","Could not load your preference.");
+    message("emailMessage","Could not load your preference. "+error.message);
     console.error(error);
     return;
   }
+
   $("emailAlertsEnabled").checked=data?.enabled===true;
   message("emailMessage","");
 }
@@ -681,56 +1023,107 @@ async function loadEmailPreference(){
 $("saveEmailBtn").addEventListener("click",async()=>{
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-  if(!user){message("emailMessage","Please sign in again.");return;}
+
+  if(!user){
+    message("emailMessage","Please sign in again.");
+    return;
+  }
+
   const button=$("saveEmailBtn");
   button.disabled=true;
   message("emailMessage","Saving...");
-  const {error}=await supabaseClient.from("email_alert_preferences").upsert({
-    user_id:user.id,
-    enabled:$("emailAlertsEnabled").checked,
-    updated_at:new Date().toISOString()
-  },{onConflict:"user_id"});
-  button.disabled=false;
-  if(error){
+
+  try{
+    const {error}=await supabaseClient
+      .from("email_alert_preferences")
+      .upsert({
+        user_id:user.id,
+        enabled:$("emailAlertsEnabled").checked,
+        updated_at:new Date().toISOString()
+      },{onConflict:"user_id"});
+
+    if(error)throw error;
+
+    message(
+      "emailMessage",
+      $("emailAlertsEnabled").checked
+        ?"Email match alerts are switched on."
+        :"Email match alerts are switched off."
+    );
+  }catch(error){
     message("emailMessage","Could not save preference: "+error.message);
-    return;
+  }finally{
+    button.disabled=false;
   }
-  message("emailMessage",$("emailAlertsEnabled").checked
-    ?"Email match alerts are switched on."
-    :"Email match alerts are switched off.");
 });
 
 $("signUpBtn").addEventListener("click",async()=>{
   const email=$("accountEmail").value.trim();
   const password=$("accountPassword").value;
-  if(!email||!password){message("accountMessage","Enter your email and password.");return;}
+
+  if(!email||!password){
+    message("accountMessage","Enter your email and password.");
+    return;
+  }
+
   message("accountMessage","Creating account...");
-  const {data,error}=await supabaseClient.auth.signUp({
-    email,password,options:{emailRedirectTo:ALFIK_URL}
-  });
-  if(error){message("accountMessage",error.message);return;}
-  if(data.session){
-    message("accountMessage","Account created.");
-    showSignedIn(data.session);
-  }else{
-    message("accountMessage","Account created. Check your email to confirm, then sign in.");
+  $("signUpBtn").disabled=true;
+
+  try{
+    const {data,error}=await supabaseClient.auth.signUp({
+      email,
+      password,
+      options:{emailRedirectTo:ALFIK_URL}
+    });
+
+    if(error)throw error;
+
+    if(data.session){
+      message("accountMessage","Account created.");
+      showSignedIn(data.session);
+    }else{
+      message("accountMessage","Account created. Check your email to confirm, then sign in.");
+    }
+  }catch(error){
+    message("accountMessage",error.message||"Could not create the account.");
+  }finally{
+    $("signUpBtn").disabled=false;
   }
 });
 
 $("signInBtn").addEventListener("click",async()=>{
   const email=$("accountEmail").value.trim();
   const password=$("accountPassword").value;
-  if(!email||!password){message("accountMessage","Enter your email and password.");return;}
+
+  if(!email||!password){
+    message("accountMessage","Enter your email and password.");
+    return;
+  }
+
   message("accountMessage","Signing in...");
-  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
-  if(error){message("accountMessage",error.message);return;}
-  message("accountMessage","");
-  showSignedIn(data.session);
+  $("signInBtn").disabled=true;
+
+  try{
+    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+    if(error)throw error;
+
+    message("accountMessage","");
+    showSignedIn(data.session);
+  }catch(error){
+    message("accountMessage",error.message||"Could not sign in.");
+  }finally{
+    $("signInBtn").disabled=false;
+  }
 });
 
 $("signOutBtn").addEventListener("click",async()=>{
   const {error}=await supabaseClient.auth.signOut();
-  if(error){alert("Could not sign out: "+error.message);return;}
+
+  if(error){
+    alert("Could not sign out: "+error.message);
+    return;
+  }
+
   showSignedIn(null);
   message("accountMessage","You have signed out.");
 });
@@ -739,12 +1132,17 @@ function showSignedIn(session){
   const user=session?.user||null;
   const newId=user?.id||null;
   const changed=newId!==currentUserId;
+
   currentUserId=newId;
+
   accountSection.classList.toggle("hidden",!!user);
   siteContent.classList.toggle("hidden",!user);
+
   if(user){
     $("signedInAs").textContent="Signed in to your ALFIK account.";
+
     if(changed){
+      showView("homeView");
       loadReports();
       loadMyReports();
       loadEmailPreference();
@@ -752,11 +1150,18 @@ function showSignedIn(session){
   }else{
     activeReports=[];
     myReports=[];
-    ownReportIds=new Set();
+
     $("reportsList").textContent="Please sign in to view reports.";
     $("myReportsList").textContent="Please sign in to view your reports.";
     $("matchResults").replaceChildren();
     $("emailAlertsEnabled").checked=false;
+
+    reportForm.reset();
+    resetPhoto();
+    reportForm.classList.add("hidden");
+    editingReportId=null;
+    editingPhotoUrl=null;
+    editingOriginalStatus="active";
   }
 }
 
@@ -766,7 +1171,12 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 
 (async()=>{
   const {data,error}=await supabaseClient.auth.getSession();
-  if(error)message("accountMessage",error.message);
+
+  if(error){
+    message("accountMessage",error.message);
+    return;
+  }
+
   showSignedIn(data?.session||null);
 })();
 </script>
