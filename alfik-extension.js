@@ -192,10 +192,10 @@
     const user = await currentUser();
     if (!user) return;
 
-    if (!(await hasPlan("pro"))) {
+    if (!(await hasPlan("premium"))) {
       if (list) {
         const p = document.createElement("p");
-        p.textContent = "Upgrade to Pro to use pet health records.";
+        p.textContent = "Upgrade to Premium to use pet profiles and Pro for health records.";
         list.appendChild(p);
       }
       return;
@@ -252,8 +252,8 @@
       return;
     }
 
-    if (!(await hasPlan("pro"))) {
-      say("petMessage", "Pet health records require the Pro plan.");
+    if (!(await hasPlan("premium"))) {
+      say("petMessage", "Saving pet profiles requires Premium or Pro.");
       return;
     }
 
