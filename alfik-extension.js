@@ -1022,7 +1022,13 @@ async function loadVerificationAdminQueue() {
 const db = client();
 const panel = el("verificationAdminPanel");
 const queue = el("verificationQueue");
-if (!db || !panel || !queue) return;
+if (!panel || !queue) return;
+if (!db) {
+  panel.classList.remove("hidden");
+  queue.textContent = "Supabase is not available on this page. Refresh ALFIK and sign in again.";
+  say("verificationAdminMessage", "Admin review could not load because the Supabase client is unavailable.");
+  return;
+}
 try {
   const result = await db.rpc("alfik_admin_list_verification_requests");
   if (result.error) {
@@ -1184,7 +1190,13 @@ async function loadMemberReportsAdminQueue() {
 const db = client();
 const panel = el("memberReportsAdminPanel");
 const queue = el("memberReportsAdminQueue");
-if (!db || !panel || !queue) return;
+if (!panel || !queue) return;
+if (!db) {
+  panel.classList.remove("hidden");
+  queue.textContent = "Supabase is not available on this page. Refresh ALFIK and sign in again.";
+  say("memberReportsAdminMessage", "Safety reports could not load because the Supabase client is unavailable.");
+  return;
+}
 try {
   const result = await db.rpc("alfik_admin_list_member_safety_reports");
   if (result.error) {
