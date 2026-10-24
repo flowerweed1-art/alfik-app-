@@ -99,6 +99,7 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <button class="secondary" data-view="vetView" data-account-types="veterinary">Vet workspace</button>
 <button class="secondary" data-view="billingView" data-account-types="public,rescue,veterinary">Plans</button>
 <button class="secondary" data-view="accountView" data-account-types="public,rescue,veterinary">Account</button>
+<button class="secondary" data-view="adminView" data-account-types="public,rescue,veterinary">Admin Tools</button>
 </nav>
 
 <section id="homeView">
@@ -225,6 +226,26 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 </div>
 </section>
 
+<section id="adminView" class="hidden">
+<h2>ALFIK Admin Tools</h2>
+<p class="note">Administrator controls appear only when Supabase confirms that your signed-in account is authorised.</p>
+<div class="feature-panel hidden" id="verificationAdminPanel">
+<h3>ALFIK administrator: verification reviews</h3>
+<p>Only authorised ALFIK administrators can approve or reject rescue organisations.</p>
+<button class="secondary" id="refreshVerificationQueueBtn" type="button">Refresh review queue</button>
+<p id="verificationAdminMessage" class="message" role="status"></p>
+<div id="verificationQueue">Checking administrator access...</div>
+</div>
+<div class="feature-panel hidden" id="memberReportsAdminPanel">
+<h3>ALFIK administrator: member safety reports</h3>
+<p>Review reports about harassment, threats, scams or other conduct concerns. Report details are private and should only be accessed for moderation.</p>
+<button class="secondary" id="refreshMemberReportsBtn" type="button">Refresh safety reports</button>
+<p id="memberReportsAdminMessage" class="message" role="status"></p>
+<div id="memberReportsAdminQueue">Checking administrator access...</div>
+</div>
+<p id="adminAccessNote" class="note">If no review panels appear, this account may not have administrator permissions.</p>
+</section>
+
 <section id="emailView" class="hidden">
 <h2>Email match alerts</h2>
 <p>Choose whether ALFIK may email you about possible matches.</p>
@@ -311,20 +332,7 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <p id="verificationMessage" class="message" role="status"></p>
 <p id="verificationStatusNote" class="note">Choose your organisation above to see its current verification status.</p>
 </div>
-<div class="feature-panel hidden" id="verificationAdminPanel">
-<h3>ALFIK administrator: verification reviews</h3>
-<p>Only authorised ALFIK administrators can approve or reject rescue organisations.</p>
-<button class="secondary" id="refreshVerificationQueueBtn" type="button">Refresh review queue</button>
-<p id="verificationAdminMessage" class="message" role="status"></p>
-<div id="verificationQueue">Checking administrator access...</div>
-</div>
-<div class="feature-panel hidden" id="memberReportsAdminPanel">
-<h3>ALFIK administrator: member safety reports</h3>
-<p>Review reports about harassment, threats, scams or other conduct concerns. Report details are private and should only be accessed for moderation.</p>
-<button class="secondary" id="refreshMemberReportsBtn" type="button">Refresh safety reports</button>
-<p id="memberReportsAdminMessage" class="message" role="status"></p>
-<div id="memberReportsAdminQueue">Checking administrator access...</div>
-</div>
+
 <div class="feature-panel">
 <h3>Rescue animal records</h3>
 <label for="rescueAnimalName">Animal name or reference</label><input id="rescueAnimalName" maxlength="150">
@@ -447,9 +455,9 @@ const accountTypeLabels={
   veterinary:"Veterinary practice"
 };
 const roleViews={
-  public:["homeView","reportView","reportsView","myView","messagesView","emailView","accountView","petsView","billingView"],
-  rescue:["homeView","reportsView","messagesView","accountView","rescueView","billingView"],
-  veterinary:["homeView","reportsView","messagesView","accountView","vetView","billingView"]
+  public:["homeView","reportView","reportsView","myView","messagesView","emailView","accountView","petsView","billingView","adminView"],
+  rescue:["homeView","reportsView","messagesView","accountView","rescueView","billingView","adminView"],
+  veterinary:["homeView","reportsView","messagesView","accountView","vetView","billingView","adminView"]
 };
 function applyAccountType(user){
   const metadata=user?.user_metadata||{};
@@ -470,7 +478,7 @@ function showView(id){
   if(!allowedViews.includes(id))id="homeView";
   [
     "homeView","reportView","reportsView","myView","messagesView","emailView","accountView",
-    "petsView","rescueView","vetView","billingView"
+    "petsView","rescueView","vetView","billingView","adminView"
   ].forEach(view=>{
     const section=$(view);
     if(section)section.classList.toggle("hidden",view!==id);
@@ -482,6 +490,7 @@ function showView(id){
   if(id==="emailView")loadEmailPreference();
   if(id==="petsView"&&window.loadPetWorkspace)window.loadPetWorkspace();
   if(id==="rescueView"&&window.loadRescueWorkspace)window.loadRescueWorkspace();
+  if(id==="adminView"&&window.loadAlfikAdminTools)window.loadAlfikAdminTools();
   if(id==="vetView"&&window.loadVetWorkspace)window.loadVetWorkspace();
   if(id==="billingView"&&window.renderPayPalButtons)window.renderPayPalButtons();
   if(window.refreshAlfikProfile)window.refreshAlfikProfile();
