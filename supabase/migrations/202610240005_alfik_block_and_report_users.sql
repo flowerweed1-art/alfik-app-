@@ -37,7 +37,8 @@ alter table public.alfik_user_reports enable row level security;
 revoke all on public.alfik_user_blocks from anon, authenticated;
 revoke all on public.alfik_user_reports from anon, authenticated;
 grant select, insert, delete on public.alfik_user_blocks to authenticated;
-grant select, insert, update on public.alfik_user_reports to authenticated;
+grant select, insert on public.alfik_user_reports to authenticated;
+grant update (status, reviewed_by, reviewed_at) on public.alfik_user_reports to authenticated;
 
 drop policy if exists "Members can view blocks they created" on public.alfik_user_blocks;
 create policy "Members can view blocks they created"
