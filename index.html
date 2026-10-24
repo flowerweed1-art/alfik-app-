@@ -235,9 +235,9 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <label for="verificationApplicantRole">Your role in the organisation</label>
 <input id="verificationApplicantRole" maxlength="150" placeholder="e.g. Director, trustee, rescue coordinator">
 <label for="verificationWebsite">Official website (optional)</label>
-<input id="verificationWebsite" type="url" maxlength="500" placeholder="https://">
+<input id="verificationWebsite" name="alfik_optional_official_website" type="url" maxlength="500" placeholder="https://" autocomplete="off" autocapitalize="off" spellcheck="false">
 <label for="verificationSocial">Public social media page (optional)</label>
-<input id="verificationSocial" type="url" maxlength="500" placeholder="https://">
+<input id="verificationSocial" name="alfik_optional_public_social_page" type="url" maxlength="500" placeholder="https://" autocomplete="off" autocapitalize="off" spellcheck="false">
 <label for="verificationRegistrationType">Registration type (if applicable)</label>
 <select id="verificationRegistrationType">
 <option value="">Not registered / not applicable</option>
@@ -952,6 +952,6 @@ supabaseClient.auth.onAuthStateChange((event,session)=>showSignedIn(session));
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261024-uploadfix2"></script>
+<script src="alfik-extension.js?v=20261024-autofillfix1"></script>
 </body>
 </html>
