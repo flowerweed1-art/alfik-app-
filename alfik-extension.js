@@ -877,6 +877,45 @@ try {
 }
 }
 
+async function compressVerificationImage(file) {
+  const maxBytes = 5 * 1024 * 1024;
+  if (!file.type.startsWith("image/") || file.size <= maxBytes) return file;
+
+  if (typeof createImageBitmap !== "function") {
+    throw new Error("This browser cannot automatically compress this image. Please choose a smaller image or screenshot.");
+  }
+
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    let scale = Math.min(1, 2200 / Math.max(bitmap.width, bitmap.height));
+    let blob = null;
+
+    for (let attempt = 0; attempt < 8; attempt++) {
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Could not prepare this image for compression.");
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+      blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", Math.max(0.58, 0.86 - attempt * 0.04)));
+      if (blob && blob.size <= maxBytes) {
+        const baseName = file.name.replace(/\.[^.]+$/, "") || "evidence";
+        return new File([blob], baseName + "-compressed.jpg", {
+          type: "image/jpeg",
+          lastModified: Date.now()
+        });
+      }
+      scale *= 0.78;
+    }
+    throw new Error("This image is still too large after compression. Please choose a smaller image.");
+  } finally {
+    if (bitmap && typeof bitmap.close === "function") bitmap.close();
+  }
+}
+
 async function submitOrganisationVerification() {
 const db = client();
 const orgId = el("rescueOrgSelect")?.value;
@@ -886,7 +925,7 @@ const website = el("verificationWebsite")?.value.trim() || "";
 const social = el("verificationSocial")?.value.trim() || "";
 const registrationType = el("verificationRegistrationType")?.value || "";
 const registrationNumber = el("verificationRegistrationNumber")?.value.trim() || "";
-const files = Array.from(el("verificationEvidenceFiles")?.files || []);
+let files = Array.from(el("verificationEvidenceFiles")?.files || []);
 const details = [
   "Applicant role: " + (applicantRole || "Not provided"),
   "Website: " + (website || "Not provided"),
@@ -911,6 +950,15 @@ if (narrative.length < 20) {
 }
 if (files.length > 5) {
   say("verificationMessage", "Please upload no more than 5 evidence files.");
+  return;
+}
+try {
+  if (files.some(file => file.type.startsWith("image/") && file.size > 5 * 1024 * 1024)) {
+    say("verificationMessage", "Compressing large evidence images on your device...");
+    files = await Promise.all(files.map(compressVerificationImage));
+  }
+} catch (compressionError) {
+  say("verificationMessage", readableError(compressionError));
   return;
 }
 const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
