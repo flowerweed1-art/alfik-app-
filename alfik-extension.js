@@ -1171,6 +1171,114 @@ try {
 }
 }
 
+async function loadMemberReportsAdminQueue() {
+const db = client();
+const panel = el("memberReportsAdminPanel");
+const queue = el("memberReportsAdminQueue");
+if (!db || !panel || !queue) return;
+try {
+  const result = await db.from("alfik_user_reports")
+    .select("id,reporter_id,reported_user_id,conversation_id,reason,details,status,created_at")
+    .order("created_at", {ascending: false})
+    .limit(100);
+  if (result.error) {
+    panel.classList.add("hidden");
+    return;
+  }
+  panel.classList.remove("hidden");
+  queue.replaceChildren();
+  const reports = Array.isArray(result.data) ? result.data : [];
+  if (!reports.length) {
+    queue.textContent = "No member safety reports have been submitted.";
+    say("memberReportsAdminMessage", "");
+    return;
+  }
+  reports.forEach(report => {
+    const item = document.createElement("article");
+    item.className = "report-card";
+    const heading = document.createElement("h3");
+    heading.textContent = (report.reason || "other").replace(/_/g, " ").replace(/^./, letter => letter.toUpperCase());
+    item.appendChild(heading);
+
+    const meta = document.createElement("p");
+    meta.textContent = "Status: " + (report.status || "pending") +
+      " | Submitted: " + (report.created_at ? new Date(report.created_at).toLocaleString() : "Unknown date");
+    item.appendChild(meta);
+
+    const accounts = document.createElement("p");
+    accounts.textContent = "Reporter account ending …" + String(report.reporter_id || "").slice(-8) +
+      " | Reported account ending …" + String(report.reported_user_id || "").slice(-8);
+    item.appendChild(accounts);
+
+    if (report.conversation_id) {
+      const conversation = document.createElement("p");
+      conversation.textContent = "Private conversation reference: " + report.conversation_id;
+      item.appendChild(conversation);
+    }
+
+    const details = document.createElement("p");
+    details.textContent = report.details || "No additional details provided.";
+    item.appendChild(details);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    const status = String(report.status || "pending").toLowerCase();
+    if (status !== "reviewing" && status !== "actioned" && status !== "dismissed") {
+      const reviewing = document.createElement("button");
+      reviewing.className = "secondary";
+      reviewing.textContent = "Mark reviewing";
+      reviewing.addEventListener("click", () => reviewMemberSafetyReport(report.id, "reviewing"));
+      actions.appendChild(reviewing);
+    }
+    if (status !== "actioned") {
+      const actioned = document.createElement("button");
+      actioned.className = "primary";
+      actioned.textContent = "Mark actioned";
+      actioned.addEventListener("click", () => reviewMemberSafetyReport(report.id, "actioned"));
+      actions.appendChild(actioned);
+    }
+    if (status !== "dismissed") {
+      const dismissed = document.createElement("button");
+      dismissed.className = "secondary";
+      dismissed.textContent = "Dismiss report";
+      dismissed.addEventListener("click", () => reviewMemberSafetyReport(report.id, "dismissed"));
+      actions.appendChild(dismissed);
+    }
+    if (actions.childNodes.length) item.appendChild(actions);
+    queue.appendChild(item);
+  });
+  say("memberReportsAdminMessage", "Private member safety report queue loaded.");
+} catch (error) {
+  panel.classList.add("hidden");
+  console.warn("ALFIK member safety admin queue:", error);
+}
+}
+
+async function reviewMemberSafetyReport(reportId, status) {
+const db = client();
+const user = await currentUser();
+if (!db || !user) {
+  say("memberReportsAdminMessage", "Please sign in again before reviewing reports.");
+  return;
+}
+if (!["reviewing", "actioned", "dismissed"].includes(status)) return;
+if (status !== "reviewing" && !window.confirm("Confirm you want to mark this safety report as " + status + "?")) return;
+say("memberReportsAdminMessage", "Saving moderation decision...");
+try {
+  const result = await db.from("alfik_user_reports")
+    .update({status, reviewed_by: user.id, reviewed_at: new Date().toISOString()})
+    .eq("id", reportId)
+    .select("id")
+    .maybeSingle();
+  if (result.error) throw result.error;
+  if (!result.data) throw new Error("No report was updated. Check administrator permissions.");
+  say("memberReportsAdminMessage", "Report status updated to " + status + ".");
+  await loadMemberReportsAdminQueue();
+} catch (error) {
+  say("memberReportsAdminMessage", "Could not update report: " + readableError(error) + ". Check migration 202610240005 and administrator permissions.");
+}
+}
+
 function wireEvents() {
 if (el("petForm")) el("petForm").addEventListener("submit", savePet);
 if (el("saveHealthBtn")) el("saveHealthBtn").addEventListener("click", saveHealthRecord);
@@ -1192,6 +1300,7 @@ if (el("rescueOrgSelect")) {
 }
 if (el("submitVerificationBtn")) el("submitVerificationBtn").addEventListener("click", submitOrganisationVerification);
 if (el("refreshVerificationQueueBtn")) el("refreshVerificationQueueBtn").addEventListener("click", loadVerificationAdminQueue);
+if (el("refreshMemberReportsBtn")) el("refreshMemberReportsBtn").addEventListener("click", loadMemberReportsAdminQueue);
 if (el("refreshVerifiedRescuesBtn")) el("refreshVerifiedRescuesBtn").addEventListener("click", loadVerifiedRescueDirectory);
 
 if (el("createVetOrgBtn")) {
