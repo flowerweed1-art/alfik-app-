@@ -1177,10 +1177,7 @@ const panel = el("memberReportsAdminPanel");
 const queue = el("memberReportsAdminQueue");
 if (!db || !panel || !queue) return;
 try {
-  const result = await db.from("alfik_user_reports")
-    .select("id,reporter_id,reported_user_id,conversation_id,reason,details,status,created_at")
-    .order("created_at", {ascending: false})
-    .limit(100);
+  const result = await db.rpc("alfik_admin_list_member_safety_reports");
   if (result.error) {
     panel.classList.add("hidden");
     return;
