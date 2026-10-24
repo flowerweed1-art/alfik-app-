@@ -464,6 +464,8 @@ try {
   }
 
   await loadRescueAnimals();
+  await loadOrganisationVerificationStatus();
+  await loadVerificationAdminQueue();
 } catch (error) {
   console.warn("ALFIK rescue workspace:", error);
   say("rescueAnimalMessage", "Could not load rescue workspaces: " + readableError(error));
@@ -788,6 +790,156 @@ try {
 
 }
 
+async function loadOrganisationVerificationStatus() {
+const db = client();
+const orgId = el("rescueOrgSelect")?.value;
+const note = el("verificationStatusNote");
+const details = el("verificationDetails");
+if (!db || !orgId) {
+  if (note) note.textContent = "Choose your organisation above to see its current verification status.";
+  if (details) details.value = "";
+  return;
+}
+try {
+  const result = await db.from("alfik_organisations")
+    .select("name,verification_status,verification_details,verification_rejection_reason")
+    .eq("id", orgId).maybeSingle();
+  if (result.error) throw result.error;
+  if (!result.data) throw new Error("Organisation details are not available to this account.");
+  const org = result.data;
+  const status = String(org.verification_status || "unverified").toLowerCase();
+  if (note) {
+    note.textContent = status === "verified"
+      ? "Verified by ALFIK. Thank you for helping keep the community trustworthy."
+      : status === "rejected"
+        ? "Verification was not approved. Reason: " + (org.verification_rejection_reason || "Please update your details and resubmit.")
+        : status === "pending"
+          ? "Pending review. Your organisation has not yet been verified."
+          : "Not yet submitted for verification.";
+  }
+  if (details && org.verification_details && !details.value) details.value = org.verification_details;
+} catch (error) {
+  if (note) note.textContent = "Could not load verification status: " + readableError(error);
+}
+}
+
+async function submitOrganisationVerification() {
+const db = client();
+const orgId = el("rescueOrgSelect")?.value;
+const details = el("verificationDetails")?.value.trim() || "";
+const button = el("submitVerificationBtn");
+if (!db || !(await currentUser())) {
+  say("verificationMessage", "Please sign in again.");
+  return;
+}
+if (!orgId) {
+  say("verificationMessage", "Choose your rescue organisation first.");
+  return;
+}
+if (details.length < 20) {
+  say("verificationMessage", "Please provide at least 20 characters describing your rescue and evidence of its work.");
+  return;
+}
+if (button) button.disabled = true;
+say("verificationMessage", "Submitting verification details...");
+try {
+  const result = await db.rpc("alfik_submit_organisation_verification", {p_org_id: orgId, p_details: details});
+  if (result.error) throw result.error;
+  say("verificationMessage", typeof result.data === "string" ? result.data : "Verification details submitted. Status: Pending review.");
+  await loadOrganisationVerificationStatus();
+  await loadRescueWorkspace();
+} catch (error) {
+  console.error("ALFIK verification submission:", error);
+  say("verificationMessage", "Could not submit verification details: " + readableError(error) + ". Check that the verification SQL migration has been run in Supabase.");
+} finally {
+  if (button) button.disabled = false;
+}
+}
+
+async function loadVerificationAdminQueue() {
+const db = client();
+const panel = el("verificationAdminPanel");
+const queue = el("verificationQueue");
+if (!db || !panel || !queue) return;
+try {
+  const result = await db.rpc("alfik_admin_list_verification_requests");
+  if (result.error) {
+    panel.classList.add("hidden");
+    return;
+  }
+  panel.classList.remove("hidden");
+  queue.replaceChildren();
+  const rows = Array.isArray(result.data) ? result.data : [];
+  if (!rows.length) {
+    queue.textContent = "No organisations are awaiting review.";
+    say("verificationAdminMessage", "");
+    return;
+  }
+  rows.forEach(org => {
+    const item = document.createElement("article");
+    item.className = "report-card";
+    const heading = document.createElement("h3");
+    heading.textContent = org.name || "Unnamed organisation";
+    item.appendChild(heading);
+    const info = document.createElement("p");
+    info.textContent = "Status: " + (org.verification_status || "unverified") + (org.contact_details ? " | Contact: " + org.contact_details : "");
+    item.appendChild(info);
+    const evidence = document.createElement("p");
+    evidence.textContent = org.verification_details || "No verification details submitted yet.";
+    item.appendChild(evidence);
+    const submitted = document.createElement("p");
+    submitted.textContent = "Submitted: " + (org.verification_submitted_at || "Not submitted");
+    item.appendChild(submitted);
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    const approve = document.createElement("button");
+    approve.className = "primary";
+    approve.textContent = "Approve and verify";
+    approve.addEventListener("click", () => reviewOrganisation(org.id, "verified"));
+    const reject = document.createElement("button");
+    reject.className = "secondary";
+    reject.textContent = "Reject";
+    reject.addEventListener("click", () => reviewOrganisation(org.id, "rejected"));
+    actions.append(approve, reject);
+    item.appendChild(actions);
+    queue.appendChild(item);
+  });
+  say("verificationAdminMessage", "Administrator review queue loaded.");
+} catch (error) {
+  panel.classList.add("hidden");
+  console.warn("ALFIK verification admin queue:", error);
+}
+}
+
+async function reviewOrganisation(orgId, decision) {
+const db = client();
+if (!db || !(await currentUser())) {
+  say("verificationAdminMessage", "Please sign in again.");
+  return;
+}
+let reason = null;
+if (decision === "rejected") {
+  reason = window.prompt("Give the organisation a reason for rejection. They can use this to improve and resubmit:");
+  if (reason === null) return;
+  if (reason.trim().length < 5) {
+    say("verificationAdminMessage", "Please enter a rejection reason of at least 5 characters.");
+    return;
+  }
+}
+if (decision === "verified" && !window.confirm("Confirm that you have reviewed the evidence and want to mark this rescue as verified?")) return;
+say("verificationAdminMessage", "Saving review decision...");
+try {
+  const result = await db.rpc("alfik_admin_review_organisation", {p_org_id: orgId, p_decision: decision, p_reason: reason});
+  if (result.error) throw result.error;
+  say("verificationAdminMessage", typeof result.data === "string" ? result.data : "Review decision saved.");
+  await loadVerificationAdminQueue();
+  await loadOrganisationVerificationStatus();
+  await loadRescueWorkspace();
+} catch (error) {
+  say("verificationAdminMessage", "Could not save review: " + readableError(error) + ". Check the SQL migration and administrator setup.");
+}
+}
+
 function wireEvents() {
 if (el("petForm")) el("petForm").addEventListener("submit", savePet);
 if (el("saveHealthBtn")) el("saveHealthBtn").addEventListener("click", saveHealthRecord);
@@ -802,8 +954,13 @@ if (el("saveRescueAnimalBtn")) {
 }
 
 if (el("rescueOrgSelect")) {
-  el("rescueOrgSelect").addEventListener("change", loadRescueAnimals);
+  el("rescueOrgSelect").addEventListener("change", async () => {
+    await loadRescueAnimals();
+    await loadOrganisationVerificationStatus();
+  });
 }
+if (el("submitVerificationBtn")) el("submitVerificationBtn").addEventListener("click", submitOrganisationVerification);
+if (el("refreshVerificationQueueBtn")) el("refreshVerificationQueueBtn").addEventListener("click", loadVerificationAdminQueue);
 
 if (el("createVetOrgBtn")) {
   el("createVetOrgBtn").addEventListener("click", createVetOrganisation);
