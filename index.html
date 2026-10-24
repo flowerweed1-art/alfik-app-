@@ -47,7 +47,13 @@ input[type=checkbox]{width:auto}
 .ai-card{background:#f0f8f4;border:1px solid #c7e2d4;border-radius:8px;padding:10px;margin:8px 0}
 nav{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
 nav button{flex:1 1 120px}
-footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
+footer{text-align:center;color:#52697c;padding:24px 16px;font-size:13px;border-top:1px solid #d6e5f2;background:#fff}
+nav{gap:6px}
+nav button{flex:1 1 135px;min-height:44px}
+button{transition:background-color .15s ease,transform .15s ease}
+button:active{transform:translateY(1px)}
+section{border-radius:14px}
+header{background:linear-gradient(135deg,#123b63,#1769aa)}
 .feature-grid{display:grid;grid-template-columns:1fr;gap:10px}
 .feature-panel{background:#f6faff;border:1px solid #d6e5f2;border-radius:8px;padding:13px;margin:12px 0}
 @media(min-width:560px){.feature-grid{grid-template-columns:1fr 1fr}}
@@ -64,7 +70,13 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <main>
 <section id="accountSection">
 <h2>Your ALFIK account</h2>
-<p>Sign in or create an account to report an animal.</p>
+<p>Sign in or create a free account. Choose the type that fits you when creating an account.</p>
+<label for="newAccountType">I am joining ALFIK as</label>
+<select id="newAccountType">
+<option value="public">A member of the public / pet owner</option>
+<option value="rescue">A rescue or animal welfare organisation</option>
+<option value="veterinary">A veterinary practice</option>
+</select>
 <label for="accountEmail">Email address</label>
 <input id="accountEmail" type="email" autocomplete="email">
 <label for="accountPassword">Password</label>
@@ -78,40 +90,36 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <nav>
 <button class="secondary" data-view="homeView">Home</button>
 <button class="secondary" data-view="reportsView">All reports</button>
-<button class="secondary" data-view="myView">My ALFIK</button>
-<button class="secondary" data-view="messagesView">🔒 Private messages</button>
-<button class="secondary" data-view="reportView">Report an animal</button>
-<button class="secondary" data-view="emailView">Email alerts</button>
-<button class="secondary" data-view="petsView">My pets</button>
-<button class="secondary" data-view="rescueView">Rescue workspace</button>
-<button class="secondary" data-view="vetView">Vet workspace</button>
-<button class="secondary" data-view="billingView">Plans</button>
-<button class="secondary" data-view="accountView">Account</button>
+<button class="secondary" data-view="myView" data-account-types="public">My ALFIK</button>
+<button class="secondary" data-view="messagesView" data-account-types="public,rescue,veterinary">Private messages</button>
+<button class="secondary" data-view="reportView" data-account-types="public">Report an animal</button>
+<button class="secondary" data-view="emailView" data-account-types="public">Email alerts</button>
+<button class="secondary" data-view="petsView" data-account-types="public">My pets</button>
+<button class="secondary" data-view="rescueView" data-account-types="rescue">Rescue workspace</button>
+<button class="secondary" data-view="vetView" data-account-types="veterinary">Vet workspace</button>
+<button class="secondary" data-view="billingView" data-account-types="public,rescue,veterinary">Plans</button>
+<button class="secondary" data-view="accountView" data-account-types="public,rescue,veterinary">Account</button>
 </nav>
 
 <section id="homeView">
 <h2>Welcome to ALFIK 🐾</h2>
 <p>Helping lost animals find their way home.</p>
 <button class="primary wide" data-view="reportsView">🔎 View all animal reports</button>
-<button class="found wide" data-view="reportView">📝 Report a lost or found animal</button>
-<button class="secondary wide" data-view="myView">👤 My ALFIK and my reports</button>
+<button class="found wide" data-view="reportView" data-account-types="public">Report a lost or found animal</button>
+<button class="secondary wide" data-view="myView" data-account-types="public">My reports</button>
+<button class="secondary wide hidden" id="rescueHomeShortcut" data-view="rescueView" data-account-types="rescue">Open rescue workspace</button>
+<button class="secondary wide hidden" id="vetHomeShortcut" data-view="vetView" data-account-types="veterinary">Open veterinary workspace</button>
 <div class="feature-panel" id="verifiedRescueDirectory">
 <h3>ALFIK Verified rescues</h3>
 <p class="note">Organisations listed here have been reviewed by an ALFIK administrator. A badge reflects ALFIK's checks, not a guarantee of every action or service.</p>
 <button class="secondary wide" id="refreshVerifiedRescuesBtn" type="button">Refresh verified rescues</button>
 <div id="verifiedRescueList" aria-live="polite">Loading verified rescues...</div>
 </div>
-<div class="feature-grid">
+<div class="feature-grid" data-account-types="public">
 <div class="feature-panel">
 <h3>My pets</h3>
-<p>Keep pet profiles and, when your plan allows, health records together.</p>
+<p>Keep your pet profiles and records together.</p>
 <button class="secondary wide" data-view="petsView">Open pet profiles</button>
-</div>
-<div class="feature-panel">
-<h3>Animal welfare teams</h3>
-<p>Dedicated workspaces for rescue organisations and veterinary teams.</p>
-<button class="secondary wide" data-view="rescueView">Rescue workspace</button>
-<button class="secondary wide" data-view="vetView">Veterinary workspace</button>
 </div>
 </div>
 <p class="note">Please don't include private contact details in public descriptions. Possible matches are suggestions, not confirmed identifications.</p>
@@ -376,12 +384,21 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <section id="accountView" class="hidden">
 <h2>Your account</h2>
 <p id="signedInAs" class="note">Signed in to ALFIK</p>
+<label for="accountTypeSetting">Your account type</label>
+<select id="accountTypeSetting">
+<option value="public">Member of the public / pet owner</option>
+<option value="rescue">Rescue or animal welfare organisation</option>
+<option value="veterinary">Veterinary practice</option>
+</select>
+<p class="note">This only changes which tools you see. Rescue and veterinary data still requires the correct organisation access and plan.</p>
+<button class="primary wide" id="saveAccountTypeBtn" type="button">Save account type</button>
+<p id="accountTypeMessage" class="message" role="status"></p>
 <button class="secondary wide" id="signOutBtn" type="button">Sign out</button>
 </section>
 </div>
 </main>
 
-<footer>ALFIK | Animals Lost and Found Information Keeper</footer>
+<footer>Powered by Animals Lost and found in Kent Ltd.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -423,7 +440,34 @@ function element(tag,text){
   return e;
 }
 
+let activeAccountType="public";
+const accountTypeLabels={
+  public:"Member of the public / pet owner",
+  rescue:"Rescue or animal welfare organisation",
+  veterinary:"Veterinary practice"
+};
+const roleViews={
+  public:["homeView","reportView","reportsView","myView","messagesView","emailView","accountView","petsView","billingView"],
+  rescue:["homeView","reportsView","messagesView","accountView","rescueView","billingView"],
+  veterinary:["homeView","reportsView","messagesView","accountView","vetView","billingView"]
+};
+function applyAccountType(user){
+  const metadata=user?.user_metadata||{};
+  const allowed=["public","rescue","veterinary"];
+  activeAccountType=allowed.includes(metadata.alfik_account_type)?metadata.alfik_account_type:"public";
+  document.querySelectorAll("[data-account-types]").forEach(node=>{
+    const types=(node.getAttribute("data-account-types")||"").split(",").map(value=>value.trim());
+    node.classList.toggle("hidden",!types.includes(activeAccountType));
+  });
+  const selector=$("accountTypeSetting");
+  if(selector)selector.value=activeAccountType;
+  if($("signedInAs"))$("signedInAs").textContent="Account type: "+accountTypeLabels[activeAccountType]+".";
+  if($("rescueHomeShortcut"))$("rescueHomeShortcut").classList.toggle("hidden",activeAccountType!=="rescue");
+  if($("vetHomeShortcut"))$("vetHomeShortcut").classList.toggle("hidden",activeAccountType!=="veterinary");
+}
 function showView(id){
+  const allowedViews=roleViews[activeAccountType]||roleViews.public;
+  if(!allowedViews.includes(id))id="homeView";
   [
     "homeView","reportView","reportsView","myView","messagesView","emailView","accountView",
     "petsView","rescueView","vetView","billingView"
@@ -1201,11 +1245,12 @@ $("saveEmailBtn").addEventListener("click",async()=>{
 
 $("signUpBtn").addEventListener("click",async()=>{
   const email=$("accountEmail").value.trim(),password=$("accountPassword").value;
+  const accountType=$("newAccountType").value||"public";
   if(!email||!password){message("accountMessage","Enter your email and password.");return;}
   message("accountMessage","Creating account...");
   $("signUpBtn").disabled=true;
   try{
-    const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:ALFIK_URL}});
+    const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:ALFIK_URL,data:{alfik_account_type:accountType}}});
     if(error)throw error;
     if(data.session){message("accountMessage","Account created.");showSignedIn(data.session);}
     else message("accountMessage","Account created. Check your email to confirm, then sign in.");
@@ -1227,6 +1272,23 @@ $("signInBtn").addEventListener("click",async()=>{
   finally{$("signInBtn").disabled=false;}
 });
 
+$("saveAccountTypeBtn").addEventListener("click",async()=>{
+  const user=(await supabaseClient.auth.getUser()).data?.user;
+  if(!user){message("accountTypeMessage","Please sign in again.");return;}
+  const accountType=$("accountTypeSetting").value||"public";
+  message("accountTypeMessage","Saving your account type...");
+  $("saveAccountTypeBtn").disabled=true;
+  try{
+    const {data,error}=await supabaseClient.auth.updateUser({data:{alfik_account_type:accountType}});
+    if(error)throw error;
+    applyAccountType(data.user);
+    showView("homeView");
+    message("accountTypeMessage","Saved. Your ALFIK menu has been simplified.");
+  }catch(error){
+    message("accountTypeMessage",error.message||"Could not save your account type.");
+  }finally{$("saveAccountTypeBtn").disabled=false;}
+});
+
 $("signOutBtn").addEventListener("click",async()=>{
   const {error}=await supabaseClient.auth.signOut();
   if(error){alert("Could not sign out: "+error.message);return;}
@@ -1241,6 +1303,7 @@ function showSignedIn(session){
   currentUserId=newId;
   accountSection.classList.toggle("hidden",!!user);
   siteContent.classList.toggle("hidden",!user);
+  applyAccountType(user);
 
   if(user){
     $("signedInAs").textContent="Signed in to your ALFIK account.";
@@ -1253,6 +1316,9 @@ function showSignedIn(session){
       if(window.refreshAlfikProfile)window.refreshAlfikProfile();
     }
   }else{
+    activeAccountType="public";
+    document.querySelectorAll("[data-account-types]").forEach(node=>node.classList.remove("hidden"));
+    if($("accountTypeMessage"))$("accountTypeMessage").textContent="";
     activeReports=[];
     myReports=[];
     privateConversations=[];
