@@ -1026,7 +1026,11 @@ if (!db || !panel || !queue) return;
 try {
   const result = await db.rpc("alfik_admin_list_verification_requests");
   if (result.error) {
-    panel.classList.add("hidden");
+    panel.classList.remove("hidden");
+    queue.replaceChildren();
+    queue.textContent = "Could not load the rescue verification review queue: " + readableError(result.error);
+    say("verificationAdminMessage", "Admin review could not load. Check that your account is authorised and the verification migration is installed.");
+    console.warn("ALFIK verification admin queue:", result.error);
     return;
   }
   panel.classList.remove("hidden");
@@ -1112,7 +1116,12 @@ try {
   });
   say("verificationAdminMessage", "Administrator review queue loaded.");
 } catch (error) {
-  panel.classList.add("hidden");
+  panel.classList.remove("hidden");
+  if (queue) {
+    queue.replaceChildren();
+    queue.textContent = "Could not load the rescue verification review queue: " + readableError(error);
+  }
+  say("verificationAdminMessage", "Admin review could not load. Check that your account is authorised and the verification migration is installed.");
   console.warn("ALFIK verification admin queue:", error);
 }
 }
@@ -1179,7 +1188,11 @@ if (!db || !panel || !queue) return;
 try {
   const result = await db.rpc("alfik_admin_list_member_safety_reports");
   if (result.error) {
-    panel.classList.add("hidden");
+    panel.classList.remove("hidden");
+    queue.replaceChildren();
+    queue.textContent = "Could not load member safety reports: " + readableError(result.error);
+    say("memberReportsAdminMessage", "Safety reports could not load. Check that your account is authorised and the reporting migration is installed.");
+    console.warn("ALFIK member safety reports:", result.error);
     return;
   }
   panel.classList.remove("hidden");
@@ -1246,7 +1259,12 @@ try {
   });
   say("memberReportsAdminMessage", "Private member safety report queue loaded.");
 } catch (error) {
-  panel.classList.add("hidden");
+  panel.classList.remove("hidden");
+  if (queue) {
+    queue.replaceChildren();
+    queue.textContent = "Could not load member safety reports: " + readableError(error);
+  }
+  say("memberReportsAdminMessage", "Safety reports could not load. Check that your account is authorised and the reporting migration is installed.");
   console.warn("ALFIK member safety admin queue:", error);
 }
 }
