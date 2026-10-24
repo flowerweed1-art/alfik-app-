@@ -182,11 +182,37 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <div id="conversationList" aria-live="polite">Your private conversations will appear here.</div>
 </div>
 <div class="feature-panel">
+<h3>Members you've blocked</h3>
+<p class="note">Blocked members cannot start new conversations with you or send messages to existing conversations. You can unblock someone here if you change your mind.</p>
+<div id="blockedMembersList" aria-live="polite">Loading blocked members...</div>
+</div>
+<div class="feature-panel">
 <h3 id="messageThreadHeading">Choose a conversation</h3>
 <div id="messageThread" aria-live="polite">Select a conversation to read messages.</div>
 <label for="privateMessageDraft">Your message</label>
 <textarea id="privateMessageDraft" rows="3" maxlength="2000" placeholder="Write a message about the animal."></textarea>
 <button class="primary wide" id="sendPrivateMessageBtn" type="button" disabled>Send private message</button>
+<div class="actions">
+  <button class="secondary" id="blockConversationUserBtn" type="button" disabled>🚫 Block this member</button>
+  <button class="secondary" id="reportConversationUserBtn" type="button" disabled>⚑ Report this member</button>
+</div>
+<div id="reportMemberForm" class="hidden">
+  <h3>Report a member</h3>
+  <p class="note">Reports are private and sent for ALFIK review. Only report behaviour that raises a genuine safety or conduct concern.</p>
+  <label for="memberReportReason">Reason</label>
+  <select id="memberReportReason" required>
+    <option value="harassment">Harassment or repeated unwanted contact</option>
+    <option value="threats">Threats or intimidation</option>
+    <option value="scam">Scam or suspicious request</option>
+    <option value="inappropriate">Inappropriate messages</option>
+    <option value="other">Other safety or conduct concern</option>
+  </select>
+  <label for="memberReportDetails">Additional details (optional)</label>
+  <textarea id="memberReportDetails" rows="3" maxlength="2000" placeholder="Describe what happened. Please don't include passwords or payment details."></textarea>
+  <button class="primary wide" id="submitMemberReportBtn" type="button">Send private report to ALFIK</button>
+  <button class="secondary wide" id="cancelMemberReportBtn" type="button">Cancel</button>
+  <p id="memberReportStatus" class="message" role="status"></p>
+</div>
 <p id="privateMessageStatus" class="message" role="status"></p>
 </div>
 </section>
@@ -401,7 +427,7 @@ function showView(id){
 
   if(id==="reportsView")loadReports();
   if(id==="myView")loadMyReports();
-  if(id==="messagesView")loadPrivateConversations();
+  if(id==="messagesView"){loadPrivateConversations();loadBlockedMembers();}
   if(id==="emailView")loadEmailPreference();
   if(id==="petsView"&&window.loadPetWorkspace)window.loadPetWorkspace();
   if(id==="rescueView"&&window.loadRescueWorkspace)window.loadRescueWorkspace();
@@ -845,6 +871,50 @@ function applyFilters(){
 let activeConversationId=null;
 let privateConversations=[];
 
+function otherConversationUser(conversation){
+  return conversation.owner_id===currentUserId ? conversation.contact_user_id : conversation.owner_id;
+}
+
+async function getConversationBlockState(otherUserId){
+  const own=await supabaseClient.from("alfik_user_blocks").select("id")
+    .eq("blocker_id",currentUserId).eq("blocked_id",otherUserId).maybeSingle();
+  if(own.error)throw own.error;
+  const reverse=await supabaseClient.from("alfik_user_blocks").select("id")
+    .eq("blocker_id",otherUserId).eq("blocked_id",currentUserId).maybeSingle();
+  if(reverse.error)throw reverse.error;
+  return {blockedByMe:!!own.data,blockedMe:!!reverse.data,blocked:!!own.data||!!reverse.data};
+}
+
+async function loadBlockedMembers(){
+  const box=$("blockedMembersList");
+  if(!box)return;
+  box.replaceChildren(element("p","Loading blocked members..."));
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  if(!sessionData.session?.user){box.replaceChildren(element("p","Sign in to manage blocked members."));return;}
+  const {data,error}=await supabaseClient.from("alfik_user_blocks")
+    .select("id,blocked_id,created_at").order("created_at",{ascending:false}).limit(200);
+  if(error){box.replaceChildren(element("p","Could not load blocked members: "+error.message+". The block/report migration may not be active yet."));return;}
+  box.replaceChildren();
+  if(!data||!data.length){box.appendChild(element("p","You haven't blocked any members."));return;}
+  data.forEach(block=>{
+    const row=document.createElement("div");
+    row.className="report-card";
+    row.appendChild(element("p","Blocked member account ending …"+String(block.blocked_id).slice(-8)));
+    const unblock=element("button","Unblock this member");
+    unblock.className="secondary";
+    unblock.onclick=async()=>{
+      if(!confirm("Unblock this member? They may be able to message you again unless they have blocked you too."))return;
+      unblock.disabled=true;
+      const result=await supabaseClient.from("alfik_user_blocks").delete().eq("id",block.id);
+      if(result.error){alert("Could not unblock this member: "+result.error.message);unblock.disabled=false;return;}
+      await loadBlockedMembers();
+      if(activeConversationId)await loadPrivateMessages(activeConversationId);
+    };
+    row.appendChild(unblock);
+    box.appendChild(row);
+  });
+}
+
 async function startPrivateConversation(report){
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
@@ -916,9 +986,24 @@ async function loadPrivateMessages(conversationId){
   activeConversationId=conversationId;
   $("messageThreadHeading").textContent=conversationLabel(conversation);
   thread.replaceChildren(element("p","Loading messages..."));
-  $("sendPrivateMessageBtn").disabled=conversation.status!=="open";
+  $("sendPrivateMessageBtn").disabled=true;
+  $("blockConversationUserBtn").disabled=true;
+  $("reportConversationUserBtn").disabled=true;
+  $("reportMemberForm").classList.add("hidden");
+  $("memberReportStatus").textContent="";
   $("privateMessageStatus").textContent="";
   try{
+    const otherUserId=otherConversationUser(conversation);
+    const blockState=await getConversationBlockState(otherUserId);
+    $("blockConversationUserBtn").textContent=blockState.blockedByMe?"Unblock this member":"🚫 Block this member";
+    $("blockConversationUserBtn").disabled=false;
+    $("reportConversationUserBtn").disabled=false;
+    $("sendPrivateMessageBtn").disabled=conversation.status!=="open"||blockState.blocked;
+    if(blockState.blocked){
+      $("privateMessageStatus").textContent=blockState.blockedByMe
+        ?"You have blocked this member. Unblock them to send messages."
+        :"This member has blocked you. You cannot send messages in this conversation.";
+    }
     const {data,error}=await supabaseClient.from("alfik_private_messages")
       .select("id,conversation_id,sender_id,body,created_at")
       .eq("conversation_id",conversationId).order("created_at",{ascending:true}).limit(500);
@@ -944,6 +1029,65 @@ async function loadPrivateMessages(conversationId){
     thread.replaceChildren(element("p","Could not load messages: "+(error.message||"Please try again.")));
   }
 }
+
+async function toggleConversationBlock(){
+  const conversation=privateConversations.find(item=>item.id===activeConversationId);
+  if(!conversation)return;
+  const otherUserId=otherConversationUser(conversation);
+  const state=await getConversationBlockState(otherUserId);
+  if(state.blockedByMe){
+    if(!confirm("Unblock this member? They may be able to message you again unless they have blocked you too."))return;
+    const {error}=await supabaseClient.from("alfik_user_blocks").delete()
+      .eq("blocker_id",currentUserId).eq("blocked_id",otherUserId);
+    if(error){$("privateMessageStatus").textContent="Could not unblock this member: "+error.message;return;}
+    $("privateMessageStatus").textContent="Member unblocked. You can message again if neither member has blocked the other.";
+  }else{
+    if(!confirm("Block this member? They won't be able to send you messages, and you won't be able to message them. You can unblock them later."))return;
+    const {error}=await supabaseClient.from("alfik_user_blocks").insert({
+      blocker_id:currentUserId,blocked_id:otherUserId
+    });
+    if(error&&error.code!=="23505"){$("privateMessageStatus").textContent="Could not block this member: "+error.message;return;}
+    $("privateMessageStatus").textContent="Member blocked. They cannot send you private messages.";
+    $("reportMemberForm").classList.add("hidden");
+  }
+  await loadBlockedMembers();
+  await loadPrivateMessages(activeConversationId);
+}
+
+async function submitMemberReport(){
+  const conversation=privateConversations.find(item=>item.id===activeConversationId);
+  if(!conversation){$("memberReportStatus").textContent="Choose a conversation first.";return;}
+  const reason=$("memberReportReason").value;
+  const details=$("memberReportDetails").value.trim();
+  const button=$("submitMemberReportBtn");
+  button.disabled=true;
+  $("memberReportStatus").textContent="Sending your private report...";
+  try{
+    const {error}=await supabaseClient.from("alfik_user_reports").insert({
+      reporter_id:currentUserId,
+      reported_user_id:otherConversationUser(conversation),
+      conversation_id:conversation.id,
+      reason,
+      details
+    });
+    if(error)throw error;
+    $("memberReportDetails").value="";
+    $("reportMemberForm").classList.add("hidden");
+    $("memberReportStatus").textContent="Your report has been sent privately to ALFIK for review.";
+  }catch(error){
+    $("memberReportStatus").textContent="Could not submit the report: "+(error.message||"Please try again.")+". The block/report migration may not be active yet.";
+  }finally{button.disabled=false;}
+}
+
+$("blockConversationUserBtn").addEventListener("click",async()=>{
+  try{await toggleConversationBlock();}
+  catch(error){$("privateMessageStatus").textContent="Could not update block settings: "+(error.message||"Please try again.");}
+});
+$("reportConversationUserBtn").addEventListener("click",()=>{
+  $("reportMemberForm").classList.toggle("hidden");
+});
+$("submitMemberReportBtn").addEventListener("click",submitMemberReport);
+$("cancelMemberReportBtn").addEventListener("click",()=> $("reportMemberForm").classList.add("hidden"));
 
 async function sendPrivateMessage(){
   const draft=$("privateMessageDraft");
@@ -1098,6 +1242,10 @@ function showSignedIn(session){
     if($("messageThread"))$("messageThread").replaceChildren(element("p","Select a conversation to read messages."));
     if($("privateMessageDraft"))$("privateMessageDraft").value="";
     if($("sendPrivateMessageBtn"))$("sendPrivateMessageBtn").disabled=true;
+    if($("blockConversationUserBtn"))$("blockConversationUserBtn").disabled=true;
+    if($("reportConversationUserBtn"))$("reportConversationUserBtn").disabled=true;
+    if($("reportMemberForm"))$("reportMemberForm").classList.add("hidden");
+    if($("blockedMembersList"))$("blockedMembersList").replaceChildren(element("p","Sign in to manage blocked members."));
     $("reportsList").textContent="Please sign in to view reports.";
     $("myReportsList").textContent="Please sign in to view your reports.";
     $("matchResults").replaceChildren();
@@ -1121,6 +1269,6 @@ supabaseClient.auth.onAuthStateChange((event,session)=>showSignedIn(session));
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261024-privatemessages1"></script>
+<script src="alfik-extension.js?v=20261024-blockreport1"></script>
 </body>
 </html>
