@@ -1028,15 +1028,23 @@ try {
     item.appendChild(submitted);
     const actions = document.createElement("div");
     actions.className = "actions";
-    const approve = document.createElement("button");
-    approve.className = "primary";
-    approve.textContent = "Approve and verify";
-    approve.addEventListener("click", () => reviewOrganisation(org.id, "verified"));
-    const reject = document.createElement("button");
-    reject.className = "secondary";
-    reject.textContent = "Reject";
-    reject.addEventListener("click", () => reviewOrganisation(org.id, "rejected"));
-    actions.append(approve, reject);
+    if (String(org.verification_status || "").toLowerCase() === "verified") {
+      const reset = document.createElement("button");
+      reset.className = "secondary";
+      reset.textContent = "Remove verified badge";
+      reset.addEventListener("click", () => returnOrganisationToPending(org.id, org.name));
+      actions.appendChild(reset);
+    } else {
+      const approve = document.createElement("button");
+      approve.className = "primary";
+      approve.textContent = "Approve and verify";
+      approve.addEventListener("click", () => reviewOrganisation(org.id, "verified"));
+      const reject = document.createElement("button");
+      reject.className = "secondary";
+      reject.textContent = "Reject";
+      reject.addEventListener("click", () => reviewOrganisation(org.id, "rejected"));
+      actions.append(approve, reject);
+    }
     item.appendChild(actions);
     queue.appendChild(item);
   });
@@ -1044,6 +1052,31 @@ try {
 } catch (error) {
   panel.classList.add("hidden");
   console.warn("ALFIK verification admin queue:", error);
+}
+}
+
+async function returnOrganisationToPending(orgId, orgName) {
+const db = client();
+if (!db || !(await currentUser())) {
+  say("verificationAdminMessage", "Please sign in again.");
+  return;
+}
+const confirmed = window.confirm(
+  "Remove the ALFIK verified badge from " + (orgName || "this rescue") +
+  "? Its status will return to pending review. The organisation and evidence files will be kept."
+);
+if (!confirmed) return;
+say("verificationAdminMessage", "Removing the verified status...");
+try {
+  const result = await db.rpc("alfik_admin_return_organisation_to_pending", {p_org_id: orgId});
+  if (result.error) throw result.error;
+  say("verificationAdminMessage", typeof result.data === "string" ? result.data : "Verification status returned to pending.");
+  await loadVerificationAdminQueue();
+  await loadVerifiedRescueDirectory();
+  await loadOrganisationVerificationStatus();
+  await loadRescueWorkspace();
+} catch (error) {
+  say("verificationAdminMessage", "Could not remove verification: " + readableError(error) + ". Make sure migration 202610240003 has been run in Supabase.");
 }
 }
 
