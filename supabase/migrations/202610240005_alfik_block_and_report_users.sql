@@ -84,6 +84,37 @@ create policy "ALFIK admins can update user report reviews"
   using (exists (select 1 from public.alfik_admins a where a.user_id = auth.uid()))
   with check (exists (select 1 from public.alfik_admins a where a.user_id = auth.uid()));
 
+-- Check blocking in a policy without exposing either member's block table.
+-- The caller must be one of the two accounts being checked.
+create or replace function public.alfik_private_message_is_blocked(
+  p_user_a uuid,
+  p_user_b uuid
+) returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public, auth, pg_temp
+as $
+begin
+  if auth.uid() is null
+     or auth.uid() not in (p_user_a, p_user_b)
+     or p_user_a is null
+     or p_user_b is null
+     or p_user_a = p_user_b then
+    raise exception 'You may only check blocking for your own conversation.';
+  end if;
+
+  return exists (
+    select 1 from public.alfik_user_blocks b
+    where (b.blocker_id = p_user_a and b.blocked_id = p_user_b)
+       or (b.blocker_id = p_user_b and b.blocked_id = p_user_a)
+  );
+end;
+$;
+
+revoke all on function public.alfik_private_message_is_blocked(uuid, uuid) from public, anon;
+grant execute on function public.alfik_private_message_is_blocked(uuid, uuid) to authenticated;
+
 -- Enforce blocks in the database as well as in the interface.
 drop policy if exists "ALFIK participants can send private messages" on public.alfik_private_messages;
 create policy "ALFIK participants can send private messages"
@@ -162,36 +193,7 @@ grant execute on function public.alfik_start_conversation(uuid) to authenticated
 
 
 
--- Check blocking in a policy without exposing either member's block table.
--- The caller must be one of the two accounts being checked.
-create or replace function public.alfik_private_message_is_blocked(
-  p_user_a uuid,
-  p_user_b uuid
-) returns boolean
-language plpgsql
-stable
-security definer
-set search_path = public, auth, pg_temp
-as $
-begin
-  if auth.uid() is null
-     or auth.uid() not in (p_user_a, p_user_b)
-     or p_user_a is null
-     or p_user_b is null
-     or p_user_a = p_user_b then
-    raise exception 'You may only check blocking for your own conversation.';
-  end if;
 
-  return exists (
-    select 1 from public.alfik_user_blocks b
-    where (b.blocker_id = p_user_a and b.blocked_id = p_user_b)
-       or (b.blocker_id = p_user_b and b.blocked_id = p_user_a)
-  );
-end;
-$;
-
-revoke all on function public.alfik_private_message_is_blocked(uuid, uuid) from public, anon;
-grant execute on function public.alfik_private_message_is_blocked(uuid, uuid) to authenticated;
 
 -- Return only the relationship state for the signed-in member and one selected conversation partner.
 -- This avoids granting broad read access to other members' block records.
