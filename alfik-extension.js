@@ -877,9 +877,14 @@ try {
 }
 }
 
+function isVerificationImage(file) {
+  return (file.type || "").toLowerCase().startsWith("image/")
+    || /\.(jpe?g|png|webp|heic|heif|avif)$/i.test(file.name || "");
+}
+
 async function compressVerificationImage(file) {
   const maxBytes = 5 * 1024 * 1024;
-  if (!file.type.startsWith("image/") || file.size <= maxBytes) return file;
+  if (!isVerificationImage(file) || file.size <= maxBytes) return file;
 
   if (typeof createImageBitmap !== "function") {
     throw new Error("This browser cannot automatically compress this image. Please choose a smaller image or screenshot.");
@@ -956,7 +961,7 @@ if (files.length > 5) {
   return;
 }
 try {
-  if (files.some(file => file.type.startsWith("image/") && file.size > 5 * 1024 * 1024)) {
+  if (files.some(file => isVerificationImage(file) && file.size > 5 * 1024 * 1024)) {
     say("verificationMessage", "Compressing large evidence images on your device...");
     files = await Promise.all(files.map(compressVerificationImage));
   }
