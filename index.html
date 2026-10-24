@@ -1116,7 +1116,17 @@ async function sendPrivateMessage(){
   }catch(error){
     $("privateMessageStatus").textContent="Could not send the message: "+(error.message||"Please try again.")+". The messaging migration may not yet be active.";
   }finally{
-    button.disabled=false;
+    const active=privateConversations.find(item=>item.id===activeConversationId);
+    if(!active){
+      button.disabled=true;
+    }else{
+      try{
+        const state=await getConversationBlockState(otherConversationUser(active));
+        button.disabled=active.status!=="open"||state.blocked;
+      }catch(error){
+        button.disabled=true;
+      }
+    }
   }
 }
 
