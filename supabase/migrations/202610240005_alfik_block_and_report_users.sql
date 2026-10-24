@@ -233,4 +233,40 @@ $$;
 revoke all on function public.alfik_private_message_block_state(uuid) from public, anon;
 grant execute on function public.alfik_private_message_block_state(uuid) to authenticated;
 
+
+-- Return the private moderation queue only to authenticated ALFIK administrators.
+create or replace function public.alfik_admin_list_member_safety_reports()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public, auth, pg_temp
+as $
+declare
+  v_reports jsonb;
+begin
+  if auth.uid() is null
+     or not exists (select 1 from public.alfik_admins a where a.user_id = auth.uid()) then
+    raise exception 'ALFIK administrator access required.';
+  end if;
+
+  select coalesce(
+    jsonb_agg(to_jsonb(q) order by q.created_at desc),
+    '[]'::jsonb
+  )
+  into v_reports
+  from (
+    select id, reporter_id, reported_user_id, conversation_id, reason, details, status, created_at
+    from public.alfik_user_reports
+    order by created_at desc
+    limit 100
+  ) q;
+
+  return v_reports;
+end;
+$;
+
+revoke all on function public.alfik_admin_list_member_safety_reports() from public, anon;
+grant execute on function public.alfik_admin_list_member_safety_reports() to authenticated;
+
 commit;
