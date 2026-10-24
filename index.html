@@ -94,6 +94,12 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <button class="primary wide" data-view="reportsView">🔎 View all animal reports</button>
 <button class="found wide" data-view="reportView">📝 Report a lost or found animal</button>
 <button class="secondary wide" data-view="myView">👤 My ALFIK and my reports</button>
+<div class="feature-panel" id="verifiedRescueDirectory">
+<h3>ALFIK Verified rescues</h3>
+<p class="note">Organisations listed here have been reviewed by an ALFIK administrator. A badge reflects ALFIK's checks, not a guarantee of every action or service.</p>
+<button class="secondary wide" id="refreshVerifiedRescuesBtn" type="button">Refresh verified rescues</button>
+<div id="verifiedRescueList" aria-live="polite">Loading verified rescues...</div>
+</div>
 <div class="feature-grid">
 <div class="feature-panel">
 <h3>My pets</h3>
@@ -225,9 +231,29 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <div class="feature-panel">
 <h3>Organisation verification</h3>
 <p>Verification is reviewed by an ALFIK administrator. Creating a workspace does not automatically verify it.</p>
-<label for="verificationDetails">Tell us about your rescue and provide evidence details</label>
-<textarea id="verificationDetails" rows="5" maxlength="4000" placeholder="Include your website or public social page, areas served, registration details if applicable, and examples of your animal welfare work. Do not include passwords or sensitive personal information."></textarea>
-<button class="primary wide" id="submitVerificationBtn" type="button">Submit for verification</button>
+<p>Tell us who you are, how the rescue operates, and how we can independently check your details. Registration is helpful where applicable but is not compulsory for every legitimate rescue.</p>
+<label for="verificationApplicantRole">Your role in the organisation</label>
+<input id="verificationApplicantRole" maxlength="150" placeholder="e.g. Director, trustee, rescue coordinator">
+<label for="verificationWebsite">Official website (optional)</label>
+<input id="verificationWebsite" type="url" maxlength="500" placeholder="https://">
+<label for="verificationSocial">Public social media page (optional)</label>
+<input id="verificationSocial" type="url" maxlength="500" placeholder="https://">
+<label for="verificationRegistrationType">Registration type (if applicable)</label>
+<select id="verificationRegistrationType">
+<option value="">Not registered / not applicable</option>
+<option value="charity">Registered charity</option>
+<option value="company">Companies House company</option>
+<option value="scottish_charity">Scottish charity (OSCR)</option>
+<option value="other">Other registration or licence</option>
+</select>
+<label for="verificationRegistrationNumber">Registration or licence number (optional)</label>
+<input id="verificationRegistrationNumber" maxlength="150" placeholder="Registration number">
+<label for="verificationDetails">About your rescue and evidence</label>
+<textarea id="verificationDetails" rows="5" maxlength="4000" placeholder="Describe your animal welfare work, areas served, how animals are cared for, and any independent references. Do not include passwords, bank details, or unnecessary personal data."></textarea>
+<label for="verificationEvidenceFiles">Supporting evidence documents (optional)</label>
+<input id="verificationEvidenceFiles" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp">
+<p class="note">Up to 5 files, maximum 5 MB each. Accepted formats: PDF, JPG, PNG and WebP. Documents are private and visible only to authorised members of your organisation and ALFIK administrators. Redact unrelated personal information before uploading.</p>
+<button class="primary wide" id="submitVerificationBtn" type="button">Submit details and evidence for verification</button>
 <p id="verificationMessage" class="message" role="status"></p>
 <p id="verificationStatusNote" class="note">Choose your organisation above to see its current verification status.</p>
 </div>
@@ -892,6 +918,7 @@ function showSignedIn(session){
 
   if(user){
     $("signedInAs").textContent="Signed in to your ALFIK account.";
+    if(window.loadVerifiedRescueDirectory) window.loadVerifiedRescueDirectory();
     if(changed){
       showView("homeView");
       loadReports();
