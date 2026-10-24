@@ -921,8 +921,11 @@ const db = client();
 const orgId = el("rescueOrgSelect")?.value;
 const narrative = el("verificationDetails")?.value.trim() || "";
 const applicantRole = el("verificationApplicantRole")?.value.trim() || "";
-const website = el("verificationWebsite")?.value.trim() || "";
-const social = el("verificationSocial")?.value.trim() || "";
+const websiteInput = el("verificationWebsite")?.value.trim() || "";
+const socialInput = el("verificationSocial")?.value.trim() || "";
+const addHttpsIfMissing = value => value && !/^https?:\/\//i.test(value) ? "https://" + value : value;
+const website = addHttpsIfMissing(websiteInput);
+const social = addHttpsIfMissing(socialInput);
 const registrationType = el("verificationRegistrationType")?.value || "";
 const registrationNumber = el("verificationRegistrationNumber")?.value.trim() || "";
 let files = Array.from(el("verificationEvidenceFiles")?.files || []);
@@ -973,13 +976,15 @@ for (const file of files) {
   }
 }
 if (website && !/^https:\/\//i.test(website)) {
-  say("verificationMessage", "Please use a full https:// URL for the official website.");
+  say("verificationMessage", "Please enter a valid official website address, or leave it blank.");
   return;
 }
 if (social && !/^https:\/\//i.test(social)) {
-  say("verificationMessage", "Please use a full https:// URL for the public social page.");
+  say("verificationMessage", "Please enter a valid public social page address, or leave it blank.");
   return;
 }
+if (el("verificationWebsite") && website) el("verificationWebsite").value = website;
+if (el("verificationSocial") && social) el("verificationSocial").value = social;
 if (button) button.disabled = true;
 say("verificationMessage", "Uploading evidence and submitting verification details...");
 try {
