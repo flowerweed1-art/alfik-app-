@@ -142,3 +142,18 @@ grant execute on function public.alfik_admin_list_verification_requests() to aut
 grant execute on function public.alfik_admin_review_organisation(uuid,text,text) to authenticated;
 
 commit;
+
+-- IMPORTANT: after running this migration, authorise the ALFIK administrator account.
+-- Replace the email below with the email address used to sign in to ALFIK,
+-- then run this statement separately in Supabase SQL Editor:
+--
+-- insert into public.alfik_admins (user_id)
+-- select id from auth.users where lower(email) = lower('YOUR_ALFIK_LOGIN_EMAIL')
+-- on conflict (user_id) do nothing;
+--
+-- Check that exactly one account was added:
+-- select a.user_id, u.email
+-- from public.alfik_admins a
+-- join auth.users u on u.id = a.user_id;
+--
+-- Do not add ordinary rescue users to alfik_admins.
