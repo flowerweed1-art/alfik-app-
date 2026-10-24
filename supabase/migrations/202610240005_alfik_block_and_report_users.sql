@@ -163,4 +163,43 @@ $$;
 revoke all on function public.alfik_start_conversation(uuid) from public, anon;
 grant execute on function public.alfik_start_conversation(uuid) to authenticated;
 
+
+-- Return only the relationship state for the signed-in member and one selected conversation partner.
+-- This avoids granting broad read access to other members' block records.
+create or replace function public.alfik_private_message_block_state(p_other_user_id uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public, auth, pg_temp
+as $
+declare
+  v_user_id uuid := auth.uid();
+  v_blocked_by_me boolean;
+  v_blocked_me boolean;
+begin
+  if v_user_id is null then
+    raise exception 'Please sign in to check messaging permissions.';
+  end if;
+  if p_other_user_id is null or p_other_user_id = v_user_id then
+    raise exception 'Choose another member.';
+  end if;
+
+  select exists (
+    select 1 from public.alfik_user_blocks b
+    where b.blocker_id = v_user_id and b.blocked_id = p_other_user_id
+  ) into v_blocked_by_me;
+
+  select exists (
+    select 1 from public.alfik_user_blocks b
+    where b.blocker_id = p_other_user_id and b.blocked_id = v_user_id
+  ) into v_blocked_me;
+
+  return jsonb_build_object('blockedByMe', v_blocked_by_me, 'blockedMe', v_blocked_me);
+end;
+$;
+
+revoke all on function public.alfik_private_message_block_state(uuid) from public, anon;
+grant execute on function public.alfik_private_message_block_state(uuid) to authenticated;
+
 commit;
