@@ -1320,6 +1320,10 @@ window.loadPetWorkspace = loadPetWorkspace;
 window.loadRescueWorkspace = loadRescueWorkspace;
 window.loadVerifiedRescueDirectory = loadVerifiedRescueDirectory;
 window.loadVetWorkspace = loadVetWorkspace;
+window.loadAlfikAdminTools = async function () {
+  await loadVerificationAdminQueue();
+  await loadMemberReportsAdminQueue();
+};
 
 if (document.readyState === "loading") {
 document.addEventListener("DOMContentLoaded", wireEvents);
