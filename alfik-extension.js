@@ -865,8 +865,12 @@ try {
   const lines = String(org.verification_details || "").split("\n");
   const fieldValue = (prefix) => (lines.find(line => line.startsWith(prefix)) || "").slice(prefix.length).trim();
   if (role && !role.value) role.value = fieldValue("Applicant role: ");
-  if (websiteInput && !websiteInput.value) websiteInput.value = fieldValue("Website: ");
-  if (socialInput && !socialInput.value) socialInput.value = fieldValue("Public social page: ");
+  const savedWebsite = fieldValue("Website: ");
+  const savedSocial = fieldValue("Public social page: ");
+  // Restore only complete web addresses. Older saved entries without https://
+  // can otherwise be mistaken for bad autofill and block an optional submission.
+  if (websiteInput && !websiteInput.value && /^https?:\/\//i.test(savedWebsite)) websiteInput.value = savedWebsite;
+  if (socialInput && !socialInput.value && /^https?:\/\//i.test(savedSocial)) socialInput.value = savedSocial;
   if (regType && !regType.value) {
     const value = fieldValue("Registration type: ");
     if (Array.from(regType.options).some(option => option.value === value)) regType.value = value;
