@@ -79,6 +79,7 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <button class="secondary" data-view="homeView">Home</button>
 <button class="secondary" data-view="reportsView">All reports</button>
 <button class="secondary" data-view="myView">My ALFIK</button>
+<button class="secondary" data-view="messagesView">🔒 Private messages</button>
 <button class="secondary" data-view="reportView">Report an animal</button>
 <button class="secondary" data-view="emailView">Email alerts</button>
 <button class="secondary" data-view="petsView">My pets</button>
@@ -169,6 +170,25 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <p>Your reports are shown separately from community reports.</p>
 <button class="primary wide" data-view="reportView">Create a new report</button>
 <div id="myReportsList" aria-live="polite">Loading your reports...</div>
+</section>
+
+<section id="messagesView" class="hidden">
+<h2>🔒 Private messages</h2>
+<p>Contact the person who reported a lost or found animal without publishing email addresses or phone numbers.</p>
+<p class="note">For your safety, do not share your home address, phone number, email address, passwords or payment details in messages. Arrange any reunion carefully and meet in a safe public place where appropriate.</p>
+<div class="feature-panel">
+<h3>Your conversations</h3>
+<button class="secondary wide" id="refreshConversationsBtn" type="button">Refresh conversations</button>
+<div id="conversationList" aria-live="polite">Your private conversations will appear here.</div>
+</div>
+<div class="feature-panel">
+<h3 id="messageThreadHeading">Choose a conversation</h3>
+<div id="messageThread" aria-live="polite">Select a conversation to read messages.</div>
+<label for="privateMessageDraft">Your message</label>
+<textarea id="privateMessageDraft" rows="3" maxlength="2000" placeholder="Write a message about the animal."></textarea>
+<button class="primary wide" id="sendPrivateMessageBtn" type="button" disabled>Send private message</button>
+<p id="privateMessageStatus" class="message" role="status"></p>
+</div>
 </section>
 
 <section id="emailView" class="hidden">
@@ -372,7 +392,7 @@ function element(tag,text){
 
 function showView(id){
   [
-    "homeView","reportView","reportsView","myView","emailView","accountView",
+    "homeView","reportView","reportsView","myView","messagesView","emailView","accountView",
     "petsView","rescueView","vetView","billingView"
   ].forEach(view=>{
     const section=$(view);
@@ -381,6 +401,7 @@ function showView(id){
 
   if(id==="reportsView")loadReports();
   if(id==="myView")loadMyReports();
+  if(id==="messagesView")loadPrivateConversations();
   if(id==="emailView")loadEmailPreference();
   if(id==="petsView"&&window.loadPetWorkspace)window.loadPetWorkspace();
   if(id==="rescueView"&&window.loadRescueWorkspace)window.loadRescueWorkspace();
@@ -607,6 +628,13 @@ function makeReportCard(report,isOwn){
   addField(card,"Date",report.date_seen);
   addField(card,"Status",report.status==="resolved"?"Resolved / reunited":"Active");
 
+  if(!isOwn && report.status==="active" && (report.report_type==="lost" || report.report_type==="found") && report.owner_id){
+    const contact=element("button","🔒 Message privately about this animal");
+    contact.className="primary wide";
+    contact.onclick=()=>startPrivateConversation(report);
+    card.appendChild(contact);
+  }
+
   if(isOwn){
     const actions=document.createElement("div");
     actions.className="actions";
@@ -814,6 +842,141 @@ function applyFilters(){
   renderMatches();
 }
 
+let activeConversationId=null;
+let privateConversations=[];
+
+async function startPrivateConversation(report){
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  const user=sessionData.session?.user;
+  if(!user){alert("Please sign in to send a private message.");return;}
+  if(report.owner_id===user.id){alert("This is your own report. You cannot message yourself.");return;}
+  const buttonLabel="🔒 Message privately about this animal";
+  try{
+    const result=await supabaseClient.rpc("alfik_start_conversation",{p_report_id:report.id});
+    if(result.error)throw result.error;
+    activeConversationId=result.data;
+    showView("messagesView");
+    await loadPrivateConversations(activeConversationId);
+  }catch(error){
+    alert("Private messaging is not ready yet. "+(error.message||"Please try again later.")+" If this continues, the ALFIK messaging database migration needs to be applied.");
+  }
+}
+
+function conversationLabel(conversation){
+  const report=activeReports.find(item=>item.id===conversation.report_id);
+  const context=report
+    ? reportTypeLabel(report.report_type)+" · "+(report.animal_type||"animal")+" · "+(report.location_text||"location not provided")
+    : "Animal report";
+  const role=conversation.owner_id===currentUserId?"Your report":"You contacted the reporter";
+  return role+" · "+context;
+}
+
+async function loadPrivateConversations(selectedId){
+  const list=$("conversationList");
+  if(!list)return;
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  const user=sessionData.session?.user;
+  if(!user){list.replaceChildren(element("p","Please sign in to view private messages."));return;}
+  list.replaceChildren(element("p","Loading private conversations..."));
+  $("sendPrivateMessageBtn").disabled=true;
+  try{
+    const {data,error}=await supabaseClient.from("alfik_message_conversations")
+      .select("id,report_id,owner_id,contact_user_id,status,created_at,last_message_at")
+      .order("last_message_at",{ascending:false}).limit(100);
+    if(error)throw error;
+    privateConversations=data||[];
+    list.replaceChildren();
+    if(!privateConversations.length){
+      list.appendChild(element("p","No private conversations yet. Open an active lost or found report and choose “Message privately about this animal”."));
+      $("messageThreadHeading").textContent="Choose a conversation";
+      $("messageThread").replaceChildren(element("p","Your messages will appear here."));
+      activeConversationId=null;
+      return;
+    }
+    privateConversations.forEach(conversation=>{
+      const button=element("button",conversationLabel(conversation));
+      button.type="button";
+      button.className="secondary wide";
+      button.style.marginBottom="8px";
+      button.onclick=()=>loadPrivateMessages(conversation.id);
+      list.appendChild(button);
+    });
+    const target=selectedId||activeConversationId;
+    const chosen=privateConversations.find(item=>item.id===target)||privateConversations[0];
+    await loadPrivateMessages(chosen.id);
+  }catch(error){
+    list.replaceChildren(element("p","Could not load private conversations: "+(error.message||"Please try again.")+". If the messaging migration has not been applied, this is expected."));
+  }
+}
+
+async function loadPrivateMessages(conversationId){
+  const thread=$("messageThread");
+  const conversation=privateConversations.find(item=>item.id===conversationId);
+  if(!thread||!conversation)return;
+  activeConversationId=conversationId;
+  $("messageThreadHeading").textContent=conversationLabel(conversation);
+  thread.replaceChildren(element("p","Loading messages..."));
+  $("sendPrivateMessageBtn").disabled=conversation.status!=="open";
+  $("privateMessageStatus").textContent="";
+  try{
+    const {data,error}=await supabaseClient.from("alfik_private_messages")
+      .select("id,conversation_id,sender_id,body,created_at")
+      .eq("conversation_id",conversationId).order("created_at",{ascending:true}).limit(500);
+    if(error)throw error;
+    thread.replaceChildren();
+    if(!data||!data.length){
+      thread.appendChild(element("p","No messages yet. Start by asking about the animal's description, location or safe reunion arrangements."));
+    }else{
+      data.forEach(item=>{
+        const bubble=document.createElement("article");
+        bubble.className="report-card";
+        bubble.appendChild(element("strong",item.sender_id===currentUserId?"You":"Other participant"));
+        const date=new Date(item.created_at);
+        bubble.appendChild(element("p",date.toLocaleString()));
+        const body=element("p",item.body);
+        body.style.whiteSpace="pre-wrap";
+        bubble.appendChild(body);
+        thread.appendChild(bubble);
+      });
+    }
+    thread.scrollTop=thread.scrollHeight;
+  }catch(error){
+    thread.replaceChildren(element("p","Could not load messages: "+(error.message||"Please try again.")));
+  }
+}
+
+async function sendPrivateMessage(){
+  const draft=$("privateMessageDraft");
+  const body=draft.value.trim();
+  if(!activeConversationId){$("privateMessageStatus").textContent="Choose a conversation first.";return;}
+  if(!body){$("privateMessageStatus").textContent="Write a message first.";return;}
+  if(body.length>2000){$("privateMessageStatus").textContent="Messages must be 2,000 characters or fewer.";return;}
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  const user=sessionData.session?.user;
+  if(!user){$("privateMessageStatus").textContent="Please sign in again.";return;}
+  const button=$("sendPrivateMessageBtn");
+  button.disabled=true;
+  $("privateMessageStatus").textContent="Sending privately...";
+  try{
+    const {error}=await supabaseClient.from("alfik_private_messages").insert({
+      conversation_id:activeConversationId,
+      sender_id:user.id,
+      body
+    });
+    if(error)throw error;
+    draft.value="";
+    $("privateMessageStatus").textContent="Private message sent.";
+    await loadPrivateConversations(activeConversationId);
+  }catch(error){
+    $("privateMessageStatus").textContent="Could not send the message: "+(error.message||"Please try again.")+". The messaging migration may not yet be active.";
+  }finally{
+    button.disabled=false;
+  }
+}
+
+$("sendPrivateMessageBtn").addEventListener("click",sendPrivateMessage);
+$("refreshConversationsBtn").addEventListener("click",()=>loadPrivateConversations(activeConversationId));
+
 async function loadMyReports(){
   const box=$("myReportsList");
   box.replaceChildren(element("p","Loading your reports..."));
@@ -929,6 +1092,12 @@ function showSignedIn(session){
   }else{
     activeReports=[];
     myReports=[];
+    privateConversations=[];
+    activeConversationId=null;
+    if($("conversationList"))$("conversationList").replaceChildren(element("p","Sign in to view private conversations."));
+    if($("messageThread"))$("messageThread").replaceChildren(element("p","Select a conversation to read messages."));
+    if($("privateMessageDraft"))$("privateMessageDraft").value="";
+    if($("sendPrivateMessageBtn"))$("sendPrivateMessageBtn").disabled=true;
     $("reportsList").textContent="Please sign in to view reports.";
     $("myReportsList").textContent="Please sign in to view your reports.";
     $("matchResults").replaceChildren();
@@ -952,6 +1121,6 @@ supabaseClient.auth.onAuthStateChange((event,session)=>showSignedIn(session));
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261024-autofillfix1"></script>
+<script src="alfik-extension.js?v=20261024-privatemessages1"></script>
 </body>
 </html>
