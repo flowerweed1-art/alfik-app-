@@ -241,7 +241,7 @@ language plpgsql
 stable
 security definer
 set search_path = public, auth, pg_temp
-as $
+as $$
 declare
   v_reports jsonb;
 begin
@@ -264,7 +264,7 @@ begin
 
   return v_reports;
 end;
-$;
+$$;
 
 revoke all on function public.alfik_admin_list_member_safety_reports() from public, anon;
 grant execute on function public.alfik_admin_list_member_safety_reports() to authenticated;
