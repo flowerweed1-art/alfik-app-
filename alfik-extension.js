@@ -854,15 +854,15 @@ try {
           : "Not yet submitted for verification.";
   }
   if (details && org.verification_details && !details.value) {
-    const match = org.verification_details.split("Rescue information and evidence notes:\\n");
-    details.value = match.length > 1 ? match.slice(1).join("Rescue information and evidence notes:\\n") : org.verification_details;
+    const match = org.verification_details.split("Rescue information and evidence notes:\n");
+    details.value = match.length > 1 ? match.slice(1).join("Rescue information and evidence notes:\n") : org.verification_details;
   }
   const role = el("verificationApplicantRole");
   const websiteInput = el("verificationWebsite");
   const socialInput = el("verificationSocial");
   const regType = el("verificationRegistrationType");
   const regNumber = el("verificationRegistrationNumber");
-  const lines = String(org.verification_details || "").split("\\n");
+  const lines = String(org.verification_details || "").split("\n");
   const fieldValue = (prefix) => (lines.find(line => line.startsWith(prefix)) || "").slice(prefix.length).trim();
   if (role && !role.value) role.value = fieldValue("Applicant role: ");
   if (websiteInput && !websiteInput.value) websiteInput.value = fieldValue("Website: ");
@@ -1125,4 +1125,5 @@ document.addEventListener("DOMContentLoaded", wireEvents);
 } else {
 wireEvents();
 }
+loadVerifiedRescueDirectory();
 })();
