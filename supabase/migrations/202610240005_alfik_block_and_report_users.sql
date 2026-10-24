@@ -94,7 +94,7 @@ language plpgsql
 stable
 security definer
 set search_path = public, auth, pg_temp
-as $
+as $$
 begin
   if auth.uid() is null
      or auth.uid() not in (p_user_a, p_user_b)
@@ -110,7 +110,7 @@ begin
        or (b.blocker_id = p_user_b and b.blocked_id = p_user_a)
   );
 end;
-$;
+$$;
 
 revoke all on function public.alfik_private_message_is_blocked(uuid, uuid) from public, anon;
 grant execute on function public.alfik_private_message_is_blocked(uuid, uuid) to authenticated;
@@ -203,7 +203,7 @@ language plpgsql
 stable
 security definer
 set search_path = public, auth, pg_temp
-as $
+as $$
 declare
   v_user_id uuid := auth.uid();
   v_blocked_by_me boolean;
@@ -228,7 +228,7 @@ begin
 
   return jsonb_build_object('blockedByMe', v_blocked_by_me, 'blockedMe', v_blocked_me);
 end;
-$;
+$$;
 
 revoke all on function public.alfik_private_message_block_state(uuid) from public, anon;
 grant execute on function public.alfik_private_message_block_state(uuid) to authenticated;
