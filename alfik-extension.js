@@ -446,7 +446,7 @@ try {
     if (orgSelect) {
       const option = document.createElement("option");
       option.value = org.id;
-      option.textContent = org.name + " (" + (org.verification_status || "unverified") + ")";
+      option.textContent = org.name + (org.verification_status === "verified" ? " ✓ ALFIK Verified" : " (" + (org.verification_status || "unverified") + ")");
       orgSelect.appendChild(option);
     }
   });
@@ -790,6 +790,42 @@ try {
 
 }
 
+async function loadVerifiedRescueDirectory() {
+const db = client();
+const list = el("verifiedRescueList");
+if (!db || !list) return;
+list.textContent = "Loading verified rescues...";
+try {
+  const result = await db.rpc("alfik_list_verified_rescues");
+  if (result.error) throw result.error;
+  list.replaceChildren();
+  const rows = Array.isArray(result.data) ? result.data : [];
+  if (!rows.length) {
+    list.textContent = "No organisations have completed ALFIK verification yet.";
+    return;
+  }
+  rows.forEach(org => {
+    const item = document.createElement("article");
+    item.className = "report-card";
+    const heading = document.createElement("h3");
+    heading.textContent = org.name || "Verified rescue";
+    item.appendChild(heading);
+    const badge = document.createElement("span");
+    badge.className = "badge own";
+    badge.textContent = "✓ ALFIK Verified";
+    item.appendChild(badge);
+    const note = document.createElement("p");
+    note.className = "note";
+    note.textContent = "Reviewed by an ALFIK administrator.";
+    item.appendChild(note);
+    list.appendChild(item);
+  });
+} catch (error) {
+  list.textContent = "Could not load verified rescues. Please refresh and try again.";
+  console.warn("ALFIK verified rescue directory:", error);
+}
+}
+
 async function loadOrganisationVerificationStatus() {
 const db = client();
 const orgId = el("rescueOrgSelect")?.value;
@@ -817,7 +853,25 @@ try {
           ? "Pending review. Your organisation has not yet been verified."
           : "Not yet submitted for verification.";
   }
-  if (details && org.verification_details && !details.value) details.value = org.verification_details;
+  if (details && org.verification_details && !details.value) {
+    const match = org.verification_details.split("Rescue information and evidence notes:\\n");
+    details.value = match.length > 1 ? match.slice(1).join("Rescue information and evidence notes:\\n") : org.verification_details;
+  }
+  const role = el("verificationApplicantRole");
+  const websiteInput = el("verificationWebsite");
+  const socialInput = el("verificationSocial");
+  const regType = el("verificationRegistrationType");
+  const regNumber = el("verificationRegistrationNumber");
+  const lines = String(org.verification_details || "").split("\\n");
+  const fieldValue = (prefix) => (lines.find(line => line.startsWith(prefix)) || "").slice(prefix.length).trim();
+  if (role && !role.value) role.value = fieldValue("Applicant role: ");
+  if (websiteInput && !websiteInput.value) websiteInput.value = fieldValue("Website: ");
+  if (socialInput && !socialInput.value) socialInput.value = fieldValue("Public social page: ");
+  if (regType && !regType.value) {
+    const value = fieldValue("Registration type: ");
+    if (Array.from(regType.options).some(option => option.value === value)) regType.value = value;
+  }
+  if (regNumber && !regNumber.value) regNumber.value = fieldValue("Registration number: ");
 } catch (error) {
   if (note) note.textContent = "Could not load verification status: " + readableError(error);
 }
@@ -826,7 +880,22 @@ try {
 async function submitOrganisationVerification() {
 const db = client();
 const orgId = el("rescueOrgSelect")?.value;
-const details = el("verificationDetails")?.value.trim() || "";
+const narrative = el("verificationDetails")?.value.trim() || "";
+const applicantRole = el("verificationApplicantRole")?.value.trim() || "";
+const website = el("verificationWebsite")?.value.trim() || "";
+const social = el("verificationSocial")?.value.trim() || "";
+const registrationType = el("verificationRegistrationType")?.value || "";
+const registrationNumber = el("verificationRegistrationNumber")?.value.trim() || "";
+const files = Array.from(el("verificationEvidenceFiles")?.files || []);
+const details = [
+  "Applicant role: " + (applicantRole || "Not provided"),
+  "Website: " + (website || "Not provided"),
+  "Public social page: " + (social || "Not provided"),
+  "Registration type: " + (registrationType || "Not applicable"),
+  "Registration number: " + (registrationNumber || "Not provided"),
+  "Rescue information and evidence notes:",
+  narrative
+].join("\n");
 const button = el("submitVerificationBtn");
 if (!db || !(await currentUser())) {
   say("verificationMessage", "Please sign in again.");
@@ -836,13 +905,44 @@ if (!orgId) {
   say("verificationMessage", "Choose your rescue organisation first.");
   return;
 }
-if (details.length < 20) {
-  say("verificationMessage", "Please provide at least 20 characters describing your rescue and evidence of its work.");
+if (narrative.length < 20) {
+  say("verificationMessage", "Please describe your rescue and its work in at least 20 characters.");
+  return;
+}
+if (files.length > 5) {
+  say("verificationMessage", "Please upload no more than 5 evidence files.");
+  return;
+}
+const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+for (const file of files) {
+  if (file.size > 5 * 1024 * 1024) {
+    say("verificationMessage", "Each evidence file must be 5 MB or smaller.");
+    return;
+  }
+  if (!allowedTypes.includes(file.type)) {
+    say("verificationMessage", "Evidence files must be PDF, JPG, PNG or WebP.");
+    return;
+  }
+}
+if (website && !/^https:\/\//i.test(website)) {
+  say("verificationMessage", "Please use a full https:// URL for the official website.");
+  return;
+}
+if (social && !/^https:\/\//i.test(social)) {
+  say("verificationMessage", "Please use a full https:// URL for the public social page.");
   return;
 }
 if (button) button.disabled = true;
-say("verificationMessage", "Submitting verification details...");
+say("verificationMessage", "Uploading evidence and submitting verification details...");
 try {
+  for (const file of files) {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-120);
+    const path = orgId + "/" + crypto.randomUUID() + "-" + safeName;
+    const upload = await db.storage.from("alfik-verification-evidence").upload(path, file, {
+      cacheControl: "3600", upsert: false, contentType: file.type
+    });
+    if (upload.error) throw upload.error;
+  }
   const result = await db.rpc("alfik_submit_organisation_verification", {p_org_id: orgId, p_details: details});
   if (result.error) throw result.error;
   say("verificationMessage", typeof result.data === "string" ? result.data : "Verification details submitted. Status: Pending review.");
@@ -887,6 +987,42 @@ try {
     const evidence = document.createElement("p");
     evidence.textContent = org.verification_details || "No verification details submitted yet.";
     item.appendChild(evidence);
+    const filesBox = document.createElement("div");
+    filesBox.className = "ai-results";
+    const filesHeading = document.createElement("strong");
+    filesHeading.textContent = "Private supporting documents";
+    filesBox.appendChild(filesHeading);
+    const filesList = document.createElement("div");
+    filesList.textContent = "Loading evidence documents...";
+    filesBox.appendChild(filesList);
+    item.appendChild(filesBox);
+    (async () => {
+      try {
+        const storage = db.storage.from("alfik-verification-evidence");
+        const listed = await storage.list(org.id, {limit: 20, sortBy: {column: "name", order: "asc"}});
+        if (listed.error) throw listed.error;
+        filesList.replaceChildren();
+        const docs = (listed.data || []).filter(file => file.name && file.id);
+        if (!docs.length) {
+          filesList.textContent = "No documents uploaded.";
+          return;
+        }
+        for (const file of docs) {
+          const path = org.id + "/" + file.name;
+          const signed = await storage.createSignedUrl(path, 300);
+          const link = document.createElement("a");
+          link.textContent = file.name.replace(/^.*?-/, "");
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          if (!signed.error && signed.data?.signedUrl) link.href = signed.data.signedUrl;
+          else link.textContent += " (could not create secure link)";
+          filesList.appendChild(link);
+          filesList.appendChild(document.createElement("br"));
+        }
+      } catch (err) {
+        filesList.textContent = "Could not load evidence documents: " + readableError(err);
+      }
+    })();
     const submitted = document.createElement("p");
     submitted.textContent = "Submitted: " + (org.verification_submitted_at || "Not submitted");
     item.appendChild(submitted);
@@ -961,6 +1097,7 @@ if (el("rescueOrgSelect")) {
 }
 if (el("submitVerificationBtn")) el("submitVerificationBtn").addEventListener("click", submitOrganisationVerification);
 if (el("refreshVerificationQueueBtn")) el("refreshVerificationQueueBtn").addEventListener("click", loadVerificationAdminQueue);
+if (el("refreshVerifiedRescuesBtn")) el("refreshVerifiedRescuesBtn").addEventListener("click", loadVerifiedRescueDirectory);
 
 if (el("createVetOrgBtn")) {
   el("createVetOrgBtn").addEventListener("click", createVetOrganisation);
@@ -980,6 +1117,7 @@ window.refreshAlfikProfile = refreshAlfikProfile;
 window.renderPayPalButtons = renderPayPalButtons;
 window.loadPetWorkspace = loadPetWorkspace;
 window.loadRescueWorkspace = loadRescueWorkspace;
+window.loadVerifiedRescueDirectory = loadVerifiedRescueDirectory;
 window.loadVetWorkspace = loadVetWorkspace;
 
 if (document.readyState === "loading") {
