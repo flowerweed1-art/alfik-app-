@@ -223,6 +223,22 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <label for="rescueOrgSelect">Your rescue organisation</label><select id="rescueOrgSelect"><option value="">Choose an organisation</option></select>
 </div>
 <div class="feature-panel">
+<h3>Organisation verification</h3>
+<p>Verification is reviewed by an ALFIK administrator. Creating a workspace does not automatically verify it.</p>
+<label for="verificationDetails">Tell us about your rescue and provide evidence details</label>
+<textarea id="verificationDetails" rows="5" maxlength="4000" placeholder="Include your website or public social page, areas served, registration details if applicable, and examples of your animal welfare work. Do not include passwords or sensitive personal information."></textarea>
+<button class="primary wide" id="submitVerificationBtn" type="button">Submit for verification</button>
+<p id="verificationMessage" class="message" role="status"></p>
+<p id="verificationStatusNote" class="note">Choose your organisation above to see its current verification status.</p>
+</div>
+<div class="feature-panel hidden" id="verificationAdminPanel">
+<h3>ALFIK administrator: verification reviews</h3>
+<p>Only authorised ALFIK administrators can approve or reject rescue organisations.</p>
+<button class="secondary" id="refreshVerificationQueueBtn" type="button">Refresh review queue</button>
+<p id="verificationAdminMessage" class="message" role="status"></p>
+<div id="verificationQueue">Checking administrator access...</div>
+</div>
+<div class="feature-panel">
 <h3>Rescue animal records</h3>
 <label for="rescueAnimalName">Animal name or reference</label><input id="rescueAnimalName" maxlength="150">
 <label for="rescueAnimalType">Animal type</label><select id="rescueAnimalType"><option value="cat">Cat</option><option value="dog">Dog</option><option value="other">Other</option></select>
