@@ -97,11 +97,7 @@ create policy "ALFIK participants can send private messages"
       where c.id = conversation_id
         and c.status = 'open'
         and (c.owner_id = auth.uid() or c.contact_user_id = auth.uid())
-        and not exists (
-          select 1 from public.alfik_user_blocks b
-          where (b.blocker_id = c.owner_id and b.blocked_id = c.contact_user_id)
-             or (b.blocker_id = c.contact_user_id and b.blocked_id = c.owner_id)
-        )
+        and not public.alfik_private_message_is_blocked(c.owner_id, c.contact_user_id)
     )
   );
 
@@ -163,6 +159,39 @@ $$;
 revoke all on function public.alfik_start_conversation(uuid) from public, anon;
 grant execute on function public.alfik_start_conversation(uuid) to authenticated;
 
+
+
+
+-- Check blocking in a policy without exposing either member's block table.
+-- The caller must be one of the two accounts being checked.
+create or replace function public.alfik_private_message_is_blocked(
+  p_user_a uuid,
+  p_user_b uuid
+) returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public, auth, pg_temp
+as $
+begin
+  if auth.uid() is null
+     or auth.uid() not in (p_user_a, p_user_b)
+     or p_user_a is null
+     or p_user_b is null
+     or p_user_a = p_user_b then
+    raise exception 'You may only check blocking for your own conversation.';
+  end if;
+
+  return exists (
+    select 1 from public.alfik_user_blocks b
+    where (b.blocker_id = p_user_a and b.blocked_id = p_user_b)
+       or (b.blocker_id = p_user_b and b.blocked_id = p_user_a)
+  );
+end;
+$;
+
+revoke all on function public.alfik_private_message_is_blocked(uuid, uuid) from public, anon;
+grant execute on function public.alfik_private_message_is_blocked(uuid, uuid) to authenticated;
 
 -- Return only the relationship state for the signed-in member and one selected conversation partner.
 -- This avoids granting broad read access to other members' block records.
