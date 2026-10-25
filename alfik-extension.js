@@ -1267,7 +1267,9 @@ try {
   }
   panel.classList.remove("hidden");
   queue.replaceChildren();
-  const rows = Array.isArray(result.data) ? result.data : [];
+  const rows = (Array.isArray(result.data) ? result.data : []).filter(org =>
+    ["pending", "unverified"].includes(String(org.verification_status || "unverified").toLowerCase())
+  );
   if (!rows.length) {
     queue.textContent = "No organisations are awaiting review.";
     say("verificationAdminMessage", "");
@@ -1358,6 +1360,47 @@ try {
 }
 }
 
+async function loadVerificationAdminHistory() {
+  const db = client(), list = el("verificationHistory");
+  if (!db || !list) return;
+  try {
+    const result = await db.rpc("alfik_admin_list_verification_history");
+    if (result.error) throw result.error;
+    const panel = el("verificationHistoryPanel"); if (panel) panel.classList.remove("hidden");
+    list.replaceChildren();
+    const rows = Array.isArray(result.data) ? result.data : [];
+    if (!rows.length) { list.textContent = "No completed rescue verification decisions yet."; return; }
+    rows.forEach(org => {
+      const item = document.createElement("article"); item.className = "report-card";
+      const title = document.createElement("h4"); title.textContent = org.name || "Unnamed organisation"; item.appendChild(title);
+      const status = document.createElement("p"); status.textContent = "Decision: " + org.verification_status + " | Reviewed: " + (org.verification_reviewed_at ? new Date(org.verification_reviewed_at).toLocaleString() : "Date unavailable"); item.appendChild(status);
+      if (org.verification_rejection_reason) { const reason = document.createElement("p"); reason.textContent = "Rejection reason: " + org.verification_rejection_reason; item.appendChild(reason); }
+      if (org.verification_details) { const details = document.createElement("p"); details.textContent = "Application details: " + org.verification_details; item.appendChild(details); }
+      list.appendChild(item);
+    });
+  } catch (error) { list.textContent = "Could not load verification history: " + readableError(error) + ". Run the admin history SQL setup."; }
+}
+
+async function loadMemberReportsAdminHistory() {
+  const db = client(), list = el("memberReportsAdminHistory");
+  if (!db || !list) return;
+  try {
+    const result = await db.rpc("alfik_admin_list_member_safety_report_history");
+    if (result.error) throw result.error;
+    const panel = el("memberReportsAdminHistoryPanel"); if (panel) panel.classList.remove("hidden");
+    list.replaceChildren();
+    const rows = Array.isArray(result.data) ? result.data : [];
+    if (!rows.length) { list.textContent = "No completed safety reports yet."; return; }
+    rows.forEach(report => {
+      const item = document.createElement("article"); item.className = "report-card";
+      const title = document.createElement("h4"); title.textContent = (report.reason || "other").replace(/_/g, " ").replace(/^./, letter => letter.toUpperCase()); item.appendChild(title);
+      const meta = document.createElement("p"); meta.textContent = "Status: " + report.status + " | Submitted: " + (report.created_at ? new Date(report.created_at).toLocaleString() : "Unknown") + " | Reviewed: " + (report.reviewed_at ? new Date(report.reviewed_at).toLocaleString() : "Not recorded"); item.appendChild(meta);
+      const details = document.createElement("p"); details.textContent = report.details || "No additional details provided."; item.appendChild(details);
+      list.appendChild(item);
+    });
+  } catch (error) { list.textContent = "Could not load safety report history: " + readableError(error) + ". Run the admin history SQL setup."; }
+}
+
 async function returnOrganisationToPending(orgId, orgName) {
 const db = client();
 if (!db || !(await currentUser())) {
@@ -1435,9 +1478,11 @@ try {
   }
   panel.classList.remove("hidden");
   queue.replaceChildren();
-  const reports = Array.isArray(result.data) ? result.data : [];
+  const reports = (Array.isArray(result.data) ? result.data : []).filter(report =>
+    ["pending", "reviewing"].includes(String(report.status || "pending").toLowerCase())
+  );
   if (!reports.length) {
-    queue.textContent = "No member safety reports have been submitted.";
+    queue.textContent = "No member safety reports need action.";
     say("memberReportsAdminMessage", "");
     return;
   }
@@ -1527,6 +1572,8 @@ try {
   if (!result.data) throw new Error("No report was updated. Check administrator permissions.");
   say("memberReportsAdminMessage", "Report status updated to " + status + ".");
   await loadMemberReportsAdminQueue();
+  await loadVerificationAdminHistory();
+  await loadMemberReportsAdminHistory();
 } catch (error) {
   say("memberReportsAdminMessage", "Could not update report: " + readableError(error) + ". Check migration 202610240005 and administrator permissions.");
 }
@@ -1573,6 +1620,8 @@ if (el("saveRescueMedicationBtn")) el("saveRescueMedicationBtn").addEventListene
 if (el("submitVerificationBtn")) el("submitVerificationBtn").addEventListener("click", submitOrganisationVerification);
 if (el("refreshVerificationQueueBtn")) el("refreshVerificationQueueBtn").addEventListener("click", loadVerificationAdminQueue);
 if (el("refreshMemberReportsBtn")) el("refreshMemberReportsBtn").addEventListener("click", loadMemberReportsAdminQueue);
+if (el("refreshVerificationHistoryBtn")) el("refreshVerificationHistoryBtn").addEventListener("click", loadVerificationAdminHistory);
+if (el("refreshMemberReportsHistoryBtn")) el("refreshMemberReportsHistoryBtn").addEventListener("click", loadMemberReportsAdminHistory);
 if (el("refreshVerifiedRescuesBtn")) el("refreshVerifiedRescuesBtn").addEventListener("click", loadVerifiedRescueDirectory);
 
 if (el("createVetOrgBtn")) {
