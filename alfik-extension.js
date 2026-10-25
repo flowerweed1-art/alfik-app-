@@ -483,6 +483,7 @@ try {
 
   await loadRescueAnimals();
   await loadRescueCareSchedules();
+  await loadRescueMedicationList();
   await loadCareNotifications();
   await loadOrganisationVerificationStatus();
   await loadVerificationAdminQueue();
@@ -614,20 +615,23 @@ try {
   if (result.error) throw result.error;
 
   const careAnimalSelect = el("rescueCareAnimal");
-  if (careAnimalSelect) {
-    careAnimalSelect.replaceChildren();
+  const medAnimalSelect = el("rescueMedicationAnimal");
+  [careAnimalSelect, medAnimalSelect].forEach(target => {
+    if (!target) return;
+    target.replaceChildren();
     const placeholder = document.createElement("option");
     placeholder.value = "";
     placeholder.textContent = "Choose an animal";
-    careAnimalSelect.appendChild(placeholder);
-  }
+    target.appendChild(placeholder);
+  });
   (result.data || []).forEach(animal => {
-    if (careAnimalSelect) {
+    [careAnimalSelect, medAnimalSelect].forEach(target => {
+      if (!target) return;
       const option = document.createElement("option");
       option.value = animal.id;
       option.textContent = animal.name + (animal.status === "rehomed" ? " (rehomed)" : "");
-      careAnimalSelect.appendChild(option);
-    }
+      target.appendChild(option);
+    });
     const item = card(list, animal.name);
     addText(item, "Species", animal.species);
     addText(item, "Status", animal.status);
@@ -662,6 +666,40 @@ try {
   list.textContent = "Could not load the animal register: " + readableError(error);
 }
 
+}
+
+async function saveRescueMedication(){
+const db=client(),user=await currentUser(),orgId=el("rescueOrgSelect")?.value,animalId=el("rescueMedicationAnimal")?.value;
+if(!db||!user)return say("rescueMedicationMessage","Please sign in again.");
+if(!(await hasPlan("premium")))return say("rescueMedicationMessage","Rescue medication lists require Premium or Pro.");
+const name=el("rescueMedicationName").value.trim();
+if(!orgId||!animalId||!name)return say("rescueMedicationMessage","Choose an animal and enter a medication name.");
+try{
+ const r=await db.from("alfik_rescue_animal_medications").insert([{
+  org_id:orgId,rescue_animal_id:animalId,medication_name:name,
+  dose:el("rescueMedicationDose").value.trim()||null,
+  frequency:el("rescueMedicationFrequency").value.trim()||null,
+  start_date:el("rescueMedicationStart").value||null,
+  end_date:el("rescueMedicationEnd").value||null,
+  instructions:el("rescueMedicationInstructions").value.trim()||null,
+  created_by:user.id
+ }]);
+ if(r.error)throw r.error;
+ ["rescueMedicationName","rescueMedicationDose","rescueMedicationFrequency","rescueMedicationStart","rescueMedicationEnd","rescueMedicationInstructions"].forEach(id=>{if(el(id))el(id).value="";});
+ say("rescueMedicationMessage","Rescue medication saved.");await loadRescueMedicationList();
+}catch(e){say("rescueMedicationMessage","Could not save rescue medication: "+readableError(e));}
+}
+
+async function loadRescueMedicationList(){
+const db=client(),list=el("rescueMedicationList"),orgId=el("rescueOrgSelect")?.value,animalId=el("rescueMedicationAnimal")?.value;
+if(!db||!list)return;list.replaceChildren();
+if(!orgId||!animalId){list.textContent="Choose an organisation and animal to view medications.";return;}
+try{
+ const r=await db.from("alfik_rescue_animal_medications").select("medication_name,dose,frequency,start_date,end_date,instructions").eq("org_id",orgId).eq("rescue_animal_id",animalId).order("created_at",{ascending:false});
+ if(r.error)throw r.error;
+ (r.data||[]).forEach(m=>{const item=card(list,m.medication_name);addText(item,"Dose",m.dose);addText(item,"Frequency",m.frequency);addText(item,"Dates",(m.start_date||"")+(m.end_date?" to "+m.end_date:""));addText(item,"Instructions",m.instructions);});
+ if(!(r.data||[]).length)list.textContent="No medications recorded for this rescue animal.";
+}catch(e){list.textContent="Could not load rescue medications: "+readableError(e);}
 }
 
 async function loadCareNotifications() {
@@ -1524,10 +1562,13 @@ if (el("rescueOrgSelect")) {
   el("rescueOrgSelect").addEventListener("change", async () => {
     await loadRescueAnimals();
     await loadRescueCareSchedules();
+    await loadRescueMedicationList();
     await loadOrganisationVerificationStatus();
   });
 }
 if (el("rescueCareAnimal")) el("rescueCareAnimal").addEventListener("change", loadRescueCareSchedules);
+if (el("rescueMedicationAnimal")) el("rescueMedicationAnimal").addEventListener("change", loadRescueMedicationList);
+if (el("saveRescueMedicationBtn")) el("saveRescueMedicationBtn").addEventListener("click", saveRescueMedication);
 if (el("submitVerificationBtn")) el("submitVerificationBtn").addEventListener("click", submitOrganisationVerification);
 if (el("refreshVerificationQueueBtn")) el("refreshVerificationQueueBtn").addEventListener("click", loadVerificationAdminQueue);
 if (el("refreshMemberReportsBtn")) el("refreshMemberReportsBtn").addEventListener("click", loadMemberReportsAdminQueue);
