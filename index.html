@@ -295,6 +295,33 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <div id="healthRecords">Health records will appear here.</div>
 <p id="healthPlanMessage" class="note"></p>
 </div>
+<div class="feature-panel">
+<h3>Medication list</h3>
+<p class="note">Private to your account. Follow your veterinary professional's instructions.</p>
+<label for="medicationPet">Pet</label><select id="medicationPet"><option value="">Choose a pet</option></select>
+<label for="medicationName">Medication name</label><input id="medicationName" maxlength="160">
+<label for="medicationDose">Dose (optional)</label><input id="medicationDose" maxlength="160">
+<label for="medicationFrequency">How often? (optional)</label><input id="medicationFrequency" maxlength="160" placeholder="As prescribed">
+<label for="medicationStart">Start date (optional)</label><input id="medicationStart" type="date">
+<label for="medicationEnd">End date (optional)</label><input id="medicationEnd" type="date">
+<label for="medicationInstructions">Instructions (optional)</label><textarea id="medicationInstructions" rows="2" maxlength="1500"></textarea>
+<button class="primary wide" id="saveMedicationBtn" type="button">Save medication</button>
+<p id="medicationMessage" class="message" role="status"></p>
+<div id="medicationList">Your medications will appear here.</div>
+</div>
+<div class="feature-panel">
+<h3>Flea and worming reminders</h3>
+<p class="note">Set dates using the product label or your vet's advice. Flea reminders default to every 28 days; worming defaults to every month (calendar month). These are reminders, not treatment instructions.</p>
+<label for="carePet">Pet</label><select id="carePet"><option value="">Choose a pet</option></select>
+<label for="careType">Reminder type</label><select id="careType"><option value="flea">Flea treatment</option><option value="worming">Worming</option><option value="medication">Medication</option></select>
+<label for="careName">Product or medication name (optional)</label><input id="careName" maxlength="160">
+<label for="careInterval">Repeat every (days)</label><input id="careInterval" type="number" min="1" max="730" value="28">
+<label for="careDue">Next due date</label><input id="careDue" type="date" required>
+<label><input id="careEnabled" type="checkbox" checked> Reminders on</label>
+<button class="primary wide" id="saveCareBtn" type="button">Save reminder</button>
+<p id="careMessage" class="message" role="status"></p>
+<div id="careList">Your reminders will appear here.</div>
+</div>
 </section>
 
 <section id="rescueView" class="hidden">
@@ -353,6 +380,19 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <button class="primary wide" id="saveRescueAnimalBtn" type="button">Save rescue animal record</button>
 <p id="rescueAnimalMessage" class="message" role="status"></p>
 <div id="rescueAnimalList">Rescue animal records will appear here.</div>
+<div class="feature-panel">
+<h3>Rescue care reminders</h3>
+<p class="note">Set reminders for animals in your care. Disable reminders or mark the animal rehomed when responsibility ends.</p>
+<label for="rescueCareAnimal">Rescue animal</label><select id="rescueCareAnimal"><option value="">Choose an animal</option></select>
+<label for="rescueCareType">Reminder type</label><select id="rescueCareType"><option value="flea">Flea treatment</option><option value="worming">Worming</option><option value="medication">Medication</option></select>
+<label for="rescueCareName">Product or medication name (optional)</label><input id="rescueCareName" maxlength="160">
+<label for="rescueCareInterval">Repeat every (days)</label><input id="rescueCareInterval" type="number" min="1" max="730" value="28">
+<label for="rescueCareDue">Next due date</label><input id="rescueCareDue" type="date">
+<label><input id="rescueCareEnabled" type="checkbox" checked> Reminders on</label>
+<button class="primary wide" id="saveRescueCareBtn" type="button">Save rescue reminder</button>
+<p id="rescueCareMessage" class="message" role="status"></p>
+<div id="rescueCareList">Rescue reminders will appear here.</div>
+</div>
 <p id="rescuePlanMessage" class="note"></p>
 </div>
 </section>
