@@ -112,7 +112,7 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <section id="homeView">
 <h2>Welcome to ALFIK 🐾</h2>
 <p>Helping lost animals find their way home.</p>
-<div class="feature-panel">
+<div class="feature-panel" id="careNotificationsPanel" tabindex="-1">
 <h3>Your notifications</h3>
 <p class="note">Private in-app alerts for possible animal matches and care reminders for your pets or rescue animals.</p>
 <button class="secondary" id="refreshCareNotificationsBtn" type="button">Refresh notifications</button>
@@ -588,6 +588,19 @@ function showView(id){
 document.querySelectorAll("[data-view]").forEach(button=>{
   button.addEventListener("click",()=>showView(button.dataset.view));
 });
+
+const notificationBell=$( "notificationBell" );
+if(notificationBell){
+  notificationBell.addEventListener("click",()=>{
+    showView("homeView");
+    window.setTimeout(()=>{
+      const panel=$( "careNotificationsPanel" );
+      if(panel){panel.scrollIntoView({behavior:"smooth",block:"start"});panel.focus({preventScroll:true});}
+      const refresh=$( "refreshCareNotificationsBtn" );
+      if(refresh)refresh.click();
+    },100);
+  });
+}
 
 function clearPhotoPreview(){
   if(previewUrl){
