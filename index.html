@@ -83,6 +83,11 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <input id="accountPassword" type="password" minlength="6" autocomplete="current-password">
 <button class="primary wide" id="signInBtn" type="button">Sign in</button>
 <button class="secondary wide" id="signUpBtn" type="button">Create account</button>
+<div class="feature-panel" id="alfikSecurityPanel">
+<p><strong>Cloudflare security check</strong></p>
+<p class="note">Complete this quick check before signing in or creating an account.</p>
+<div id="alfikTurnstile" class="cf-turnstile" data-sitekey="0x4AAAAAAFiK2Uh9rYAy9ril" data-callback="onAlfikCaptchaSuccess" data-expired-callback="onAlfikCaptchaExpired" data-error-callback="onAlfikCaptchaError" data-theme="light"></div>
+</div>
 <p id="accountMessage" class="message" role="status"></p>
 </section>
 
@@ -440,6 +445,18 @@ const photoInput=$("photo");
 function message(id,text){
   const target=$(id);
   if(target)target.textContent=text||"";
+}
+
+let alfikCaptchaToken="";
+window.onAlfikCaptchaSuccess=function(token){alfikCaptchaToken=token||"";};
+window.onAlfikCaptchaExpired=function(){alfikCaptchaToken="";};
+window.onAlfikCaptchaError=function(){
+  alfikCaptchaToken="";
+  message("accountMessage","Cloudflare security check could not load. Please refresh the page and try again.");
+};
+function resetAlfikCaptcha(){
+  alfikCaptchaToken="";
+  if(window.turnstile){try{window.turnstile.reset();}catch(error){console.warn("Could not reset Turnstile.",error);}}
 }
 
 function element(tag,text){
@@ -1256,29 +1273,33 @@ $("signUpBtn").addEventListener("click",async()=>{
   const email=$("accountEmail").value.trim(),password=$("accountPassword").value;
   const accountType=$("newAccountType").value||"public";
   if(!email||!password){message("accountMessage","Enter your email and password.");return;}
+  if(!alfikCaptchaToken){message("accountMessage","Please complete the Cloudflare security check before continuing.");return;}
+  const captchaToken=alfikCaptchaToken;
   message("accountMessage","Creating account...");
   $("signUpBtn").disabled=true;
   try{
-    const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:ALFIK_URL,data:{alfik_account_type:accountType}}});
+    const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:ALFIK_URL,captchaToken,data:{alfik_account_type:accountType}}});
     if(error)throw error;
     if(data.session){message("accountMessage","Account created.");showSignedIn(data.session);}
     else message("accountMessage","Account created. Check your email to confirm, then sign in.");
   }catch(error){message("accountMessage",error.message||"Could not create the account.");}
-  finally{$("signUpBtn").disabled=false;}
+  finally{resetAlfikCaptcha();$("signUpBtn").disabled=false;}
 });
 
 $("signInBtn").addEventListener("click",async()=>{
   const email=$("accountEmail").value.trim(),password=$("accountPassword").value;
   if(!email||!password){message("accountMessage","Enter your email and password.");return;}
+  if(!alfikCaptchaToken){message("accountMessage","Please complete the Cloudflare security check before continuing.");return;}
+  const captchaToken=alfikCaptchaToken;
   message("accountMessage","Signing in...");
   $("signInBtn").disabled=true;
   try{
-    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password,options:{captchaToken}});
     if(error)throw error;
     message("accountMessage","");
     showSignedIn(data.session);
   }catch(error){message("accountMessage",error.message||"Could not sign in.");}
-  finally{$("signInBtn").disabled=false;}
+  finally{resetAlfikCaptcha();$("signInBtn").disabled=false;}
 });
 
 $("saveAccountTypeBtn").addEventListener("click",async()=>{
@@ -1364,5 +1385,6 @@ supabaseClient.auth.onAuthStateChange((event,session)=>showSignedIn(session));
 
 <script src="alfik-config.js"></script>
 <script src="alfik-extension.js?v=20261024-admintools2"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </body>
 </html>
