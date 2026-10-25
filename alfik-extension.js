@@ -221,7 +221,7 @@ if (!db) return;
 try {
   const result = await db
     .from("alfik_pets")
-    .select("id,name,species,breed,date_of_birth,microchip,notes")
+    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date")
     .eq("owner_id", user.id)
     .order("name");
 
