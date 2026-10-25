@@ -1647,6 +1647,8 @@ window.loadVetWorkspace = loadVetWorkspace;
 window.loadAlfikAdminTools = async function () {
   await loadVerificationAdminQueue();
   await loadMemberReportsAdminQueue();
+  await loadVerificationAdminHistory();
+  await loadMemberReportsAdminHistory();
 };
 
 if (document.readyState === "loading") {
