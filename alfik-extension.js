@@ -239,6 +239,14 @@ try {
       addText(item, "Notes", pet.notes);
     }
 
+    ["medicationPet", "carePet"].forEach(selectId => {
+      const target = el(selectId);
+      if (!target) return;
+      const option = document.createElement("option");
+      option.value = pet.id;
+      option.textContent = pet.name || "Unnamed pet";
+      target.appendChild(option);
+    });
     if (petSelect) {
       const option = document.createElement("option");
       option.value = pet.id;
@@ -252,6 +260,8 @@ try {
   }
 
   await loadHealthRecords();
+  await loadMedicationList();
+  await loadCareSchedules();
 } catch (error) {
   console.warn("ALFIK pet profiles:", error);
   say("petMessage", "Pet profiles could not be loaded: " + readableError(error));
@@ -591,16 +601,31 @@ if (!orgId) {
 try {
   const result = await db
     .from("alfik_rescue_animals")
-    .select("name,species,status,notes,microchip,neutering_status,neutered_date")
+    .select("id,name,species,status,notes,microchip,neutering_status,neutered_date,care_reminders_enabled")
     .eq("org_id", orgId)
     .order("name");
 
   if (result.error) throw result.error;
 
+  const careAnimalSelect = el("rescueCareAnimal");
+  if (careAnimalSelect) {
+    careAnimalSelect.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Choose an animal";
+    careAnimalSelect.appendChild(placeholder);
+  }
   (result.data || []).forEach(animal => {
+    if (careAnimalSelect) {
+      const option = document.createElement("option");
+      option.value = animal.id;
+      option.textContent = animal.name + (animal.status === "rehomed" ? " (rehomed)" : "");
+      careAnimalSelect.appendChild(option);
+    }
     const item = card(list, animal.name);
     addText(item, "Species", animal.species);
     addText(item, "Status", animal.status);
+    addText(item, "Care reminders", animal.care_reminders_enabled && animal.status !== "rehomed" ? "On" : "Off");
     addText(item, "Microchip", animal.microchip);
     addText(item, "Neutering status", ({neutered:"Neutered / spayed",not_neutered:"Not neutered",unknown:"Unknown / not confirmed"})[animal.neutering_status] || "Unknown / not confirmed");
     addText(item, "Date neutered", animal.neutered_date);
@@ -615,6 +640,109 @@ try {
   list.textContent = "Could not load the animal register: " + readableError(error);
 }
 
+}
+
+async function saveMedication() {
+const db = client();
+const user = await currentUser();
+if (!db || !user) return say("medicationMessage", "Please sign in again.");
+if (!(await hasPlan("pro"))) return say("medicationMessage", "The private medication list requires Pro.");
+const petId = el("medicationPet").value;
+const name = el("medicationName").value.trim();
+if (!petId || !name) return say("medicationMessage", "Choose a pet and enter a medication name.");
+try {
+  const result = await db.from("alfik_animal_medications").insert([{
+    owner_id:user.id, pet_id:petId, medication_name:name,
+    dose:el("medicationDose").value.trim() || null,
+    frequency:el("medicationFrequency").value.trim() || null,
+    start_date:el("medicationStart").value || null,
+    end_date:el("medicationEnd").value || null,
+    instructions:el("medicationInstructions").value.trim() || null
+  }]);
+  if (result.error) throw result.error;
+  ["medicationName","medicationDose","medicationFrequency","medicationStart","medicationEnd","medicationInstructions"].forEach(id => { if(el(id)) el(id).value=""; });
+  say("medicationMessage","Medication saved privately.");
+  await loadMedicationList();
+} catch(error) { say("medicationMessage","Could not save medication: "+readableError(error)); }
+}
+
+async function loadMedicationList() {
+const db=client(), user=await currentUser(), list=el("medicationList"), petId=el("medicationPet")?.value;
+if(!db||!user||!list)return;
+list.replaceChildren();
+if(!(await hasPlan("pro"))){list.textContent="Medication lists require Pro.";return;}
+if(!petId){list.textContent="Choose a pet to view medications.";return;}
+try{
+ const r=await db.from("alfik_animal_medications").select("id,medication_name,dose,frequency,start_date,end_date,instructions,active").eq("owner_id",user.id).eq("pet_id",petId).order("created_at",{ascending:false});
+ if(r.error)throw r.error;
+ (r.data||[]).forEach(m=>{const item=card(list,m.medication_name);addText(item,"Dose",m.dose);addText(item,"Frequency",m.frequency);addText(item,"Dates",(m.start_date||"")+(m.end_date?" to "+m.end_date:""));addText(item,"Instructions",m.instructions);});
+ if(!(r.data||[]).length)list.textContent="No medications recorded for this pet.";
+}catch(e){list.textContent="Could not load medications: "+readableError(e);}
+}
+
+async function saveCareSchedule() {
+const db=client(),user=await currentUser();
+if(!db||!user)return say("careMessage","Please sign in again.");
+if(!(await hasPlan("premium")))return say("careMessage","Care reminders require Premium or Pro.");
+const petId=el("carePet").value, due=el("careDue").value, type=el("careType").value;
+if(!petId||!due)return say("careMessage","Choose a pet and next due date.");
+try{
+ const r=await db.from("alfik_care_schedules").insert([{
+  schedule_type:type,owner_id:user.id,pet_id:petId,treatment_name:el("careName").value.trim()||null,
+  interval_days:Number(el("careInterval").value)||null,next_due_date:due,enabled:el("careEnabled").checked,
+  advance_notice_days:0,created_by:user.id
+ }]);
+ if(r.error)throw r.error;
+ el("careName").value="";say("careMessage","Reminder saved.");await loadCareSchedules();
+}catch(e){say("careMessage","Could not save reminder: "+readableError(e));}
+}
+
+async function loadCareSchedules() {
+const db=client(),user=await currentUser(),list=el("careList"),petId=el("carePet")?.value;
+if(!db||!user||!list)return;list.replaceChildren();
+if(!(await hasPlan("premium"))){list.textContent="Care reminders require Premium or Pro.";return;}
+if(!petId){list.textContent="Choose a pet to view reminders.";return;}
+try{
+ const r=await db.from("alfik_care_schedules").select("id,schedule_type,treatment_name,interval_days,next_due_date,enabled").eq("owner_id",user.id).eq("pet_id",petId).order("next_due_date");
+ if(r.error)throw r.error;
+ (r.data||[]).forEach(s=>{const item=card(list,(s.schedule_type==="flea"?"Flea treatment":s.schedule_type==="worming"?"Worming":"Medication")+(s.treatment_name?" · "+s.treatment_name:""));addText(item,"Next due",s.next_due_date);addText(item,"Repeat",s.interval_days?s.interval_days+" days":"No repeat interval");addText(item,"Status",s.enabled?"On":"Off");const b=document.createElement("button");b.className="secondary";b.textContent=s.enabled?"Turn off":"Turn on";b.addEventListener("click",()=>toggleCareSchedule(s.id,!s.enabled));item.appendChild(b);});
+ if(!(r.data||[]).length)list.textContent="No reminders set for this pet.";
+}catch(e){list.textContent="Could not load reminders: "+readableError(e);}
+}
+
+async function toggleCareSchedule(id,enabled){
+const db=client();if(!db)return;
+const r=await db.from("alfik_care_schedules").update({enabled}).eq("id",id);
+if(r.error){say("careMessage","Could not update reminder: "+readableError(r.error));return;}await loadCareSchedules();
+}
+
+async function saveRescueCareSchedule(){
+const db=client(),user=await currentUser();
+if(!db||!user)return say("rescueCareMessage","Please sign in again.");
+if(!(await hasPlan("premium")))return say("rescueCareMessage","Rescue reminders require Premium or Pro.");
+const animalId=el("rescueCareAnimal").value,due=el("rescueCareDue").value,orgId=el("rescueOrgSelect").value;
+if(!animalId||!due||!orgId)return say("rescueCareMessage","Choose an animal and next due date.");
+try{
+ const r=await db.from("alfik_care_schedules").insert([{
+  schedule_type:el("rescueCareType").value,org_id:orgId,rescue_animal_id:animalId,
+  treatment_name:el("rescueCareName").value.trim()||null,interval_days:Number(el("rescueCareInterval").value)||null,
+  next_due_date:due,enabled:el("rescueCareEnabled").checked,advance_notice_days:0,created_by:user.id
+ }]);
+ if(r.error)throw r.error;
+ el("rescueCareName").value="";say("rescueCareMessage","Rescue reminder saved.");await loadRescueCareSchedules();
+}catch(e){say("rescueCareMessage","Could not save rescue reminder: "+readableError(e));}
+}
+
+async function loadRescueCareSchedules(){
+const db=client(),list=el("rescueCareList"),orgId=el("rescueOrgSelect")?.value,animalId=el("rescueCareAnimal")?.value;
+if(!db||!list)return;list.replaceChildren();
+if(!orgId||!animalId){list.textContent="Choose an organisation and animal to view reminders.";return;}
+try{
+ const r=await db.from("alfik_care_schedules").select("id,schedule_type,treatment_name,interval_days,next_due_date,enabled").eq("org_id",orgId).eq("rescue_animal_id",animalId).order("next_due_date");
+ if(r.error)throw r.error;
+ (r.data||[]).forEach(s=>{const item=card(list,(s.schedule_type==="flea"?"Flea treatment":s.schedule_type==="worming"?"Worming":"Medication")+(s.treatment_name?" · "+s.treatment_name:""));addText(item,"Next due",s.next_due_date);addText(item,"Repeat",s.interval_days?s.interval_days+" days":"No repeat interval");addText(item,"Status",s.enabled?"On":"Off");const b=document.createElement("button");b.className="secondary";b.textContent=s.enabled?"Turn off":"Turn on";b.addEventListener("click",async()=>{const u=await db.from("alfik_care_schedules").update({enabled:!s.enabled}).eq("id",s.id);if(u.error)say("rescueCareMessage","Could not update reminder: "+readableError(u.error));else await loadRescueCareSchedules();});item.appendChild(b);});
+ if(!(r.data||[]).length)list.textContent="No reminders set for this rescue animal.";
+}catch(e){list.textContent="Could not load rescue reminders: "+readableError(e);}
 }
 
 async function loadVetWorkspace() {
@@ -1321,6 +1449,19 @@ function wireEvents() {
 if (el("petForm")) el("petForm").addEventListener("submit", savePet);
 if (el("saveHealthBtn")) el("saveHealthBtn").addEventListener("click", saveHealthRecord);
 if (el("healthPet")) el("healthPet").addEventListener("change", loadHealthRecords);
+if (el("medicationPet")) el("medicationPet").addEventListener("change", loadMedicationList);
+if (el("carePet")) el("carePet").addEventListener("change", loadCareSchedules);
+if (el("careType")) el("careType").addEventListener("change", () => {
+  const interval = el("careInterval");
+  if (interval && el("careType").value !== "medication") interval.value = el("careType").value === "flea" ? "28" : "30";
+});
+if (el("rescueCareType")) el("rescueCareType").addEventListener("change", () => {
+  const interval = el("rescueCareInterval");
+  if (interval && el("rescueCareType").value !== "medication") interval.value = el("rescueCareType").value === "flea" ? "28" : "30";
+});
+if (el("saveMedicationBtn")) el("saveMedicationBtn").addEventListener("click", saveMedication);
+if (el("saveCareBtn")) el("saveCareBtn").addEventListener("click", saveCareSchedule);
+if (el("saveRescueCareBtn")) el("saveRescueCareBtn").addEventListener("click", saveRescueCareSchedule);
 
 if (el("createRescueOrgBtn")) {
   el("createRescueOrgBtn").addEventListener("click", createRescueOrganisation);
@@ -1333,9 +1474,11 @@ if (el("saveRescueAnimalBtn")) {
 if (el("rescueOrgSelect")) {
   el("rescueOrgSelect").addEventListener("change", async () => {
     await loadRescueAnimals();
+    await loadRescueCareSchedules();
     await loadOrganisationVerificationStatus();
   });
 }
+if (el("rescueCareAnimal")) el("rescueCareAnimal").addEventListener("change", loadRescueCareSchedules);
 if (el("submitVerificationBtn")) el("submitVerificationBtn").addEventListener("click", submitOrganisationVerification);
 if (el("refreshVerificationQueueBtn")) el("refreshVerificationQueueBtn").addEventListener("click", loadVerificationAdminQueue);
 if (el("refreshMemberReportsBtn")) el("refreshMemberReportsBtn").addEventListener("click", loadMemberReportsAdminQueue);
