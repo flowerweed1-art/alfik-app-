@@ -1,6 +1,6 @@
 -- ALFIK care reminders setup for Supabase SQL Editor.
 -- Run this script once in the ALFIK project's SQL Editor.
--- It creates private medication records, care schedules, notifications, RLS rules and a daily reminder job where pg_cron is available.
+-- Creates private medication records, care schedules, notifications, RLS rules and a daily reminder job where pg_cron is available.
 
 -- Combined from supabase/migrations/202610250001_alfik_animal_care_reminders.sql
 -- ALFIK animal care profiles, medication, reminders and private in-app notifications.
@@ -347,6 +347,24 @@ begin
   end if;
 end;
 $$;
+
+drop policy if exists "ALFIK rescue members update animal care status" on public.alfik_rescue_animals;
+create policy "ALFIK rescue members update animal care status"
+on public.alfik_rescue_animals for update to authenticated
+using (
+  public.alfik_my_plan() in ('premium','pro')
+  and exists (
+    select 1 from public.alfik_org_members m
+    where m.org_id=alfik_rescue_animals.org_id and m.user_id=auth.uid()
+  )
+)
+with check (
+  public.alfik_my_plan() in ('premium','pro')
+  and exists (
+    select 1 from public.alfik_org_members m
+    where m.org_id=alfik_rescue_animals.org_id and m.user_id=auth.uid()
+  )
+);
 
 drop policy if exists "ALFIK users access their care schedules" on public.alfik_care_schedules;
 
