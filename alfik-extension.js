@@ -265,6 +265,7 @@ try {
   await loadHealthRecords();
   await loadMedicationList();
   await loadCareSchedules();
+  await loadCareNotifications();
 } catch (error) {
   console.warn("ALFIK pet profiles:", error);
   say("petMessage", "Pet profiles could not be loaded: " + readableError(error));
@@ -482,6 +483,7 @@ try {
 
   await loadRescueAnimals();
   await loadRescueCareSchedules();
+  await loadCareNotifications();
   await loadOrganisationVerificationStatus();
   await loadVerificationAdminQueue();
 } catch (error) {
@@ -634,6 +636,22 @@ try {
     addText(item, "Neutering status", ({neutered:"Neutered / spayed",not_neutered:"Not neutered",unknown:"Unknown / not confirmed"})[animal.neutering_status] || "Unknown / not confirmed");
     addText(item, "Date neutered", animal.neutered_date);
     addText(item, "Notes", animal.notes);
+    if (animal.status !== "rehomed" && animal.status !== "reunited" && animal.status !== "closed") {
+      const rehome = document.createElement("button");
+      rehome.className = "secondary";
+      rehome.textContent = "Mark rehomed and stop reminders";
+      rehome.addEventListener("click", async () => {
+        if (!window.confirm("Mark this animal as rehomed and turn off its rescue care reminders?")) return;
+        const update = await db.from("alfik_rescue_animals").update({status:"rehomed",care_reminders_enabled:false}).eq("id",animal.id).eq("org_id",orgId);
+        if (update.error) { say("rescueAnimalMessage","Could not update animal: "+readableError(update.error)); return; }
+        const schedules = await db.from("alfik_care_schedules").update({enabled:false}).eq("rescue_animal_id",animal.id);
+        if (schedules.error) say("rescueAnimalMessage","Animal marked rehomed, but reminders could not all be switched off: "+readableError(schedules.error));
+        else say("rescueAnimalMessage","Animal marked rehomed. Rescue reminders are off.");
+        await loadRescueAnimals();
+        await loadRescueCareSchedules();
+      });
+      item.appendChild(rehome);
+    }
   });
 
   if (!(result.data || []).length) {
@@ -644,6 +662,32 @@ try {
   list.textContent = "Could not load the animal register: " + readableError(error);
 }
 
+}
+
+async function loadCareNotifications() {
+const db=client(),user=await currentUser(),list=el("careNotificationsList");
+if(!list)return;
+list.replaceChildren();
+if(!db||!user){list.textContent="Sign in to view your care notifications.";return;}
+try{
+ const r=await db.from("alfik_in_app_notifications").select("id,title,body,due_date,created_at,read_at").eq("user_id",user.id).order("created_at",{ascending:false}).limit(50);
+ if(r.error)throw r.error;
+ (r.data||[]).forEach(n=>{
+   const item=card(list,n.title||"Care reminder");
+   addText(item,"Due date",n.due_date);
+   addText(item,"Details",n.body);
+   addText(item,"Status",n.read_at?"Read":"Unread");
+   if(!n.read_at){
+     const b=document.createElement("button");b.className="secondary";b.textContent="Mark as read";
+     b.addEventListener("click",async()=>{
+       const u=await db.from("alfik_in_app_notifications").update({read_at:new Date().toISOString()}).eq("id",n.id).eq("user_id",user.id);
+       if(u.error)say("careNotificationsMessage","Could not mark notification as read: "+readableError(u.error));
+       else {say("careNotificationsMessage","Notification marked as read.");await loadCareNotifications();}
+     });item.appendChild(b);
+   }
+ });
+ if(!(r.data||[]).length)list.textContent="No care notifications yet.";
+}catch(e){list.textContent="Could not load notifications: "+readableError(e);}
 }
 
 async function saveMedication() {
@@ -1464,6 +1508,7 @@ if (el("rescueCareType")) el("rescueCareType").addEventListener("change", () => 
   if (interval && el("rescueCareType").value !== "medication") interval.value = el("rescueCareType").value === "flea" ? "28" : "30";
 });
 if (el("saveMedicationBtn")) el("saveMedicationBtn").addEventListener("click", saveMedication);
+if (el("refreshCareNotificationsBtn")) el("refreshCareNotificationsBtn").addEventListener("click", loadCareNotifications);
 if (el("saveCareBtn")) el("saveCareBtn").addEventListener("click", saveCareSchedule);
 if (el("saveRescueCareBtn")) el("saveRescueCareBtn").addEventListener("click", saveRescueCareSchedule);
 
