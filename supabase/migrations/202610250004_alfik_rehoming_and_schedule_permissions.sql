@@ -5,8 +5,10 @@ do $$
 declare
   c record;
   status_type text;
+  status_data_type text;
+  status_schema text;
 begin
-  select udt_name into status_type
+  select udt_name, data_type, udt_schema into status_type, status_data_type, status_schema
   from information_schema.columns
   where table_schema='public' and table_name='alfik_rescue_animals' and column_name='status';
 
@@ -23,8 +25,8 @@ begin
     alter table public.alfik_rescue_animals
       add constraint alfik_rescue_animals_status_check
       check (status in ('in_care','foster','available','reunited','rehomed','closed'));
-  elsif status_type like '%enum%' then
-    execute 'alter type public.' || quote_ident(status_type) || ' add value if not exists ''rehomed''';
+  elsif status_data_type = 'USER-DEFINED' then
+    execute format('alter type %I.%I add value if not exists %L', status_schema, status_type, 'rehomed');
   end if;
 end;
 $$;
