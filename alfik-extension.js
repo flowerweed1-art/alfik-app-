@@ -158,6 +158,7 @@ say(
     ? "Your account has Pro access. Veterinary features require the supporting database setup."
     : "Veterinary workspace access requires Pro and supporting database setup."
 );
+await loadCareNotifications();
 
 }
 
