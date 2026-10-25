@@ -110,6 +110,13 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <section id="homeView">
 <h2>Welcome to ALFIK 🐾</h2>
 <p>Helping lost animals find their way home.</p>
+<div class="feature-panel">
+<h3>Your care notifications</h3>
+<p class="note">Private reminders for your pets or rescue animals.</p>
+<button class="secondary" id="refreshCareNotificationsBtn" type="button">Refresh notifications</button>
+<p id="careNotificationsMessage" class="message" role="status"></p>
+<div id="careNotificationsList">Sign in to view your care notifications.</div>
+</div>
 <button class="primary wide" data-view="reportsView">🔎 View all animal reports</button>
 <button class="found wide" data-view="reportView" data-account-types="public">Report a lost or found animal</button>
 <button class="secondary wide" data-view="myView" data-account-types="public">My reports</button>
