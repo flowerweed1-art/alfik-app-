@@ -694,7 +694,7 @@ async function saveMedication() {
 const db = client();
 const user = await currentUser();
 if (!db || !user) return say("medicationMessage", "Please sign in again.");
-if (!(await hasPlan("pro"))) return say("medicationMessage", "The private medication list requires Pro.");
+if (!(await hasPlan("premium"))) return say("medicationMessage", "The medication list requires Premium or Pro.");
 const petId = el("medicationPet").value;
 const name = el("medicationName").value.trim();
 if (!petId || !name) return say("medicationMessage", "Choose a pet and enter a medication name.");
@@ -718,7 +718,7 @@ async function loadMedicationList() {
 const db=client(), user=await currentUser(), list=el("medicationList"), petId=el("medicationPet")?.value;
 if(!db||!user||!list)return;
 list.replaceChildren();
-if(!(await hasPlan("pro"))){list.textContent="Medication lists require Pro.";return;}
+if(!(await hasPlan("premium"))){list.textContent="Medication lists require Premium or Pro.";return;}
 if(!petId){list.textContent="Choose a pet to view medications.";return;}
 try{
  const r=await db.from("alfik_animal_medications").select("id,medication_name,dose,frequency,start_date,end_date,instructions,active").eq("owner_id",user.id).eq("pet_id",petId).order("created_at",{ascending:false});
