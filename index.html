@@ -46,6 +46,11 @@ input[type=checkbox]{width:auto}
 .ai-card{background:#f0f8f4;border:1px solid #c7e2d4;border-radius:8px;padding:10px;margin:8px 0}
 nav{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
 nav button{flex:1 1 120px}
+.notification-nav{position:relative;white-space:nowrap}
+.notification-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:5px;padding:0 5px;border-radius:999px;background:#c93434;color:#fff;font-size:12px}
+.notification-count.hidden{display:none!important}
+.notification-item{border:1px solid #d6e5f2;border-radius:9px;padding:12px;margin:10px 0;background:#f8fbff}
+.notification-item p{margin:5px 0}
 footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 </style>
 </head>
@@ -75,6 +80,7 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <button class="secondary" data-view="homeView">Home</button>
 <button class="secondary" data-view="reportsView">All reports</button>
 <button class="secondary" data-view="myView">My ALFIK</button>
+<button class="secondary notification-nav" id="notificationBell" data-view="notificationsView" aria-label="Notifications">🔔 Notifications <span id="notificationCount" class="notification-count hidden">0</span></button>
 <button class="secondary" data-view="reportView">Report an animal</button>
 <!-- Email alerts temporarily hidden; use in-app notifications instead. -->
 <button class="secondary" data-view="accountView">Account</button>
@@ -87,6 +93,14 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <button class="found wide" data-view="reportView">📝 Report a lost or found animal</button>
 <button class="secondary wide" data-view="myView">👤 My ALFIK and my reports</button>
 <p class="note">Please don't include private contact details in public descriptions. Possible matches are suggestions, not confirmed identifications.</p>
+</section>
+
+<section id="notificationsView" class="hidden">
+<h2>🔔 Your notifications</h2>
+<p>Private in-app alerts for possible animal matches and care reminders.</p>
+<button class="primary wide" id="refreshNotificationsBtn" type="button">Refresh notifications</button>
+<p id="notificationsMessage" class="message" role="status"></p>
+<div id="notificationsList" aria-live="polite"><p>Loading notifications...</p></div>
 </section>
 
 <section id="reportView" class="hidden">
@@ -226,13 +240,14 @@ function element(tag,text){
 }
 
 function showView(id){
-  ["homeView","reportView","reportsView","myView","emailView","accountView"].forEach(view=>{
+  ["homeView","reportView","reportsView","myView","emailView","accountView","notificationsView"].forEach(view=>{
     $(view).classList.toggle("hidden",view!==id);
   });
 
   if(id==="reportsView")loadReports();
   if(id==="myView")loadMyReports();
   if(id==="emailView")loadEmailPreference();
+  if(id==="notificationsView")loadNotifications();
 
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -444,18 +459,9 @@ $("reportForm").addEventListener("submit",async event=>{
     if(!wasEditing){
       message("reportMessage","Your report has been published.");
 
-      // Email-alert function only. This does not call OpenAI.
-      try{
-        const alertResult=await supabaseClient.functions.invoke("alfik-match-alerts",{
-          body:{report_id:savedReportId}
-        });
-
-        if(alertResult.error){
-          console.warn("Email alert function reported an issue:",alertResult.error);
-        }
-      }catch(alertError){
-        console.warn("Email alerts could not be triggered:",alertError);
-      }
+      // Possible-match notifications are created by the Supabase database trigger.
+      // Do not invoke the email-alert Edge Function here.
+      await loadNotifications();
     }else{
       message("reportMessage","Your report has been updated.");
     }
@@ -996,6 +1002,76 @@ $("searchInput").addEventListener("keydown",event=>{
 $("animalFilter").addEventListener("change",applyFilters);
 $("typeFilter").addEventListener("change",applyFilters);
 
+
+async function loadNotifications(){
+  const list=$("notificationsList");
+  const count=$("notificationCount");
+  if(!list)return;
+  list.replaceChildren(element("p","Loading notifications..."));
+  message("notificationsMessage","");
+  try{
+    const {data:sessionData}=await supabaseClient.auth.getSession();
+    const user=sessionData.session?.user;
+    if(!user){
+      list.replaceChildren(element("p","Please sign in to view your notifications."));
+      if(count){count.textContent="0";count.classList.add("hidden");}
+      return;
+    }
+    const {data,error}=await supabaseClient
+      .from("alfik_in_app_notifications")
+      .select("id,notification_type,title,body,due_date,related_report_id,created_at,read_at")
+      .eq("user_id",user.id)
+      .order("created_at",{ascending:false})
+      .limit(50);
+    if(error)throw error;
+    const rows=data||[];
+    const unread=rows.filter(n=>!n.read_at).length;
+    if(count){
+      count.textContent=unread>99?"99+":String(unread);
+      count.classList.toggle("hidden",unread===0);
+    }
+    list.replaceChildren();
+    if(!rows.length){
+      list.appendChild(element("p","No notifications yet. Possible matches and care reminders will appear here."));
+      return;
+    }
+    rows.forEach(n=>{
+      const item=document.createElement("article");
+      item.className="notification-item";
+      item.appendChild(element("h3",(n.read_at?"":"🔵 ")+(n.title||"ALFIK notification")));
+      if(n.body)item.appendChild(element("p",n.body));
+      if(n.due_date)item.appendChild(element("p","Due date: "+n.due_date));
+      item.appendChild(element("p","Status: "+(n.read_at?"Read":"Unread")));
+      item.appendChild(element("p","Received: "+new Date(n.created_at).toLocaleString()));
+      if(!n.read_at){
+        const btn=element("button","Mark as read");
+        btn.className="secondary";
+        btn.addEventListener("click",async()=>{
+          btn.disabled=true;
+          const {error:updateError}=await supabaseClient
+            .from("alfik_in_app_notifications")
+            .update({read_at:new Date().toISOString()})
+            .eq("id",n.id)
+            .eq("user_id",user.id);
+          if(updateError){
+            btn.disabled=false;
+            message("notificationsMessage","Could not mark as read: "+updateError.message);
+          }else{
+            await loadNotifications();
+          }
+        });
+        item.appendChild(btn);
+      }
+      list.appendChild(item);
+    });
+  }catch(error){
+    list.replaceChildren(element("p","Could not load notifications: "+(error.message||"Please try again.")));
+    if(count)count.classList.add("hidden");
+  }
+}
+
+$("refreshNotificationsBtn").addEventListener("click",loadNotifications);
+
 async function loadEmailPreference(){
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
@@ -1146,6 +1222,7 @@ function showSignedIn(session){
       loadReports();
       loadMyReports();
       loadEmailPreference();
+      loadNotifications();
     }
   }else{
     activeReports=[];
@@ -1155,6 +1232,8 @@ function showSignedIn(session){
     $("myReportsList").textContent="Please sign in to view your reports.";
     $("matchResults").replaceChildren();
     $("emailAlertsEnabled").checked=false;
+    if($("notificationCount"))$("notificationCount").classList.add("hidden");
+    if($("notificationsList"))$("notificationsList").replaceChildren(element("p","Please sign in to view your notifications."));
 
     reportForm.reset();
     resetPhoto();
