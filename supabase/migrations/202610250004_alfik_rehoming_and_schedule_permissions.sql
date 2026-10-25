@@ -31,6 +31,24 @@ begin
 end;
 $$;
 
+drop policy if exists "ALFIK rescue members update animal care status" on public.alfik_rescue_animals;
+create policy "ALFIK rescue members update animal care status"
+on public.alfik_rescue_animals for update to authenticated
+using (
+  public.alfik_my_plan() in ('premium','pro')
+  and exists (
+    select 1 from public.alfik_org_members m
+    where m.org_id=alfik_rescue_animals.org_id and m.user_id=auth.uid()
+  )
+)
+with check (
+  public.alfik_my_plan() in ('premium','pro')
+  and exists (
+    select 1 from public.alfik_org_members m
+    where m.org_id=alfik_rescue_animals.org_id and m.user_id=auth.uid()
+  )
+);
+
 drop policy if exists "ALFIK users access their care schedules" on public.alfik_care_schedules;
 
 create policy "ALFIK users read their care schedules"
