@@ -273,6 +273,8 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <label for="petBreed">Breed (optional)</label><input id="petBreed" maxlength="100">
 <label for="petDob">Date of birth (optional)</label><input id="petDob" type="date">
 <label for="petMicrochip">Microchip number (optional)</label><input id="petMicrochip" maxlength="100">
+<label for="petNeuteringStatus">Neutering status</label><select id="petNeuteringStatus"><option value="unknown">Unknown / not confirmed</option><option value="neutered">Neutered / spayed</option><option value="not_neutered">Not neutered</option></select>
+<label for="petNeuteredDate">Date neutered (optional)</label><input id="petNeuteredDate" type="date">
 <label for="petNotes">Notes (optional)</label><textarea id="petNotes" rows="3" maxlength="3000"></textarea>
 <button class="primary wide" type="submit">Save pet profile</button>
 </form>
@@ -342,8 +344,12 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <h3>Rescue animal records</h3>
 <label for="rescueAnimalName">Animal name or reference</label><input id="rescueAnimalName" maxlength="150">
 <label for="rescueAnimalType">Animal type</label><select id="rescueAnimalType"><option value="cat">Cat</option><option value="dog">Dog</option><option value="other">Other</option></select>
-<label for="rescueAnimalStatus">Status</label><select id="rescueAnimalStatus"><option value="in_care">In care</option><option value="foster">In foster</option><option value="available">Available for adoption</option><option value="reunited">Reunited</option><option value="closed">Closed</option></select>
+<label for="rescueAnimalStatus">Status</label><select id="rescueAnimalStatus"><option value="in_care">In care</option><option value="foster">In foster</option><option value="available">Available for adoption</option><option value="reunited">Reunited</option><option value="rehomed">Rehomed</option><option value="closed">Closed</option></select>
+<label for="rescueAnimalMicrochip">Microchip number (optional)</label><input id="rescueAnimalMicrochip" maxlength="100">
+<label for="rescueAnimalNeuteringStatus">Neutering status</label><select id="rescueAnimalNeuteringStatus"><option value="unknown">Unknown / not confirmed</option><option value="neutered">Neutered / spayed</option><option value="not_neutered">Not neutered</option></select>
+<label for="rescueAnimalNeuteredDate">Date neutered (optional)</label><input id="rescueAnimalNeuteredDate" type="date">
 <label for="rescueAnimalNotes">Notes</label><textarea id="rescueAnimalNotes" rows="3" maxlength="3000"></textarea>
+<p class="note">Rehomed animals should have reminders disabled in their care settings.</p>
 <button class="primary wide" id="saveRescueAnimalBtn" type="button">Save rescue animal record</button>
 <p id="rescueAnimalMessage" class="message" role="status"></p>
 <div id="rescueAnimalList">Rescue animal records will appear here.</div>
