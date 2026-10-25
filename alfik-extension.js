@@ -234,6 +234,8 @@ try {
       addText(item, "Breed", pet.breed);
       addText(item, "Date of birth", pet.date_of_birth);
       addText(item, "Microchip", pet.microchip);
+      addText(item, "Neutering status", ({neutered:"Neutered / spayed",not_neutered:"Not neutered",unknown:"Unknown / not confirmed"})[pet.neutering_status] || "Unknown / not confirmed");
+      addText(item, "Date neutered", pet.neutered_date);
       addText(item, "Notes", pet.notes);
     }
 
@@ -280,6 +282,8 @@ const pet = {
   breed: el("petBreed").value.trim() || null,
   date_of_birth: el("petDob").value || null,
   microchip: el("petMicrochip").value.trim() || null,
+  neutering_status: el("petNeuteringStatus")?.value || "unknown",
+  neutered_date: el("petNeuteredDate")?.value || null,
   notes: el("petNotes").value.trim() || null
 };
 
@@ -547,6 +551,10 @@ const animal = {
   name,
   species: el("rescueAnimalType").value,
   status: el("rescueAnimalStatus").value,
+  microchip: el("rescueAnimalMicrochip")?.value.trim() || null,
+  neutering_status: el("rescueAnimalNeuteringStatus")?.value || "unknown",
+  neutered_date: el("rescueAnimalNeuteredDate")?.value || null,
+  care_reminders_enabled: el("rescueAnimalStatus").value !== "rehomed",
   notes: el("rescueAnimalNotes").value.trim() || null
 };
 
@@ -583,7 +591,7 @@ if (!orgId) {
 try {
   const result = await db
     .from("alfik_rescue_animals")
-    .select("name,species,status,notes")
+    .select("name,species,status,notes,microchip,neutering_status,neutered_date")
     .eq("org_id", orgId)
     .order("name");
 
@@ -593,6 +601,9 @@ try {
     const item = card(list, animal.name);
     addText(item, "Species", animal.species);
     addText(item, "Status", animal.status);
+    addText(item, "Microchip", animal.microchip);
+    addText(item, "Neutering status", ({neutered:"Neutered / spayed",not_neutered:"Not neutered",unknown:"Unknown / not confirmed"})[animal.neutering_status] || "Unknown / not confirmed");
+    addText(item, "Date neutered", animal.neutered_date);
     addText(item, "Notes", animal.notes);
   });
 
