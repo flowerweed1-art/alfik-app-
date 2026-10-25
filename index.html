@@ -250,12 +250,24 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <p id="verificationAdminMessage" class="message" role="status"></p>
 <div id="verificationQueue">Checking administrator access...</div>
 </div>
+<div class="feature-panel hidden" id="verificationHistoryPanel">
+<h3>Admin history: rescue verification</h3>
+<p>Completed approvals and rejections are kept here, including rejection reasons.</p>
+<button class="secondary" id="refreshVerificationHistoryBtn" type="button">Refresh verification history</button>
+<div id="verificationHistory">Loading completed decisions...</div>
+</div>
 <div class="feature-panel hidden" id="memberReportsAdminPanel">
 <h3>ALFIK administrator: member safety reports</h3>
 <p>Review reports about harassment, threats, scams or other conduct concerns. Report details are private and should only be accessed for moderation.</p>
 <button class="secondary" id="refreshMemberReportsBtn" type="button">Refresh safety reports</button>
 <p id="memberReportsAdminMessage" class="message" role="status"></p>
 <div id="memberReportsAdminQueue">Checking administrator access...</div>
+</div>
+<div class="feature-panel hidden" id="memberReportsAdminHistoryPanel">
+<h3>Admin history: member safety reports</h3>
+<p>Actioned and dismissed reports are retained for moderation history.</p>
+<button class="secondary" id="refreshMemberReportsHistoryBtn" type="button">Refresh safety history</button>
+<div id="memberReportsAdminHistory">Loading completed reports...</div>
 </div>
 <p id="adminAccessNote" class="note">If no review panels appear, this account may not have administrator permissions.</p>
 </section>
