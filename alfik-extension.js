@@ -196,13 +196,16 @@ const list = el("petList");
 const petSelect = el("healthPet");
 
 if (list) list.replaceChildren();
-if (petSelect) {
-  petSelect.replaceChildren();
+["healthPet", "medicationPet", "carePet"].forEach(selectId => {
+  const target = el(selectId);
+  if (!target) return;
+  target.replaceChildren();
   const option = document.createElement("option");
   option.value = "";
   option.textContent = "Select a pet";
-  petSelect.appendChild(option);
-}
+  target.appendChild(option);
+});
+
 
 const user = await currentUser();
 if (!user) return;
@@ -478,6 +481,7 @@ try {
   }
 
   await loadRescueAnimals();
+  await loadRescueCareSchedules();
   await loadOrganisationVerificationStatus();
   await loadVerificationAdminQueue();
 } catch (error) {
