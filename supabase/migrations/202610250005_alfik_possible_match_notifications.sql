@@ -23,8 +23,8 @@ declare
   match_location text;
 begin
   if new.owner_id is null
-     or lower(coalesce(new.report_type, '')) not in ('lost','found')
-     or lower(coalesce(new.status, 'active')) in ('resolved','closed','rehomed','reunited')
+     or lower(coalesce(new.report_type::text, '')) not in ('lost','found')
+     or lower(coalesce(new.status::text, 'active')) in ('resolved','closed','rehomed','reunited')
      or nullif(btrim(new.location_text), '') is null then
     return new;
   end if;
@@ -38,10 +38,10 @@ begin
     where r.id <> new.id
       and r.owner_id is not null
       and r.owner_id <> new.owner_id
-      and lower(coalesce(r.report_type, '')) in ('lost','found')
-      and lower(coalesce(r.report_type, '')) <> lower(coalesce(new.report_type, ''))
-      and lower(coalesce(r.animal_type, '')) = lower(coalesce(new.animal_type, ''))
-      and lower(coalesce(r.status, 'active')) not in ('resolved','closed','rehomed','reunited')
+      and lower(coalesce(r.report_type::text, '')) in ('lost','found')
+      and lower(coalesce(r.report_type::text, '')) <> lower(coalesce(new.report_type::text, ''))
+      and lower(coalesce(r.animal_type::text, '')) = lower(coalesce(new.animal_type::text, ''))
+      and lower(coalesce(r.status::text, 'active')) not in ('resolved','closed','rehomed','reunited')
       and nullif(btrim(r.location_text), '') is not null
       and (
         lower(btrim(r.location_text)) = lower(btrim(new.location_text))
@@ -59,13 +59,13 @@ begin
       (user_id, notification_type, title, body, related_report_id)
     values
       (m.owner_id, 'possible_match', 'Possible animal match',
-       'A new ' || lower(new.report_type) || ' report for ' || new_label ||
+       'A new ' || lower(new.report_type::text) || ' report for ' || new_label ||
        ' may match a report you posted near ' || match_location ||
        '. Compare the reports carefully; this is only a suggestion.',
        new.id),
       (new.owner_id, 'possible_match', 'Possible animal match',
-       'Your ' || lower(new.report_type) || ' report may match a ' ||
-       lower(m.report_type) || ' report for ' || old_label ||
+       'Your ' || lower(new.report_type::text) || ' report may match a ' ||
+       lower(m.report_type::text) || ' report for ' || old_label ||
        ' near ' || coalesce(m.location_text, match_location) ||
        '. Compare the reports carefully; this is only a suggestion.',
        m.id)
