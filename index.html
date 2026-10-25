@@ -400,6 +400,19 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <p id="rescueCareMessage" class="message" role="status"></p>
 <div id="rescueCareList">Rescue reminders will appear here.</div>
 </div>
+<div class="feature-panel">
+<h3>Rescue medication list</h3>
+<label for="rescueMedicationAnimal">Rescue animal</label><select id="rescueMedicationAnimal"><option value="">Choose an animal</option></select>
+<label for="rescueMedicationName">Medication name</label><input id="rescueMedicationName" maxlength="160">
+<label for="rescueMedicationDose">Dose (optional)</label><input id="rescueMedicationDose" maxlength="160">
+<label for="rescueMedicationFrequency">How often? (optional)</label><input id="rescueMedicationFrequency" maxlength="160">
+<label for="rescueMedicationStart">Start date (optional)</label><input id="rescueMedicationStart" type="date">
+<label for="rescueMedicationEnd">End date (optional)</label><input id="rescueMedicationEnd" type="date">
+<label for="rescueMedicationInstructions">Instructions (optional)</label><textarea id="rescueMedicationInstructions" rows="2" maxlength="1500"></textarea>
+<button class="primary wide" id="saveRescueMedicationBtn" type="button">Save rescue medication</button>
+<p id="rescueMedicationMessage" class="message" role="status"></p>
+<div id="rescueMedicationList">Rescue medications will appear here.</div>
+</div>
 <p id="rescuePlanMessage" class="note"></p>
 </div>
 </section>
