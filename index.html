@@ -47,6 +47,7 @@ input[type=checkbox]{width:auto}
 .ai-card{background:#f0f8f4;border:1px solid #c7e2d4;border-radius:8px;padding:10px;margin:8px 0}
 nav{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
 nav button{flex:1 1 120px}
+.notification-nav{white-space:nowrap}
 footer{text-align:center;color:#52697c;padding:24px 16px;font-size:13px;border-top:1px solid #d6e5f2;background:#fff}
 nav{gap:6px}
 nav button{flex:1 1 135px;min-height:44px}
@@ -96,6 +97,7 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <button class="secondary" data-view="homeView">Home</button>
 <button class="secondary" data-view="reportsView">All reports</button>
 <button class="secondary" data-view="myView" data-account-types="public">My ALFIK</button>
+<button class="secondary notification-nav" id="notificationBell" data-view="homeView" aria-label="Notifications" data-account-types="public,rescue,veterinary">🔔 Notifications</button>
 <button class="secondary" data-view="messagesView" data-account-types="public,rescue,veterinary">Private messages</button>
 <button class="secondary" data-view="reportView" data-account-types="public">Report an animal</button>
 <!-- Email alerts are temporarily hidden while ALFIK moves to in-app notifications. -->
