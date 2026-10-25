@@ -450,9 +450,11 @@ function message(id,text){
 let alfikCaptchaToken="";
 window.onAlfikCaptchaSuccess=function(token){alfikCaptchaToken=token||"";};
 window.onAlfikCaptchaExpired=function(){alfikCaptchaToken="";};
-window.onAlfikCaptchaError=function(){
+window.onAlfikCaptchaError=function(errorCode){
   alfikCaptchaToken="";
-  message("accountMessage","Cloudflare security check could not load. Please refresh the page and try again.");
+  console.error("ALFIK Turnstile error code:",errorCode);
+  message("accountMessage","Cloudflare security check could not load (error "+(errorCode||"unknown")+"). Please tell ALFIK support this error code.");
+  return true;
 };
 function resetAlfikCaptcha(){
   alfikCaptchaToken="";
