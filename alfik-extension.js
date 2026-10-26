@@ -1750,12 +1750,19 @@ function ensureAlfikPushPanel() {
   if (!el("alfikPushPanel") && document.querySelector("main")) {
     const panel = document.createElement("section");
     panel.id = "alfikPushPanel";
-    panel.innerHTML = '<h2>Phone notifications</h2><p class="note">ALFIK uses one phone-notification setting for important updates, including animal matches and account alerts. Once enabled, notifications are set up automatically on this device.</p><button type="button" class="primary wide" id="alfikEnablePushBtn">Turn on phone notifications</button><p id="alfikPushMessage" class="note" aria-live="polite"></p>';
+    panel.innerHTML = '<h2>Phone notifications</h2><p class="note">Allow ALFIK notifications once to receive important updates on this device.</p><button type="button" class="primary wide" id="alfikEnablePushBtn">Allow phone notifications</button><p id="alfikPushMessage" class="note" aria-live="polite"></p>';
     const main = document.querySelector("main");
     const firstSection = main.querySelector("section");
     if (firstSection) firstSection.insertAdjacentElement("afterend", panel);
     else main.prepend(panel);
     el("alfikEnablePushBtn").addEventListener("click", enableAlfikPush);
+  }
+
+  // Keep the permission prompt only for people who have not granted it yet.
+  // Once permission is granted, hide the entire setup panel from normal users.
+  const panel = el("alfikPushPanel");
+  if (panel && "Notification" in window && Notification.permission === "granted") {
+    panel.hidden = true;
   }
 
   const db = client();
@@ -1845,17 +1852,9 @@ async function syncAlfikPushForSignedInUser(requestPermission) {
     }, { onConflict: "endpoint" });
     if (saveError) throw saveError;
 
-    status.textContent = "Phone notifications are enabled on this device. ALFIK will set them up automatically when you sign in.";
-    let test = el("alfikTestPushBtn");
-    if (!test) {
-      test = document.createElement("button");
-      test.type = "button";
-      test.id = "alfikTestPushBtn";
-      test.className = "secondary wide";
-      test.textContent = "Send me a test notification";
-      test.addEventListener("click", sendAlfikTestPush);
-      el("alfikPushPanel").appendChild(test);
-    }
+    status.textContent = "Phone notifications are enabled on this device.";
+    const panel = el("alfikPushPanel");
+    if (panel) panel.hidden = true;
   } catch (error) {
     status.textContent = error && error.message ? error.message : "Could not set up phone notifications.";
     if (button && Notification.permission !== "granted") button.hidden = false;
