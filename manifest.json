@@ -1,0 +1,11 @@
+{
+  "name": "ALFIK | Animal Reunification",
+  "short_name": "ALFIK",
+  "description": "Animals Lost and Found Information Keeper",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f7fb",
+  "theme_color": "#0d2f50",
+  "icons": []
+}
