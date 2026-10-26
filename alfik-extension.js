@@ -163,32 +163,89 @@ await loadCareNotifications();
 }
 
 async function renderPayPalButtons() {
-const config = window.ALFIK_CONFIG || {};
+  const config = window.ALFIK_CONFIG || {};
+  const premium = el("paypal-premium");
+  const pro = el("paypal-pro");
+  const messageNode = el("billingMessage");
 
-const premium = el("paypal-premium");
-const pro = el("paypal-pro");
+  if (!premium || !pro) return;
 
-if (premium) {
-  premium.textContent =
-    config.PAYPAL_CLIENT_ID &&
-    config.PAYPAL_CLIENT_ID !== "REPLACE_WITH_PAYPAL_CLIENT_ID"
-      ? "PayPal configuration detected. Checkout will be enabled after server verification is configured."
-      : "PayPal checkout is not configured yet.";
-}
+  function makeButton(container, plan, label) {
+    container.replaceChildren();
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "primary";
+    button.textContent = label;
+    button.addEventListener("click", async () => {
+      const db = client();
+      const user = await currentUser();
 
-if (pro) {
-  pro.textContent =
-    config.PAYPAL_CLIENT_ID &&
-    config.PAYPAL_CLIENT_ID !== "REPLACE_WITH_PAYPAL_CLIENT_ID"
-      ? "PayPal configuration detected. Checkout will be enabled after server verification is configured."
-      : "PayPal checkout is not configured yet.";
-}
+      if (!db || !user) {
+        say("billingMessage", "Please sign in to ALFIK before choosing a paid plan.");
+        return;
+      }
 
-say(
-  "billingMessage",
-  "Subscriptions are not active until PayPal and secure server-side verification are configured."
-);
+      button.disabled = true;
+      premium.querySelector("button") && (premium.querySelector("button").disabled = true);
+      pro.querySelector("button") && (pro.querySelector("button").disabled = true);
+      say("billingMessage", "Connecting securely to PayPal...");
 
+      try {
+        const { data, error } = await db.functions.invoke("alfik-create-subscription", {
+          body: { plan }
+        });
+
+        if (error) {
+          let detail = error.message || "Checkout could not start.";
+          if (error.context && typeof error.context.json === "function") {
+            try {
+              const body = await error.context.json();
+              if (body && body.error) detail = body.error;
+            } catch (_) {}
+          }
+          throw new Error(detail);
+        }
+
+        if (!data || !data.approvalUrl || !data.subscriptionId) {
+          throw new Error((data && data.error) || "PayPal did not return an approval link.");
+        }
+
+        say("billingMessage", "Opening PayPal. Approve the subscription there to continue.");
+        window.location.assign(data.approvalUrl);
+      } catch (error) {
+        say("billingMessage", (error && error.message) || "Checkout could not start. Please try again.");
+        [premium, pro].forEach(box => {
+          const btn = box.querySelector("button");
+          if (btn) btn.disabled = false;
+        });
+      }
+    });
+    container.appendChild(button);
+  }
+
+  const configured = config.PAYPAL_CLIENT_ID &&
+    config.PAYPAL_CLIENT_ID !== "REPLACE_WITH_PAYPAL_CLIENT_ID";
+
+  if (!configured) {
+    premium.textContent = "PayPal checkout is not configured yet.";
+    pro.textContent = "PayPal checkout is not configured yet.";
+    if (messageNode) messageNode.textContent = "PayPal configuration is missing.";
+    return;
+  }
+
+  makeButton(premium, "premium", "Subscribe to Premium · £5.99/month");
+  makeButton(pro, "pro", "Subscribe to Pro · £9.99/month");
+
+  const returnState = new URLSearchParams(window.location.search).get("subscription");
+  if (messageNode) {
+    if (returnState === "return") {
+      messageNode.textContent = "You've returned from PayPal. Paid access activates only after ALFIK verifies the PayPal confirmation.";
+    } else if (returnState === "cancelled") {
+      messageNode.textContent = "Checkout was cancelled. No paid access has been activated.";
+    } else {
+      messageNode.textContent = "Choose a plan to continue to PayPal. Paid access activates after verified confirmation.";
+    }
+  }
 }
 
 async function loadPetWorkspace() {
