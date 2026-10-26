@@ -160,7 +160,7 @@ nav.menu-collapsed{display:none}
 </button>
 <nav id="alfikMainNav">
 <button class="secondary" data-view="homeView">Home</button>
-<button class="secondary" data-view="reportsView">All reports</button>
+<button class="secondary" data-view="reportsView">🔎 Find an animal</button>
 <button class="secondary" data-view="myView" data-account-types="public">My ALFIK</button>
 <button class="secondary notification-nav" id="notificationBell" data-view="homeView" aria-label="Notifications" data-account-types="public,rescue,veterinary">🔔 Notifications</button>
 <button class="secondary" data-view="messagesView" data-account-types="public,rescue,veterinary">Private messages</button>
@@ -219,9 +219,16 @@ nav.menu-collapsed{display:none}
 <p id="careNotificationsMessage" class="message" role="status"></p>
 <div id="careNotificationsList">Sign in to view your care notifications.</div>
 </div>
-<button class="primary wide" data-view="reportsView">🔎 View all animal reports</button>
-<button class="found wide" data-view="reportView" data-account-types="public">Report a lost or found animal</button>
-<button class="secondary wide" data-view="myView" data-account-types="public">My reports</button>
+<div class="feature-panel" id="urgentAnimalHelp">
+  <h3>What do you need help with?</h3>
+  <p>Choose the option that best fits. You can take your time and change your search whenever you need.</p>
+  <button class="primary wide" type="button" data-view="reportsView" data-set-report-filter="lost">🔎 Find my lost animal</button>
+  <button class="secondary wide" type="button" data-view="reportsView" data-set-report-filter="found">🐾 I've found an animal</button>
+  <button class="lost wide" type="button" data-account-types="public" onclick="startNewReport('lost')">Report my lost animal</button>
+  <button class="found wide" type="button" data-account-types="public" onclick="startNewReport('found')">Report an animal I've found</button>
+  <button class="secondary wide" type="button" data-account-types="public" onclick="startNewReport('found_deceased')">Report an animal found deceased</button>
+  <button class="secondary wide" type="button" data-view="myView" data-account-types="public">My reports and updates</button>
+</div>
 <button class="secondary wide hidden" id="rescueHomeShortcut" data-view="rescueView" data-account-types="rescue">Open rescue workspace</button>
 <button class="secondary wide hidden" id="vetHomeShortcut" data-view="vetView" data-account-types="veterinary">Open veterinary workspace</button>
 <div class="feature-panel" id="verifiedRescueDirectory">
@@ -276,17 +283,17 @@ nav.menu-collapsed{display:none}
 </section>
 
 <section id="reportsView" class="hidden">
-<h2>Community animal reports</h2>
-<p>Search active reports shared on ALFIK.</p>
-<label for="searchInput">Search name, town or description</label>
-<input id="searchInput" type="search" placeholder="e.g. black cat, Buckhaven">
+<h2>Find an animal</h2>
+<p>Search reports of lost and found animals. If you are worried or upset, start with the option above that best matches your situation.</p>
+<label for="searchInput">Name, town, area or details</label>
+<input id="searchInput" type="search" placeholder="Try a town, street, colour or animal name" autocomplete="off">
 <label for="animalFilter">Animal type</label>
 <select id="animalFilter"><option value="">All animals</option><option value="cat">Cats</option><option value="dog">Dogs</option><option value="other">Other animals</option></select>
-<label for="typeFilter">Report type</label>
-<select id="typeFilter"><option value="">All reports</option><option value="lost">Lost animals</option><option value="found">Found animals</option><option value="found_deceased">Found deceased</option></select>
-<button class="primary wide" id="searchBtn" type="button">Search reports</button>
-<button class="secondary wide" id="clearBtn" type="button">Clear filters</button>
-<h3>Possible text matches</h3>
+<label for="typeFilter">Show me</label>
+<select id="typeFilter"><option value="">Lost and found animals</option><option value="lost">Lost animals only</option><option value="found">Found animals only</option><option value="found_deceased">Animals found deceased</option></select>
+<button class="primary wide" id="searchBtn" type="button">Search animals</button>
+<button class="secondary wide" id="clearBtn" type="button">Clear search</button>
+<h3>Possible matches</h3>
 <p class="note">Suggestions based on animal type, location, descriptions and dates. These are not confirmed matches.</p>
 <div id="matchResults" aria-live="polite"></div>
 <h3>Animal reports</h3>
@@ -1183,7 +1190,7 @@ function renderMatches(){
   lost.forEach(a=>found.forEach(b=>{
     if(a.animal_type!==b.animal_type)return;
     const result=similarity(a,b);
-    if(result.score>=7)matches.push({a,b,score:result.score,reasons:result.reasons});
+    if(result.score>=5)matches.push({a,b,score:result.score,reasons:result.reasons});
   }));
   matches.sort((a,b)=>b.score-a.score);
   matches.slice(0,10).forEach(match=>{
@@ -1522,9 +1529,15 @@ $("clearBtn").addEventListener("click",()=>{
   $("typeFilter").value="";
   applyFilters();
 });
+$("searchInput").addEventListener("input",applyFilters);
 $("searchInput").addEventListener("keydown",event=>{
   if(event.key==="Enter"){event.preventDefault();applyFilters();}
 });
+document.querySelectorAll("[data-set-report-filter]").forEach(button=>button.addEventListener("click",()=>{
+  $("typeFilter").value=button.dataset.setReportFilter;
+  $("searchInput").value="";
+  applyFilters();
+}));
 $("animalFilter").addEventListener("change",applyFilters);
 $("typeFilter").addEventListener("change",applyFilters);
 
