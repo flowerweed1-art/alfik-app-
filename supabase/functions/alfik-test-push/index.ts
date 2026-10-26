@@ -56,17 +56,19 @@ Deno.serve(async (req) => {
           url: "/"
         }));
         sent++;
+        console.log("Push service accepted notification for subscription", row.id);
       } catch (err) {
         failed++;
         const statusCode = (err as { statusCode?: number }).statusCode;
         if (statusCode === 404 || statusCode === 410) {
           await admin.from("alfik_push_subscriptions").delete().eq("id", row.id).eq("user_id", user.id);
         }
-        console.error("Push delivery failed:", statusCode || "unknown");
+        const detail = (err as { message?: string; body?: string }).body || (err as { message?: string }).message || "Unknown push error";
+        console.error("Push delivery failed:", statusCode || "unknown", detail);
       }
     }
 
-    return new Response(JSON.stringify({ sent, failed }), { status: sent ? 200 : 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ sent, failed, message: sent ? "Push service accepted the request; this does not confirm the phone displayed it." : "Push delivery failed. Check results and function logs." }), { status: sent ? 200 : 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
     console.error("Push function error:", err);
     return new Response(JSON.stringify({ error: "Push sending failed. Check the function logs." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
