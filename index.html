@@ -268,6 +268,11 @@ nav.menu-collapsed{display:none}
 <button id="cancelReportBtn" class="secondary wide" type="button">Cancel</button>
 </form>
 <p id="reportMessage" class="message" role="status"></p>
+<div id="reportAdvicePanel" class="feature-panel hidden" aria-live="polite">
+  <h3 id="reportAdviceHeading">Helpful advice for your report</h3>
+  <p id="reportAdviceIntro">Here is ALFIK's guidance for this situation.</p>
+  <a id="reportAdviceLink" href="#" target="_blank" rel="noopener noreferrer">Read ALFIK's advice ↗</a>
+</div>
 </section>
 
 <section id="reportsView" class="hidden">
@@ -770,7 +775,23 @@ async function uploadAnimalPhoto(file,userId){
   return supabaseClient.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
+function showReportAdvicePanel(report){
+  const panel=$("reportAdvicePanel");
+  const heading=$("reportAdviceHeading");
+  const intro=$("reportAdviceIntro");
+  const link=$("reportAdviceLink");
+  if(!panel||!heading||!intro||!link)return;
+  const advice=reportAdviceFor(report);
+  if(!advice){panel.classList.add("hidden");return;}
+  heading.textContent="Helpful advice for your report";
+  intro.textContent="Your report has been published. These practical next steps may help while you look for the animal or help one you've found.";
+  link.href=advice.url;
+  link.textContent=advice.title+" ↗";
+  panel.classList.remove("hidden");
+}
+
 function startNewReport(type){
+  $("reportAdvicePanel")?.classList.add("hidden");
   editingReportId=null;
   editingPhotoUrl=null;
   editingOriginalStatus="active";
@@ -870,6 +891,7 @@ $("reportForm").addEventListener("submit",async event=>{
 
     if(!wasEditing){
       message("reportMessage","Your report has been published.");
+      showReportAdvicePanel({report_type:reportStatus,animal_type:animal});
       try{
         const alertResult=await supabaseClient.functions.invoke("alfik-match-alerts",{body:{report_id:savedReportId}});
         if(alertResult.error)console.warn("Email alert function reported an issue:",alertResult.error);
