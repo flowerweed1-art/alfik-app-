@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d2f50">
+<link rel="manifest" href="/manifest.json">
 <title>ALFIK | Animal Reunification</title>
 <style>
 *{box-sizing:border-box}
@@ -1702,5 +1703,16 @@ supabaseClient.auth.onAuthStateChange((event,session)=>showSignedIn(session));
 <script src="alfik-config.js"></script>
 <script src="alfik-extension.js?v=20261026-design-polish2"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script>
+/* Register ALFIK's service worker where supported. */
+(function ALFIKServiceWorkerRegistration(){
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("/service-worker.js").catch(function(error){
+      console.warn("ALFIK service worker registration failed:", error);
+    });
+  });
+})();
+</script>
 </body>
 </html>
