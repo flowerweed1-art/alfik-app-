@@ -67,6 +67,44 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 .premium-promo.compact{padding:10px 14px}
 .premium-promo.compact h3{font-size:16px}
 
+
+/* ALFIK visual polish: clean, calm, premium, mobile-first */
+:root{--alfik-navy:#0b2945;--alfik-blue:#1769aa;--alfik-blue-dark:#125487;--alfik-sky:#eaf4fc;--alfik-border:#d5e4f0;--alfik-ink:#183047;--alfik-muted:#5b7082;--alfik-radius:18px}
+html{scroll-behavior:smooth}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f3f7fb;color:var(--alfik-ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+header{background:linear-gradient(145deg,#081f36 0%,#0d2f50 55%,#174c76 100%);padding:34px 18px 30px;position:relative;overflow:hidden;box-shadow:0 8px 28px #08243b25}
+header:after{content:"";position:absolute;width:250px;height:250px;right:-100px;bottom:-155px;border:1px solid #ffffff20;border-radius:50%;box-shadow:0 0 0 25px #ffffff08,0 0 0 52px #ffffff06;pointer-events:none}
+header img{width:112px;border:3px solid #ffffffd9;box-shadow:0 8px 24px #06182c55;position:relative;z-index:1}
+header h1{font-size:clamp(30px,7vw,42px);letter-spacing:5px;font-weight:800;line-height:1.15}
+header p{color:#e7f2fc;font-size:clamp(14px,3.5vw,17px);margin:8px 0 0}
+header p:last-child{color:#fff;font-weight:600}
+main{max-width:900px;padding:20px 15px 32px}
+nav{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:10px;margin:0 -2px 18px;background:#f3f7fbef;backdrop-filter:blur(14px);border:1px solid #dbe7f1;border-radius:18px;box-shadow:0 6px 22px #173b5b0b}
+nav button{min-width:0;min-height:48px;margin:0;padding:11px 10px;border-radius:12px;font-size:14px;line-height:1.25;font-weight:700}
+button{font-family:inherit;border-radius:12px;padding:12px 16px;font-size:15px;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #64a9e5;outline-offset:2px}
+button.primary{background:linear-gradient(135deg,#1769aa,#125487);box-shadow:0 4px 10px #1769aa2b}
+button.primary:hover{background:#0e4c7e;box-shadow:0 6px 15px #1769aa38}
+button.secondary{background:#fff;color:#164f7a;border:1px solid #c9dceb}
+button.secondary:hover{background:#eaf4fc;border-color:#9fc4e2}
+section{border:1px solid #dce7f0;border-radius:var(--alfik-radius);padding:clamp(16px,4vw,25px);margin-bottom:18px;box-shadow:0 5px 22px #163d5b0b}
+h2{font-size:clamp(23px,5vw,30px);letter-spacing:-.5px;color:var(--alfik-navy);line-height:1.25}
+h3{font-size:18px;line-height:1.3;color:var(--alfik-blue-dark)}
+p{margin-top:8px}
+.feature-panel{background:linear-gradient(145deg,#f7fbff,#edf5fc);border:1px solid #d7e6f2;border-radius:14px;padding:16px;margin:14px 0}
+.report-card{border:1px solid #d9e5ef;border-left:5px solid var(--alfik-blue);border-radius:14px;padding:16px;margin:14px 0;box-shadow:0 4px 14px #163d5b0a}
+input,select,textarea{min-height:46px;border:1px solid #c6d6e3;border-radius:10px;padding:12px 13px}
+textarea{min-height:110px}
+label{font-size:14px;color:#29465e}
+.badge{padding:5px 10px;letter-spacing:.2px}
+.premium-promo{border:1px solid #9bc7e8;border-top:4px solid var(--alfik-blue);border-radius:16px;background:linear-gradient(135deg,#eaf5ff 0%,#fff 78%);box-shadow:0 8px 24px #1769aa12;padding:18px}
+.premium-promo h3{font-size:20px;color:var(--alfik-navy)}
+.premium-promo .premium-promo-price{font-size:26px;letter-spacing:-.5px;color:var(--alfik-blue-dark)}
+footer{background:#fff;color:var(--alfik-muted);padding:26px 16px;border-top:1px solid #dce7f0}
+@media(min-width:560px){nav{grid-template-columns:repeat(3,minmax(0,1fr));padding:12px}nav button{font-size:14px}}
+@media(min-width:760px){header{padding:38px 20px 34px}main{padding-top:24px}nav{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -1500,7 +1538,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>showSignedIn(session));
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261026-premium-promo2"></script>
+<script src="alfik-extension.js?v=20261026-design-polish1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </body>
 </html>
