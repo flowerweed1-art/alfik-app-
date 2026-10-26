@@ -58,6 +58,15 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 .feature-grid{display:grid;grid-template-columns:1fr;gap:10px}
 .feature-panel{background:#f6faff;border:1px solid #d6e5f2;border-radius:8px;padding:13px;margin:12px 0}
 @media(min-width:560px){.feature-grid{grid-template-columns:1fr 1fr}}
+.premium-promo{border:2px solid #9bc7e8;background:linear-gradient(135deg,#f1f8ff,#fff);padding:16px}
+.premium-promo h3{margin:0 0 6px;color:#14558b}
+.premium-promo .premium-promo-price{font-size:22px;font-weight:bold;color:#1769aa;margin:8px 0}
+.premium-promo .premium-promo-actions{display:flex;gap:8px;flex-wrap:wrap}
+.premium-promo .premium-promo-actions button{flex:1 1 140px}
+.premium-promo.compact .premium-promo-details{display:none}
+.premium-promo.compact{padding:10px 14px}
+.premium-promo.compact h3{font-size:16px}
+
 </style>
 </head>
 <body>
@@ -112,6 +121,18 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 <section id="homeView">
 <h2>Welcome to ALFIK 🐾</h2>
 <p>Helping lost animals find their way home.</p>
+<div class="feature-panel premium-promo hidden" id="premiumPromo" data-account-types="public,rescue,veterinary" aria-live="polite">
+  <h3 id="premiumPromoHeading">Make more of your ALFIK account 🐾</h3>
+  <div class="premium-promo-details">
+    <p>Keep your pet profiles and important details together with Premium.</p>
+    <p class="premium-promo-price">£5.99/month</p>
+    <p class="note">Free lost-and-found reports and searches always remain available. Premium features are optional.</p>
+  </div>
+  <div class="premium-promo-actions">
+    <button class="primary" id="premiumPromoUpgradeBtn" type="button" data-view="billingView">Explore Premium</button>
+    <button class="secondary" id="premiumPromoDismissBtn" type="button">Keep this reminder compact</button>
+  </div>
+</div>
 <div class="feature-panel" id="careNotificationsPanel" tabindex="-1">
 <h3>Your notifications</h3>
 <p class="note">Private in-app alerts for possible animal matches and care reminders for your pets or rescue animals.</p>
@@ -1479,7 +1500,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>showSignedIn(session));
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261025-care3"></script>
+<script src="alfik-extension.js?v=20261026-premium-promo1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </body>
 </html>
