@@ -1183,11 +1183,20 @@ function similarity(a,b){
 function renderMatches(){
   const box=$("matchResults");
   box.replaceChildren();
+  const query=normalise($("searchInput").value);
   const lost=activeReports.filter(r=>r.report_type==="lost");
   const found=activeReports.filter(r=>r.report_type==="found");
   const matches=[];
   lost.forEach(a=>found.forEach(b=>{
     if(a.animal_type!==b.animal_type)return;
+    // When a town or location is searched, only show pairings where BOTH reports
+    // mention that searched location. This prevents distant-town suggestions
+    // from cluttering a location-specific search.
+    if(query){
+      const lostLocation=normalise(a.location_text||"");
+      const foundLocation=normalise(b.location_text||"");
+      if(!lostLocation.includes(query)||!foundLocation.includes(query))return;
+    }
     const result=similarity(a,b);
     if(result.score>=5)matches.push({a,b,score:result.score,reasons:result.reasons});
   }));
@@ -1210,8 +1219,10 @@ function renderMatches(){
     addPhoto(card,match.b.photo_url,"Found animal");
     card.appendChild(element("p","Automated suggestion only, not a confirmed identification. Compare the photos and details carefully."));
     box.appendChild(card);
-  });
-  if(!box.children.length)box.appendChild(element("p","No possible text matches found yet. Try checking that the location, date and description are as detailed as possible."));
+  }));
+  if(!box.children.length)box.appendChild(element("p",query
+    ?"No possible matches found with both reports mentioning “"+query+"”. Try a broader search if you want to check nearby areas."
+    :"No possible text matches found yet. Try checking that the location, date and description are as detailed as possible."));
 }
 
 async function loadReports(){
@@ -1521,7 +1532,7 @@ async function loadMyReports(){
   myReports.forEach(report=>box.appendChild(makeReportCard(report,true)));
 }
 
-$("searchBtn").addEventListener("click",applyFilters);
+$("searchBtn").addEventListener("click",()=>{applyFilters();$("reportsList").scrollIntoView({behavior:"smooth",block:"start"});});
 $("clearBtn").addEventListener("click",()=>{
   $("searchInput").value="";
   $("animalFilter").value="";
