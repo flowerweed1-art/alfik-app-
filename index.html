@@ -890,6 +890,17 @@ $("reportForm").addEventListener("submit",async event=>{
   }
 });
 
+function reportAdviceFor(report){
+  const type=String(report.report_type||"").toLowerCase();
+  const animal=String(report.animal_type||"").toLowerCase();
+  if(type==="lost"&&animal==="cat")return {title:"What to do when your cat is missing",url:"https://www.animalslostandfoundinkent.co.uk/what-to-do-if-you-have-lost-your-cat/"};
+  if(type==="lost"&&animal==="dog")return {title:"What to do when your dog is missing",url:"https://www.animalslostandfoundinkent.co.uk/what-to-do-if-you-have-lost-your-dog/"};
+  if(type==="found_deceased"&&animal==="cat")return {title:"Advice for a found deceased cat",url:"https://www.animalslostandfoundinkent.co.uk/found-an-alive-or-deceased-cat/"};
+  if(type==="found"&&animal==="cat")return {title:"What to do if you've found a live or deceased cat",url:"https://www.animalslostandfoundinkent.co.uk/found-an-alive-or-deceased-cat/"};
+  if(type==="found"&&animal==="dog")return {title:"What to do if you've found a stray dog",url:"https://www.animalslostandfoundinkent.co.uk/what-to-do-if-you-have-found-a-stray-lost-dog-in-kent/"};
+  return null;
+}
+
 function reportTypeLabel(type){
   return {lost:"🔴 LOST",found:"🟢 FOUND",found_deceased:"⚪ FOUND DECEASED"}[type]||"ANIMAL REPORT";
 }
@@ -934,6 +945,21 @@ function makeReportCard(report,isOwn){
   }
 
   if(isOwn){
+    const advice=reportAdviceFor(report);
+    if(advice){
+      const adviceBox=document.createElement("div");
+      adviceBox.className="feature-panel";
+      const adviceHeading=element("h3","Helpful advice for this report");
+      const adviceText=element("p","ALFIK's guidance explains practical next steps for this situation.");
+      const adviceLink=document.createElement("a");
+      adviceLink.href=advice.url;
+      adviceLink.target="_blank";
+      adviceLink.rel="noopener noreferrer";
+      adviceLink.textContent=advice.title+" ↗";
+      adviceLink.style.fontWeight="700";
+      adviceBox.append(adviceHeading,adviceText,adviceLink);
+      card.appendChild(adviceBox);
+    }
     const actions=document.createElement("div");
     actions.className="actions";
     const edit=element("button","✏️ Edit report");
