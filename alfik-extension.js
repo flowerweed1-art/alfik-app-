@@ -132,6 +132,24 @@ const user = await currentUser();
 if (!user) return;
 
 const plan = await getPlan();
+const promo = el("premiumPromo");
+if (promo) {
+  const paid = plan === "premium" || plan === "pro";
+  promo.classList.toggle("hidden", paid);
+  if (!paid) {
+    let compact = false;
+    try {
+      compact = localStorage.getItem("alfik-premium-promo-dismissed-" + user.id) === "yes";
+    } catch (_) {}
+    promo.classList.toggle("compact", compact);
+    const dismiss = el("premiumPromoDismissBtn");
+    if (dismiss) dismiss.textContent = compact ? "Show Premium details" : "Keep this reminder compact";
+    const heading = el("premiumPromoHeading");
+    if (heading) heading.textContent = compact
+      ? "Premium pet profiles are available for £5.99/month 🐾"
+      : "Make more of your ALFIK account 🐾";
+  }
+}
 const status = el("planStatus");
 
 if (status) {
@@ -1637,6 +1655,26 @@ try {
 }
 
 function wireEvents() {
+if (el("premiumPromoDismissBtn")) {
+  el("premiumPromoDismissBtn").addEventListener("click", async () => {
+    const user = await currentUser();
+    if (!user) return;
+    const promo = el("premiumPromo");
+    if (!promo) return;
+    const compact = !promo.classList.contains("compact");
+    promo.classList.toggle("compact", compact);
+    const heading = el("premiumPromoHeading");
+    if (heading) heading.textContent = compact
+      ? "Premium pet profiles are available for £5.99/month 🐾"
+      : "Make more of your ALFIK account 🐾";
+    el("premiumPromoDismissBtn").textContent = compact
+      ? "Show Premium details"
+      : "Keep this reminder compact";
+    try {
+      localStorage.setItem("alfik-premium-promo-dismissed-" + user.id, compact ? "yes" : "no");
+    } catch (_) {}
+  });
+}
 if (el("petForm")) el("petForm").addEventListener("submit", savePet);
 if (el("saveHealthBtn")) el("saveHealthBtn").addEventListener("click", saveHealthRecord);
 if (el("healthPet")) el("healthPet").addEventListener("change", loadHealthRecords);
