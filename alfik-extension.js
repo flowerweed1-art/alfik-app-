@@ -1817,7 +1817,11 @@ async function sendAlfikTestPush() {
     status.textContent = "Sending test notification…";
     const { data, error } = await db.functions.invoke("alfik-test-push", { body: {} });
     if (error) throw error;
-    status.textContent = data && data.sent ? "Test sent! Check your phone notifications." : "No notification was sent. Check the function logs.";
+    if (data && data.sent) {
+      status.textContent = "Push service accepted the notification, but this does not confirm your phone displayed it. Sent: " + data.sent + ", failed: " + (data.failed || 0) + ". If nothing appears, check the function logs for the delivery details.";
+    } else {
+      status.textContent = "No notification was sent. " + (data && data.error ? data.error : "Check the function logs.");
+    }
   } catch (error) {
     status.textContent = error && error.message ? error.message : "The test notification failed.";
   } finally {
