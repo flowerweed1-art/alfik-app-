@@ -292,6 +292,7 @@ nav.menu-collapsed{display:none}
 <select id="typeFilter"><option value="">Lost and found animals</option><option value="lost">Lost animals only</option><option value="found">Found animals only</option><option value="found_deceased">Animals found deceased</option></select>
 <button class="primary wide" id="searchBtn" type="button">Search animals</button>
 <button class="secondary wide" id="clearBtn" type="button">Clear search</button>
+<p id="searchStatus" class="note" role="status" aria-live="polite"></p>
 <h3>Possible matches</h3>
 <p class="note">Suggestions based on animal type, location, descriptions and dates. These are not confirmed matches.</p>
 <div id="matchResults" aria-live="polite"></div>
@@ -1238,6 +1239,8 @@ async function loadReports(){
 
 function applyFilters(){
   const query=normalise($("searchInput").value);
+  const status=$("searchStatus");
+  if(status)status.textContent="";
   const animal=$("animalFilter").value;
   const type=$("typeFilter").value;
   const list=$("reportsList");
@@ -1248,6 +1251,7 @@ function applyFilters(){
   );
   if(!filtered.length)list.appendChild(element("p","No active reports match your search."));
   filtered.forEach(report=>list.appendChild(makeReportCard(report,report.owner_id===currentUserId)));
+  if(status)status.textContent=query ? (filtered.length+" report"+(filtered.length===1?"":"s")+" found for “"+$("searchInput").value.trim()+"”.") : (filtered.length+" active reports shown.");
   renderMatches();
 }
 
@@ -1532,7 +1536,7 @@ async function loadMyReports(){
   myReports.forEach(report=>box.appendChild(makeReportCard(report,true)));
 }
 
-$("searchBtn").addEventListener("click",()=>{applyFilters();$("reportsList").scrollIntoView({behavior:"smooth",block:"start"});});
+$("searchBtn").addEventListener("click",()=>{applyFilters();const status=$("searchStatus");if(status)status.textContent="Search updated. "+status.textContent;$("reportsList").scrollIntoView({behavior:"smooth",block:"start"});});
 $("clearBtn").addEventListener("click",()=>{
   $("searchInput").value="";
   $("animalFilter").value="";
