@@ -1734,8 +1734,10 @@ if (el("vetOrgSelect")) {
 }
 
 
-/* ALFIK Web Push opt-in */
+/* ALFIK Web Push: automatic setup after sign-in, with one browser permission step. */
 const ALFIK_VAPID_PUBLIC_KEY = "BP_BnB5gdgMEKR-2BCSvPeoIBHQLF02IpYAa8dSpYgJkf7QXaLGwjsByf0lY1NIYo-51EnC_2qONmGy4fXje23w";
+let alfikPushSetupInProgress = false;
+let alfikPushAuthListenerAttached = false;
 
 function decodeAlfikVapidKey(value) {
   const padding = "=".repeat((4 - value.length % 4) % 4);
@@ -1745,34 +1747,85 @@ function decodeAlfikVapidKey(value) {
 }
 
 function ensureAlfikPushPanel() {
-  if (el("alfikPushPanel") || !document.querySelector("main")) return;
-  const panel = document.createElement("section");
-  panel.id = "alfikPushPanel";
-  panel.innerHTML = '<h2>Phone notifications</h2><p class="note">Get ALFIK updates on this device, such as animal-match alerts and important account updates.</p><button type="button" class="primary wide" id="alfikEnablePushBtn">Enable phone notifications</button><p id="alfikPushMessage" class="note" aria-live="polite"></p>';
-  const main = document.querySelector("main");
-  const firstSection = main.querySelector("section");
-  if (firstSection) firstSection.insertAdjacentElement("afterend", panel);
-  else main.prepend(panel);
+  if (!el("alfikPushPanel") && document.querySelector("main")) {
+    const panel = document.createElement("section");
+    panel.id = "alfikPushPanel";
+    panel.innerHTML = '<h2>Phone notifications</h2><p class="note">ALFIK uses one phone-notification setting for important updates, including animal matches and account alerts. Once enabled, notifications are set up automatically on this device.</p><button type="button" class="primary wide" id="alfikEnablePushBtn">Turn on phone notifications</button><p id="alfikPushMessage" class="note" aria-live="polite"></p>';
+    const main = document.querySelector("main");
+    const firstSection = main.querySelector("section");
+    if (firstSection) firstSection.insertAdjacentElement("afterend", panel);
+    else main.prepend(panel);
+    el("alfikEnablePushBtn").addEventListener("click", enableAlfikPush);
+  }
 
-  el("alfikEnablePushBtn").addEventListener("click", enableAlfikPush);
+  const db = client();
+  if (db && db.auth && !alfikPushAuthListenerAttached) {
+    alfikPushAuthListenerAttached = true;
+    db.auth.onAuthStateChange((_event, session) => {
+      // Defer Supabase calls until its auth-state callback has completed.
+      setTimeout(() => {
+        if (session && session.user) {
+          syncAlfikPushForSignedInUser(false);
+        } else {
+          const status = el("alfikPushMessage");
+          if (status) status.textContent = "Sign in to set up phone notifications.";
+        }
+      }, 0);
+    });
+  }
+
+  syncAlfikPushForSignedInUser(false);
 }
 
-async function enableAlfikPush() {
+async function syncAlfikPushForSignedInUser(requestPermission) {
+  if (alfikPushSetupInProgress) return;
   const button = el("alfikEnablePushBtn");
   const status = el("alfikPushMessage");
   const db = client();
+  if (!db || !status) return;
+
   try {
-    if (!db) throw new Error("ALFIK could not connect to your account service.");
     const { data: { user }, error: authError } = await db.auth.getUser();
-    if (authError || !user) throw new Error("Please sign in to ALFIK first.");
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      throw new Error("This browser does not support web push. Try Chrome on Android.");
+    if (authError || !user) {
+      status.textContent = "Sign in to ALFIK to set up phone notifications.";
+      if (button) button.hidden = false;
+      return;
     }
-    if (!("Notification" in window)) throw new Error("Notifications are not supported by this browser.");
-    button.disabled = true;
-    status.textContent = "Requesting notification permission…";
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") throw new Error("Notifications were not allowed. You can enable them in your browser settings.");
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+      status.textContent = "Phone notifications are not supported by this browser. Try Chrome on Android.";
+      if (button) button.hidden = true;
+      return;
+    }
+
+    if (Notification.permission !== "granted") {
+      if (Notification.permission === "denied") {
+        status.textContent = "Notifications are blocked in your browser settings. Allow notifications for alfik.co.uk in Chrome settings, then return here.";
+        if (button) button.hidden = true;
+        return;
+      }
+      status.textContent = "One step remains: allow ALFIK to send phone notifications. After that, setup happens automatically whenever you sign in.";
+      if (button) {
+        button.hidden = false;
+        button.textContent = "Allow phone notifications";
+      }
+      if (!requestPermission) return;
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        status.textContent = "Notifications were not enabled. You can allow them in Chrome site settings and return to ALFIK.";
+        if (button) button.hidden = false;
+        return;
+      }
+    }
+
+    alfikPushSetupInProgress = true;
+    if (button) {
+      button.disabled = true;
+      button.hidden = true;
+    }
+    status.textContent = "Setting up phone notifications…";
+
     const registration = await navigator.serviceWorker.register("/service-worker.js");
     await navigator.serviceWorker.ready;
     let subscription = await registration.pushManager.getSubscription();
@@ -1782,6 +1835,7 @@ async function enableAlfikPush() {
         applicationServerKey: decodeAlfikVapidKey(ALFIK_VAPID_PUBLIC_KEY)
       });
     }
+
     const value = subscription.toJSON();
     const { error: saveError } = await db.from("alfik_push_subscriptions").upsert({
       user_id: user.id,
@@ -1790,7 +1844,8 @@ async function enableAlfikPush() {
       updated_at: new Date().toISOString()
     }, { onConflict: "endpoint" });
     if (saveError) throw saveError;
-    status.textContent = "Phone notifications are enabled on this device. Tap the test button below to check delivery.";
+
+    status.textContent = "Phone notifications are enabled on this device. ALFIK will set them up automatically when you sign in.";
     let test = el("alfikTestPushBtn");
     if (!test) {
       test = document.createElement("button");
@@ -1802,10 +1857,16 @@ async function enableAlfikPush() {
       el("alfikPushPanel").appendChild(test);
     }
   } catch (error) {
-    status.textContent = error && error.message ? error.message : "Could not enable notifications.";
+    status.textContent = error && error.message ? error.message : "Could not set up phone notifications.";
+    if (button && Notification.permission !== "granted") button.hidden = false;
   } finally {
-    button.disabled = false;
+    alfikPushSetupInProgress = false;
+    if (button) button.disabled = false;
   }
+}
+
+async function enableAlfikPush() {
+  await syncAlfikPushForSignedInUser(true);
 }
 
 async function sendAlfikTestPush() {
@@ -1828,7 +1889,6 @@ async function sendAlfikTestPush() {
     button.disabled = false;
   }
 }
-
 
 window.refreshAlfikProfile = refreshAlfikProfile;
 window.renderPayPalButtons = renderPayPalButtons;
