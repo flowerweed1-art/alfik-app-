@@ -105,6 +105,19 @@ footer{background:#fff;color:var(--alfik-muted);padding:26px 16px;border-top:1px
 @media(min-width:760px){header{padding:38px 20px 34px}main{padding-top:24px}nav{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
 
+
+/* Optional collapsible navigation */
+.menu-toggle{
+  display:flex;align-items:center;justify-content:flex-start;gap:10px;
+  width:100%;min-height:48px;margin:0 0 10px;padding:11px 14px;
+  border:1px solid #cbddeb;border-radius:14px;
+  background:#fff;color:#164f7a;font-weight:750;text-align:left;
+  box-shadow:0 4px 14px #173b5b0a;
+}
+.menu-toggle-icon{display:inline-flex;align-items:center;justify-content:center;width:26px;font-size:21px;line-height:1}
+.menu-toggle-hint{margin-left:auto;font-size:12px;font-weight:500;color:#5b7082}
+nav.menu-collapsed{display:none}
+@media(max-width:420px){.menu-toggle-hint{font-size:11px}}
 </style>
 </head>
 <body>
@@ -140,7 +153,12 @@ footer{background:#fff;color:var(--alfik-muted);padding:26px 16px;border-top:1px
 </section>
 
 <div id="siteContent" class="hidden">
-<nav>
+<button type="button" class="menu-toggle" id="alfikMenuToggle" aria-controls="alfikMainNav" aria-expanded="true">
+  <span class="menu-toggle-icon" aria-hidden="true">☰</span>
+  <span id="alfikMenuToggleLabel">Hide menu</span>
+  <span class="menu-toggle-hint">Choose what you want to see</span>
+</button>
+<nav id="alfikMainNav">
 <button class="secondary" data-view="homeView">Home</button>
 <button class="secondary" data-view="reportsView">All reports</button>
 <button class="secondary" data-view="myView" data-account-types="public">My ALFIK</button>
@@ -155,6 +173,29 @@ footer{background:#fff;color:var(--alfik-muted);padding:26px 16px;border-top:1px
 <button class="secondary" data-view="accountView" data-account-types="public,rescue,veterinary">Account</button>
 <button class="secondary" data-view="adminView" data-account-types="public,rescue,veterinary">Admin Tools</button>
 </nav>
+<script>
+(function(){
+  const nav = document.getElementById("alfikMainNav");
+  const toggle = document.getElementById("alfikMenuToggle");
+  const label = document.getElementById("alfikMenuToggleLabel");
+  if (!nav || !toggle || !label) return;
+  let collapsed = false;
+  try { collapsed = localStorage.getItem("alfik-menu-collapsed") === "yes"; } catch (_) {}
+  function updateMenu() {
+    nav.classList.toggle("menu-collapsed", collapsed);
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    label.textContent = collapsed ? "Show menu" : "Hide menu";
+    toggle.querySelector(".menu-toggle-icon").textContent = collapsed ? "☰" : "×";
+  }
+  toggle.addEventListener("click", function() {
+    collapsed = !collapsed;
+    try { localStorage.setItem("alfik-menu-collapsed", collapsed ? "yes" : "no"); } catch (_) {}
+    updateMenu();
+  });
+  updateMenu();
+})();
+</script>
+
 
 <section id="homeView">
 <h2>Welcome to ALFIK 🐾</h2>
@@ -1538,7 +1579,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>showSignedIn(session));
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261026-design-polish1"></script>
+<script src="alfik-extension.js?v=20261026-design-polish2"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </body>
 </html>
