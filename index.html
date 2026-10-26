@@ -1127,7 +1127,7 @@ function normalise(value){
 const MATCH_STOP_WORDS=new Set(["the","and","for","with","from","that","this","was","were","has","had","have","near","area","found","lost","animal","cat","dog","small","large","very","black","white","brown"]);
 
 function matchWords(value){
-  return normalise(value||"").split(/\\s+/).filter(word=>word.length>2&&!MATCH_STOP_WORDS.has(word));
+  return normalise(value||"").split(" ").filter(word=>word.length>2&&!MATCH_STOP_WORDS.has(word));
 }
 
 function locationMatch(a,b){
