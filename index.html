@@ -83,6 +83,7 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <button class="secondary notification-nav" id="notificationBell" data-view="notificationsView" aria-label="Notifications">🔔 Notifications <span id="notificationCount" class="notification-count hidden">0</span></button>
 <button class="secondary" data-view="reportView">Report an animal</button>
 <!-- Email alerts temporarily hidden; use in-app notifications instead. -->
+<button class="secondary" data-view="billingView">⭐ Plans & billing</button>
 <button class="secondary" data-view="accountView">Account</button>
 </nav>
 
@@ -192,6 +193,31 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <p id="emailMessage" class="message" role="status"></p>
 </section>
 
+<section id="billingView" class="hidden">
+<h2>ALFIK plans & billing</h2>
+<p>Choose the membership that suits your work. Payments are processed securely by PayPal.</p>
+<div class="report-card">
+  <h3>Free</h3>
+  <p>Community animal reports and reunification tools.</p>
+  <p><strong>£0</strong></p>
+  <p class="note">Your current plan stays active unless you choose to upgrade.</p>
+</div>
+<div class="report-card">
+  <h3>Premium</h3>
+  <p>For rescue and animal welfare work.</p>
+  <p><strong>£5.99 per month</strong></p>
+  <button class="primary wide" id="paypal-premium" type="button">Subscribe to Premium</button>
+</div>
+<div class="report-card">
+  <h3>Pro</h3>
+  <p>For advanced pet health and veterinary workspace features.</p>
+  <p><strong>£9.99 per month</strong></p>
+  <button class="primary wide" id="paypal-pro" type="button">Subscribe to Pro</button>
+</div>
+<p id="billingMessage" class="message" role="status" aria-live="polite">Choose a plan to continue to PayPal.</p>
+<p class="note">Your paid access will be enabled after ALFIK receives and verifies PayPal's subscription confirmation. Returning from PayPal alone does not activate a plan.</p>
+</section>
+
 <section id="accountView" class="hidden">
 <h2>Your account</h2>
 <p id="signedInAs" class="note">Signed in to ALFIK</p>
@@ -240,7 +266,7 @@ function element(tag,text){
 }
 
 function showView(id){
-  ["homeView","reportView","reportsView","myView","emailView","accountView","notificationsView"].forEach(view=>{
+  ["homeView","reportView","reportsView","myView","emailView","accountView","notificationsView","billingView"].forEach(view=>{
     $(view).classList.toggle("hidden",view!==id);
   });
 
@@ -1242,6 +1268,70 @@ function showSignedIn(session){
     editingPhotoUrl=null;
     editingOriginalStatus="active";
   }
+}
+
+async function startAlfikCheckout(plan, buttonId) {
+  const button = $(buttonId);
+  const otherButton = $(plan === "premium" ? "paypal-pro" : "paypal-premium");
+  const messageNode = $("billingMessage");
+
+  if (!button || !messageNode) return;
+
+  button.disabled = true;
+  if (otherButton) otherButton.disabled = true;
+  messageNode.textContent = "Connecting securely to PayPal...";
+
+  try {
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+    const session = sessionData && sessionData.session;
+
+    if (sessionError || !session) {
+      throw new Error("Please sign in to ALFIK before choosing a paid plan.");
+    }
+
+    const { data, error } = await supabaseClient.functions.invoke(
+      "alfik-create-subscription",
+      { body: { plan } }
+    );
+
+    if (error) {
+      let detail = error.message || "Checkout could not start.";
+      if (error.context && typeof error.context.json === "function") {
+        try {
+          const body = await error.context.json();
+          if (body && body.error) detail = body.error;
+        } catch (_) {}
+      }
+      throw new Error(detail);
+    }
+
+    if (!data || !data.approvalUrl || !data.subscriptionId) {
+      throw new Error((data && data.error) || "PayPal did not return a checkout link.");
+    }
+
+    messageNode.textContent = "Opening PayPal. Please approve the subscription there.";
+    window.location.assign(data.approvalUrl);
+  } catch (error) {
+    messageNode.textContent = (error && error.message)
+      ? error.message
+      : "Checkout could not start. Please try again.";
+    button.disabled = false;
+    if (otherButton) otherButton.disabled = false;
+  }
+}
+
+$("paypal-premium").addEventListener("click", () => startAlfikCheckout("premium", "paypal-premium"));
+$("paypal-pro").addEventListener("click", () => startAlfikCheckout("pro", "paypal-pro"));
+
+const subscriptionReturn = new URLSearchParams(window.location.search).get("subscription");
+if (subscriptionReturn === "return") {
+  const billingMessage = $("billingMessage");
+  if (billingMessage) {
+    billingMessage.textContent = "You've returned from PayPal. ALFIK will activate paid access only after the verified PayPal confirmation arrives.";
+  }
+} else if (subscriptionReturn === "cancelled") {
+  const billingMessage = $("billingMessage");
+  if (billingMessage) billingMessage.textContent = "Checkout was cancelled. No paid access has been activated.";
 }
 
 supabaseClient.auth.onAuthStateChange((event,session)=>{
