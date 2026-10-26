@@ -1220,7 +1220,7 @@ function renderMatches(){
     addPhoto(card,match.b.photo_url,"Found animal");
     card.appendChild(element("p","Automated suggestion only, not a confirmed identification. Compare the photos and details carefully."));
     box.appendChild(card);
-  }));
+  });
   if(!box.children.length)box.appendChild(element("p",query
     ?"No possible matches found with both reports mentioning “"+query+"”. Try a broader search if you want to check nearby areas."
     :"No possible text matches found yet. Try checking that the location, date and description are as detailed as possible."));
