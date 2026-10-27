@@ -1508,7 +1508,7 @@ function normalise(value){
   return (value||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
 }
 
-const MATCH_STOP_WORDS=new Set(["the","and","for","with","from","that","this","was","were","has","had","have","near","area","found","lost","animal","cat","dog","small","large","very","black","white","brown"]);
+const MATCH_STOP_WORDS=new Set(["the","and","for","with","from","that","this","was","were","has","had","have","near","area","found","lost","animal","cat","dog","small","large","very"]);
 
 function matchWords(value){
   return normalise(value||"").split(" ").filter(word=>word.length>2&&!MATCH_STOP_WORDS.has(word));
@@ -1567,13 +1567,16 @@ function renderMatches(){
   const matches=[];
   lost.forEach(a=>found.forEach(b=>{
     if(a.animal_type!==b.animal_type)return;
-    // When a town or location is searched, only show pairings where BOTH reports
-    // mention that searched location. This prevents distant-town suggestions
-    // from cluttering a location-specific search.
+    // Search terms may be spread across fields, e.g. "Gillingham black cat".
+    // Let either report match the full search; the other can still be a nearby
+    // candidate ranked by its location, date and description similarity.
     if(query){
-      const lostLocation=normalise(a.location_text||"");
-      const foundLocation=normalise(b.location_text||"");
-      if(!lostLocation.includes(query)||!foundLocation.includes(query))return;
+      const queryWords=query.split(" ").filter(Boolean);
+      const matchesQuery=report=>{
+        const searchable=normalise([report.animal_name,report.animal_type,report.description,report.location_text].join(" "));
+        return queryWords.every(word=>searchable.includes(word));
+      };
+      if(!matchesQuery(a)&&!matchesQuery(b))return;
     }
     const result=similarity(a,b);
     if(result.score>=5)matches.push({a,b,score:result.score,reasons:result.reasons});
@@ -1599,7 +1602,7 @@ function renderMatches(){
     box.appendChild(card);
   });
   if(!box.children.length)box.appendChild(element("p",query
-    ?"No possible matches found with both reports mentioning “"+query+"”. Try a broader search if you want to check nearby areas."
+    ?"No possible matches found for all of those search terms. Try removing a word or broadening the location."
     :"No possible text matches found yet. Try checking that the location, date and description are as detailed as possible."));
 }
 
@@ -1622,10 +1625,12 @@ function applyFilters(){
   const type=$("typeFilter").value;
   const list=$("reportsList");
   list.replaceChildren();
-  const filtered=activeReports.filter(report=>
-    (!animal||report.animal_type===animal)&&(!type||report.report_type===type)&&
-    (!query||normalise([report.animal_name,report.animal_type,report.description,report.location_text].join(" ")).includes(query))
-  );
+  const queryWords=query.split(" ").filter(Boolean);
+  const filtered=activeReports.filter(report=>{
+    const searchable=normalise([report.animal_name,report.animal_type,report.description,report.location_text].join(" "));
+    const textMatches=!queryWords.length||queryWords.every(word=>searchable.includes(word));
+    return (!animal||report.animal_type===animal)&&(!type||report.report_type===type)&&textMatches;
+  });
   if(!filtered.length)list.appendChild(element("p","No active reports match your search."));
   filtered.forEach(report=>list.appendChild(makeReportCard(report,report.owner_id===currentUserId)));
   if(status)status.textContent=query ? (filtered.length+" report"+(filtered.length===1?"":"s")+" found for “"+$("searchInput").value.trim()+"”.") : (filtered.length+" active reports shown.");
