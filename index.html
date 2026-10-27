@@ -750,8 +750,8 @@ footer{background:#f8fbfe}
 <h2>My pet profiles 🐾</h2>
 <p>Keep useful information about your own animals in one place.</p>
 <p class="note">Pet profiles require the Premium plan or higher. Health records require Pro.</p>
-<div id="planStatus" class="feature-panel">Loading your ALFIK plan...</div>
-<div class="feature-panel" id="petDashboardPanel">
+<div id="planStatus" class="feature-panel hidden">Loading your ALFIK plan...</div>
+<div class="feature-panel hidden" id="petDashboardPanel">
 <h3>Pet dashboard 💙</h3>
 <p class="note">A quick overview of health records, care reminders and emergency details. Information is based on what you have saved in ALFIK.</p>
 <label for="dashboardPetSelect">Choose a pet</label>
@@ -788,7 +788,7 @@ footer{background:#f8fbfe}
 </div>
 </form>
 <p id="petMessage" class="message" role="status"></p>
-<div class="feature-panel">
+<div class="feature-panel hidden">
 <h3>Pet health records</h3>
 <p class="note">Health records are a Pro feature. Only store information you are comfortable keeping in your ALFIK account.</p>
 <label for="healthPet">Pet</label><select id="healthPet"><option value="">Choose a pet</option></select>
@@ -803,7 +803,7 @@ footer{background:#f8fbfe}
 <div id="healthRecords">Health records will appear here.</div>
 <p id="healthPlanMessage" class="note"></p>
 </div>
-<div class="feature-panel">
+<div class="feature-panel hidden">
 <h3>Medication list</h3>
 <p class="note">Private to your account. Follow your veterinary professional's instructions.</p>
 <label for="medicationPet">Pet</label><select id="medicationPet"><option value="">Choose a pet</option></select>
@@ -817,7 +817,7 @@ footer{background:#f8fbfe}
 <p id="medicationMessage" class="message" role="status"></p>
 <div id="medicationList">Your medications will appear here.</div>
 </div>
-<div class="feature-panel">
+<div class="feature-panel hidden">
 <h3>Flea and worming reminders</h3>
 <p class="note">Set dates using the product label or your vet's advice. Flea reminders default to every 28 days; worming defaults to every month (calendar month). These are reminders, not treatment instructions.</p>
 <label for="carePet">Pet</label><select id="carePet"><option value="">Choose a pet</option></select>
