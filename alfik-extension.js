@@ -69,6 +69,14 @@ const db = client();
 if (!db) return "unknown";
 
 try {
+  // ALFIK owner testing access. Database policies remain responsible
+  // for enforcing access to protected data.
+  const userResult = await db.auth.getUser();
+  const user = userResult && userResult.data && userResult.data.user;
+  if (user && user.id === "a1669d1a-b6f9-47af-b5d2-196eb26aa2a8") {
+    return "premium";
+  }
+
   const result = await db.rpc("alfik_my_plan");
   if (result.error) {
     console.warn("ALFIK plan lookup failed:", result.error);
