@@ -1591,12 +1591,8 @@ function getMapReports(){
   let reports=activeReports.filter(r=>r.status==="active"&&(r.report_type==="lost"||r.report_type==="found"));
   if(mapViewMode==="lost-cat")reports=reports.filter(r=>r.report_type==="lost"&&r.animal_type==="cat");
   if(mapViewMode==="found")reports=reports.filter(r=>r.report_type==="found");
-  if(mapUserLocation){
-    reports=reports.filter(r=>{
-      const coords=mapGeocodeCache[normalise(r.location_text||"")];
-      return coords&&distanceMiles(mapUserLocation.lat,mapUserLocation.lng,Number(coords.lat),Number(coords.lon))<=30;
-    });
-  }
+  // Geocode first, then apply the nearby radius. Filtering here would hide
+  // every report on a first visit before its location has been looked up.
   return reports;
 }
 
@@ -1610,7 +1606,7 @@ async function geocodeReportLocation(location){
     if(!response.ok)return null;
     const data=await response.json();
     if(!data.length)return null;
-    const coords={lat:Number(data[0].lat),lon:Number(data[0].lon),label:data[0].display_name||location};
+    const coords={lat:Math.round(Number(data[0].lat)*100)/100,lon:Math.round(Number(data[0].lon)*100)/100,label:data[0].display_name||location};
     mapGeocodeCache[key]=coords;
     try{localStorage.setItem("alfik-map-geocode-cache",JSON.stringify(mapGeocodeCache));}catch(_){}
     return coords;
@@ -1655,7 +1651,12 @@ async function renderAnimalReportsMap(){
     if(!mapGeocodeCache[normalise(location)]||i<locations.length-1)await new Promise(resolve=>setTimeout(resolve,1100));
   }
   const plotted=[];
-  candidates.forEach(report=>{
+  const visibleCandidates=candidates.filter(report=>{
+    const coords=foundCoords[normalise(report.location_text||"")];
+    if(!coords)return false;
+    return !mapUserLocation||distanceMiles(mapUserLocation.lat,mapUserLocation.lng,coords.lat,coords.lon)<=30;
+  });
+  visibleCandidates.forEach(report=>{
     const coords=foundCoords[normalise(report.location_text||"")];
     if(!coords)return;
     const colour=report.report_type==="lost"?"#c93434":"#238451";
@@ -1677,9 +1678,10 @@ async function renderAnimalReportsMap(){
   }else{
     animalReportsMap.setView([55.95,-3.2],5);
   }
-  const shown=candidates.filter(r=>foundCoords[normalise(r.location_text||"")]).length;
+  const shown=visibleCandidates.length;
   const modeText=mapViewMode==="lost-cat"?"lost cats":mapViewMode==="found"?"found animals":"active lost/found reports";
-  status.textContent=shown+" "+modeText+" mapped approximately"+(mapUserLocation?" within 30 miles of your shared location":"")+". "+(candidates.length-shown>0?(candidates.length-shown)+" report(s) could not be mapped or were outside the 12-location map limit.":"");
+  status.textContent=shown+" "+modeText+" mapped approximately"+(mapUserLocation?" within 30 miles of your shared location":"")+". "+(candidates.length-shown>0?(candidates.length-shown)+" report(s) could not be mapped, were outside your radius, or were beyond the 12-location map limit.":"");
+  if(mapUserLocation)applyFilters();
 }
 
 function escapeMapText(value){
@@ -1788,7 +1790,9 @@ function applyFilters(){
   const filtered=activeReports.filter(report=>{
     const searchable=normalise([report.animal_name,report.animal_type,report.description,report.location_text].join(" "));
     const textMatches=!queryWords.length||queryWords.every(word=>searchable.includes(word));
-    return (!animal||report.animal_type===animal)&&(!type||report.report_type===type)&&textMatches;
+    const coords=mapGeocodeCache[normalise(report.location_text||"")];
+    const nearbyMatches=!mapUserLocation||(coords&&distanceMiles(mapUserLocation.lat,mapUserLocation.lng,Number(coords.lat),Number(coords.lon))<=30);
+    return (!animal||report.animal_type===animal)&&(!type||report.report_type===type)&&textMatches&&nearbyMatches;
   });
   if(!filtered.length)list.appendChild(element("p","No active reports match your search."));
   filtered.forEach(report=>list.appendChild(makeReportCard(report,report.owner_id===currentUserId)));
