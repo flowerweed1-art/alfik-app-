@@ -195,6 +195,7 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 
 <section id="billingView" class="hidden">
 <h2>ALFIK plans & billing</h2>
+<div class="report-card" id="currentPlanCard"><h3>Your current plan</h3><p id="currentPlanText" role="status">Checking your plan…</p><p class="note">Paid access is based on verified PayPal subscription status, not simply returning from checkout.</p></div>
 <p>Choose the membership that suits your work. Payments are processed securely by PayPal.</p>
 <div class="report-card">
   <h3>Free</h3>
@@ -274,6 +275,7 @@ function showView(id){
   if(id==="myView")loadMyReports();
   if(id==="emailView")loadEmailPreference();
   if(id==="notificationsView")loadNotifications();
+  if(id==="billingView")loadPlanStatus();
 
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -1249,6 +1251,7 @@ function showSignedIn(session){
       loadMyReports();
       loadEmailPreference();
       loadNotifications();
+      loadPlanStatus();
     }
   }else{
     activeReports=[];
@@ -1267,6 +1270,38 @@ function showSignedIn(session){
     editingReportId=null;
     editingPhotoUrl=null;
     editingOriginalStatus="active";
+  }
+}
+
+async function loadPlanStatus() {
+  const node = $("currentPlanText");
+  if (!node || !currentUserId) {
+    if (node) node.textContent = "Sign in to view your plan.";
+    return;
+  }
+
+  node.textContent = "Checking your plan…";
+  try {
+    const { data, error } = await supabaseClient
+      .from("alfik_profiles")
+      .select("plan_tier, subscription_status")
+      .eq("user_id", currentUserId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    const tier = String(data?.plan_tier || "free").toLowerCase();
+    const status = String(data?.subscription_status || "free").toLowerCase();
+    const isActive = ["active", "activated", "approved"].includes(status);
+    const paidTier = ["premium", "pro"].includes(tier);
+    if (isActive && paidTier) {
+      node.textContent = tier.charAt(0).toUpperCase() + tier.slice(1) + " is active.";
+    } else {
+      node.textContent = "Free plan. No active paid subscription is recorded.";
+    }
+  } catch (error) {
+    node.textContent = "Your plan status could not be checked just now. Please try refreshing this page.";
+    console.error("ALFIK plan status lookup failed:", error);
   }
 }
 
