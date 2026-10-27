@@ -317,6 +317,40 @@ async function renderPayPalButtons() {
   }
 }
 
+function startMissingReportFromPet(pet) {
+  if (!pet || pet.life_status === "deceased") {
+    say("petMessage", "A missing report can only be started for a pet marked as living.");
+    return;
+  }
+  if (typeof window.startNewReport !== "function") {
+    say("petMessage", "The report form is not ready. Please refresh ALFIK and try again.");
+    return;
+  }
+
+  window.startNewReport("lost");
+  const animal = el("animal");
+  const name = el("animalName");
+  const description = el("description");
+  const location = el("location");
+  const dateSeen = el("dateSeen");
+  const messageNode = el("reportMessage");
+
+  const species = String(pet.species || "").toLowerCase();
+  animal.value = /cat|kitten|feline/.test(species) ? "cat"
+    : /dog|puppy|canine/.test(species) ? "dog" : "other";
+  if (name) name.value = pet.name || "";
+  if (description) {
+    const details = [pet.breed ? "Breed: " + pet.breed : "", "Details copied from the saved pet profile. Please add the pet's colours, distinctive markings, collar and anything else that may help identify them."].filter(Boolean);
+    description.value = details.join("\n\n");
+  }
+  if (location) location.value = "";
+  if (dateSeen) dateSeen.value = "";
+  if (messageNode) {
+    messageNode.textContent = "Started from " + (pet.name || "your pet") + "'s profile. Please enter where and when they were last seen. For privacy, profile notes, microchip number, vet details and private photo are not published automatically. You can choose a photo for this public report below.";
+  }
+  if (location) location.focus();
+}
+
 function dashboardAddLine(parent, label, value) {
   if (value === null || value === undefined || String(value).trim() === "") return;
   const line = document.createElement("p");
@@ -642,6 +676,14 @@ try {
       editButton.textContent = "Edit profile";
       editButton.addEventListener("click", () => beginEditPet(pet));
       actions.appendChild(editButton);
+      if (!isDeceased) {
+        const missingButton = document.createElement("button");
+        missingButton.type = "button";
+        missingButton.className = "lost";
+        missingButton.textContent = "🚨 Report missing";
+        missingButton.addEventListener("click", () => startMissingReportFromPet(pet));
+        actions.appendChild(missingButton);
+      }
       const lifeButton = document.createElement("button");
       lifeButton.type = "button";
       lifeButton.className = "secondary";
