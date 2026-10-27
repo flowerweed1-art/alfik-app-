@@ -150,6 +150,15 @@ if (promo) {
       : "Make more of your ALFIK account 🐾";
   }
 }
+const badgeValue = el("accountPlanBadgeValue");
+const badgeDetail = el("accountPlanBadgeDetail");
+if (badgeValue) badgeValue.textContent = plan.toUpperCase() + (plan === "pro" ? " ★" : plan === "premium" ? " ✓" : "");
+if (badgeDetail) badgeDetail.textContent = plan === "pro"
+  ? "Pro account • Your plan is active on this account."
+  : plan === "premium"
+    ? "Premium account • Your plan is active on this account."
+    : "Free account • Lost-and-found reports and search remain free. Upgrade options are under Plans.";
+
 const status = el("planStatus");
 
 if (status) {
