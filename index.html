@@ -1467,7 +1467,7 @@ function addShareStudio(card,report){
   if(!["lost","found"].includes(report.report_type)||report.status!=="active")return;
   const wrap=document.createElement("div");wrap.className="alfik-share-studio";
   const open=document.createElement("button");open.type="button";open.className="alfik-share-open";
-  open.textContent="✦ Create a standout share poster";
+  open.textContent="📣 Share on social media & create poster";
   const panel=document.createElement("div");panel.className="alfik-share-panel hidden";
   const intro=document.createElement("p");intro.className="alfik-share-intro";
   intro.textContent="Make this report impossible to scroll past. Create a branded ALFIK poster, then share the report wherever people can help.";
@@ -1484,7 +1484,7 @@ function addShareStudio(card,report){
   actions.append(make,native,download,whatsapp,facebook,email,copy);
   panel.append(intro,preview,status,actions);wrap.append(open,panel);card.appendChild(wrap);
   let posterBlob=null;
-  open.addEventListener("click",()=>{panel.classList.toggle("hidden");open.textContent=panel.classList.contains("hidden")?"✦ Create a standout share poster":"✕ Close Share Studio";});
+  open.addEventListener("click",()=>{panel.classList.toggle("hidden");open.textContent=panel.classList.contains("hidden")?"📣 Share on social media & create poster":"✕ Close Share Studio";});
   make.addEventListener("click",async()=>{
     make.disabled=true;status.textContent="Designing your ALFIK poster…";
     try{
