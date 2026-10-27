@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d2f50">
 <link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <title>ALFIK | Animal Reunification</title>
 <style>
 .account-plan-badge{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:14px 0;padding:12px 15px;border:2px solid #1769aa;border-radius:12px;background:#eef6ff;color:#123b63}
@@ -572,6 +573,14 @@ footer{background:#f8fbfe}
 <p id="careNotificationsMessage" class="message" role="status"></p>
 <div id="careNotificationsList">Sign in to view your care notifications.</div>
 </div>
+<div class="feature-panel" id="nearbyAnimalsPanel">
+  <h3>🐾 Animals near me</h3>
+  <p>Quickly explore lost cats and found animals in your area. Your location is only used if you choose to share it.</p>
+  <button class="primary wide" type="button" data-nearby-mode="lost-cat">🐈 Lost cats near me</button>
+  <button class="secondary wide" type="button" data-nearby-mode="found">🔎 Found animals near me</button>
+  <button class="secondary wide" type="button" data-nearby-mode="all">🗺️ Explore all reports on the map</button>
+  <p class="note">Map pins show approximate report areas, not exact addresses. You can use the map without sharing your location.</p>
+</div>
 <div class="feature-panel" id="urgentAnimalHelp">
   <h3>What do you need help with?</h3>
   <p>Choose the option that best fits. You can take your time and change your search whenever you need.</p>
@@ -645,6 +654,12 @@ footer{background:#f8fbfe}
 <select id="typeFilter"><option value="">Lost and found animals</option><option value="lost">Lost animals only</option><option value="found">Found animals only</option><option value="found_deceased">Animals found deceased</option></select>
 <button class="primary wide" id="searchBtn" type="button">Search animals</button>
 <button class="secondary wide" id="clearBtn" type="button">Clear search</button>
+<div class="feature-panel" id="nearbyMapPanel">
+  <h3>🗺️ Nearby animal reports</h3>
+  <p class="note" id="nearbyMapStatus" role="status" aria-live="polite">Choose a homepage shortcut or explore the map to view approximate report locations.</p>
+  <div id="animalReportsMap" role="application" aria-label="Map of approximate lost and found animal report locations" style="height:340px;min-height:260px;border-radius:12px;overflow:hidden;background:#eaf2f8"></div>
+  <button class="secondary wide" id="showAllMapReportsBtn" type="button">Show all report locations</button>
+</div>
 <p id="searchStatus" class="note" role="status" aria-live="polite"></p>
 <h3>Possible matches</h3>
 <p class="note">Suggestions based on animal type, location, descriptions and dates. These are not confirmed matches.</p>
@@ -1558,6 +1573,149 @@ function similarity(a,b){
   return {score,reasons};
 }
 
+let animalReportsMap=null;
+let animalMapMarkers=[];
+let mapUserLocation=null;
+let mapViewMode="all";
+let mapGeocodeCache={};
+try{mapGeocodeCache=JSON.parse(localStorage.getItem("alfik-map-geocode-cache")||"{}")||{};}catch(_){mapGeocodeCache={};}
+
+function distanceMiles(lat1,lon1,lat2,lon2){
+  const rad=n=>n*Math.PI/180;
+  const dLat=rad(lat2-lat1),dLon=rad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2+Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;
+  return 3958.8*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function getMapReports(){
+  let reports=activeReports.filter(r=>r.status==="active"&&(r.report_type==="lost"||r.report_type==="found"));
+  if(mapViewMode==="lost-cat")reports=reports.filter(r=>r.report_type==="lost"&&r.animal_type==="cat");
+  if(mapViewMode==="found")reports=reports.filter(r=>r.report_type==="found");
+  if(mapUserLocation){
+    reports=reports.filter(r=>{
+      const coords=mapGeocodeCache[normalise(r.location_text||"")];
+      return coords&&distanceMiles(mapUserLocation.lat,mapUserLocation.lng,Number(coords.lat),Number(coords.lon))<=30;
+    });
+  }
+  return reports;
+}
+
+async function geocodeReportLocation(location){
+  const key=normalise(location||"");
+  if(!key)return null;
+  if(mapGeocodeCache[key])return mapGeocodeCache[key];
+  try{
+    const url="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=gb&q="+encodeURIComponent(location);
+    const response=await fetch(url,{headers:{Accept:"application/json"}});
+    if(!response.ok)return null;
+    const data=await response.json();
+    if(!data.length)return null;
+    const coords={lat:Number(data[0].lat),lon:Number(data[0].lon),label:data[0].display_name||location};
+    mapGeocodeCache[key]=coords;
+    try{localStorage.setItem("alfik-map-geocode-cache",JSON.stringify(mapGeocodeCache));}catch(_){}
+    return coords;
+  }catch(error){console.warn("Map location lookup failed",error);return null;}
+}
+
+function ensureAnimalMap(){
+  if(typeof L==="undefined")return false;
+  if(!animalReportsMap){
+    animalReportsMap=L.map("animalReportsMap",{scrollWheelZoom:false}).setView([55.95,-3.2],5);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+      maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+    }).addTo(animalReportsMap);
+  }
+  setTimeout(()=>animalReportsMap&&animalReportsMap.invalidateSize(),120);
+  return true;
+}
+
+async function renderAnimalReportsMap(){
+  const status=$("nearbyMapStatus");
+  const mapElement=$("animalReportsMap");
+  if(!mapElement)return;
+  if(!ensureAnimalMap()){
+    status.textContent="The map could not load right now. You can still use the report list and search.";
+    return;
+  }
+  animalMapMarkers.forEach(marker=>marker.remove());
+  animalMapMarkers=[];
+  status.textContent="Preparing approximate locations for active reports…";
+  const candidates=getMapReports();
+  const locations=[...new Set(candidates.map(r=>(r.location_text||"").trim()).filter(Boolean))].slice(0,12);
+  const foundCoords={};
+  for(let i=0;i<locations.length;i++){
+    const location=locations[i];
+    let coords=await geocodeReportLocation(location);
+    if(!coords){
+      // Respect the public geocoder's usage policy: avoid rapid repeat requests.
+      if(i<locations.length-1)await new Promise(resolve=>setTimeout(resolve,1100));
+      continue;
+    }
+    foundCoords[normalise(location)]=coords;
+    if(!mapGeocodeCache[normalise(location)]||i<locations.length-1)await new Promise(resolve=>setTimeout(resolve,1100));
+  }
+  const plotted=[];
+  candidates.forEach(report=>{
+    const coords=foundCoords[normalise(report.location_text||"")];
+    if(!coords)return;
+    const colour=report.report_type==="lost"?"#c93434":"#238451";
+    const marker=L.circleMarker([coords.lat,coords.lon],{radius:8,color:"#ffffff",weight:2,fillColor:colour,fillOpacity:.95}).addTo(animalReportsMap);
+    const title=(report.report_type==="lost"?"Lost ":"Found ")+(report.animal_type||"animal");
+    const details=(report.animal_name?report.animal_name+" · ":"")+((report.location_text||"Area not given"))+" · "+(report.date_seen||"Date not given");
+    marker.bindPopup("<strong>"+escapeMapText(title)+"</strong><br>"+escapeMapText(details)+"<br><span>Approximate area only</span>");
+    animalMapMarkers.push(marker);
+    plotted.push([coords.lat,coords.lon]);
+  });
+  if(plotted.length){
+    if(mapUserLocation){
+      const userMarker=L.circleMarker([mapUserLocation.lat,mapUserLocation.lng],{radius:6,color:"#1769aa",weight:2,fillColor:"#83b9e5",fillOpacity:1}).addTo(animalReportsMap).bindPopup("Your shared location");
+      animalMapMarkers.push(userMarker);
+      animalReportsMap.setView([mapUserLocation.lat,mapUserLocation.lng],10);
+      if(plotted.length>1)animalReportsMap.fitBounds(plotted,{padding:[24,24],maxZoom:11});
+    }else if(plotted.length===1)animalReportsMap.setView(plotted[0],11);
+    else animalReportsMap.fitBounds(plotted,{padding:[24,24],maxZoom:10});
+  }else{
+    animalReportsMap.setView([55.95,-3.2],5);
+  }
+  const shown=candidates.filter(r=>foundCoords[normalise(r.location_text||"")]).length;
+  const modeText=mapViewMode==="lost-cat"?"lost cats":mapViewMode==="found"?"found animals":"active lost/found reports";
+  status.textContent=shown+" "+modeText+" mapped approximately"+(mapUserLocation?" within 30 miles of your shared location":"")+". "+(candidates.length-shown>0?(candidates.length-shown)+" report(s) could not be mapped or were outside the 12-location map limit.":"");
+}
+
+function escapeMapText(value){
+  return String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+}
+
+function startNearbySearch(mode){
+  mapViewMode=mode;
+  mapUserLocation=null;
+  $("searchInput").value="";
+  $("animalFilter").value=mode==="lost-cat"?"cat":"";
+  $("typeFilter").value=mode==="lost-cat"?"lost":mode==="found"?"found":"";
+  showView("reportsView");
+  if(navigator.geolocation&&mode!=="all"){
+    $("nearbyMapStatus").textContent="You can allow location access to filter reports within 30 miles, or continue with all matching reports.";
+    navigator.geolocation.getCurrentPosition(position=>{
+      mapUserLocation={lat:position.coords.latitude,lng:position.coords.longitude};
+      renderAnimalReportsMap();
+      applyFilters();
+    },()=>{
+      mapUserLocation=null;
+      $("nearbyMapStatus").textContent="Location wasn't shared. Showing matching reports across the available area instead.";
+      renderAnimalReportsMap();
+    },{enableHighAccuracy:false,timeout:8000,maximumAge:300000});
+  }
+  loadReports();
+  setTimeout(()=>{if(animalReportsMap)animalReportsMap.invalidateSize();$("nearbyMapPanel")?.scrollIntoView({behavior:"smooth",block:"start"});},350);
+}
+
+document.querySelectorAll("[data-nearby-mode]").forEach(button=>{
+  button.addEventListener("click",()=>startNearbySearch(button.dataset.nearbyMode));
+});
+$("showAllMapReportsBtn")?.addEventListener("click",()=>{
+  mapViewMode="all";mapUserLocation=null;renderAnimalReportsMap();
+});
+
 function renderMatches(){
   const box=$("matchResults");
   box.replaceChildren();
@@ -1615,6 +1773,7 @@ async function loadReports(){
   if(error){box.replaceChildren(element("p","Could not load reports: "+error.message));return;}
   activeReports=data||[];
   applyFilters();
+  renderAnimalReportsMap();
 }
 
 function applyFilters(){
@@ -2161,6 +2320,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
   });
 })();
 </script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </body>
 </html>
 
