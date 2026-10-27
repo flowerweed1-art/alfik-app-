@@ -133,6 +133,100 @@ footer{background:#fff;color:var(--alfik-muted);padding:26px 16px;border-top:1px
 .menu-toggle-hint{margin-left:auto;font-size:12px;font-weight:500;color:#5b7082}
 nav.menu-collapsed{display:none}
 @media(max-width:420px){.menu-toggle-hint{font-size:11px}}
+
+/* ALFIK premium homepage refinement */
+body{
+  background:linear-gradient(180deg,#edf5fc 0,#f7faff 360px,#f4f8fc 100%);
+  color:#183047;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  line-height:1.65;
+}
+header{
+  position:relative;
+  overflow:hidden;
+  padding:38px 18px 34px;
+  background:radial-gradient(ellipse at 50% 0%,#245b88 0,#123b63 48%,#0b2947 100%);
+  border-bottom:4px solid #83b9e5;
+  box-shadow:0 12px 32px #123b631c;
+}
+header img{
+  width:112px;
+  max-width:42%;
+  padding:7px;
+  margin-bottom:14px;
+  border:1px solid #ffffff70;
+  border-radius:50%;
+  background:#ffffff12;
+  box-shadow:0 8px 26px #071d3340;
+}
+header h1{
+  font-size:clamp(34px,6vw,44px);
+  letter-spacing:5px;
+  font-weight:800;
+  line-height:1.15;
+}
+header p{margin:8px auto 0;max-width:620px;color:#e2effb}
+header p:last-child{font-size:15px;letter-spacing:.15px}
+main{max-width:900px;padding:24px 18px 30px}
+section{
+  border:1px solid #d8e5f1;
+  border-radius:18px;
+  padding:clamp(18px,3.5vw,28px);
+  margin-bottom:20px;
+  box-shadow:0 8px 28px #153e5c0a;
+}
+h2{font-size:clamp(23px,4vw,30px);line-height:1.25;letter-spacing:-.5px;color:#123b63}
+h3{font-size:18px;line-height:1.35;color:#1769aa}
+button{
+  min-height:46px;
+  border-radius:10px;
+  padding:12px 16px;
+  font-weight:700;
+  letter-spacing:.05px;
+  transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
+}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:3px solid #83b9e5;
+  outline-offset:2px;
+}
+button.primary{background:linear-gradient(135deg,#1769aa,#12558e);box-shadow:0 4px 12px #1769aa26}
+button.secondary{background:#edf5fc;border:1px solid #c9deef;color:#164f7a}
+button.primary:hover,button.secondary:hover,button.found:hover,button.lost:hover{transform:translateY(-1px);box-shadow:0 6px 16px #123b631a}
+input,select,textarea{min-height:45px;border-radius:9px;border-color:#c7d7e5}
+input:focus,select:focus,textarea:focus{border-color:#1769aa;box-shadow:0 0 0 3px #1769aa17;outline:none}
+#homeView{
+  padding:clamp(22px,5vw,38px);
+  border-color:#c8dced;
+  background:linear-gradient(145deg,#fff 0%,#fbfdff 70%,#f0f7fd 100%);
+  box-shadow:0 14px 40px #123b6312;
+}
+#homeView>h2{font-size:clamp(29px,5vw,40px);letter-spacing:-1px;margin-bottom:8px}
+#homeView>h2:after{content:"";display:block;width:58px;height:4px;border-radius:9px;background:#70a9d8;margin-top:15px}
+#homeView>p:first-of-type{font-size:17px;color:#47647c;margin:10px 0 22px}
+#urgentAnimalHelp{
+  border:1px solid #c7dced;
+  background:linear-gradient(135deg,#f4f9fe,#fff 75%);
+}
+#urgentAnimalHelp h3{font-size:21px;color:#123b63}
+#urgentAnimalHelp button{margin-top:7px}
+.feature-panel{
+  border-radius:14px;
+  border-color:#d9e6f1;
+  box-shadow:0 5px 18px #123b6308;
+}
+.account-plan-badge{border-radius:13px!important}
+.report-card{border-radius:12px;box-shadow:0 4px 14px #123b6308}
+.badge{padding:5px 10px}
+.note{line-height:1.55}
+@media(max-width:520px){
+  header{padding:28px 15px 25px}
+  header img{width:94px}
+  main{padding:14px 11px 24px}
+  section{border-radius:14px;padding:17px;margin-bottom:14px}
+  #homeView{padding:20px 16px}
+  button{font-size:14px}
+}
+
 </style>
 </head>
 <body>
@@ -225,8 +319,8 @@ nav.menu-collapsed{display:none}
 
 
 <section id="homeView">
-<h2>Welcome to ALFIK 🐾</h2>
-<p>Helping lost animals find their way home.</p>
+<h2>Every animal matters.</h2>
+<p>Helping lost animals find their way home, with a community that cares.</p>
 <div id="accountPlanBadge" class="account-plan-badge" aria-live="polite"><span class="account-plan-label">YOUR ALFIK PLAN</span><strong id="accountPlanBadgeValue">Checking your plan…</strong><span id="accountPlanBadgeDetail">Your account benefits will appear here.</span></div>
 <div class="feature-panel premium-promo hidden" id="premiumPromo" data-account-types="public,rescue,veterinary" aria-live="polite">
   <h3 id="premiumPromoHeading">Make more of your ALFIK account 🐾</h3>
