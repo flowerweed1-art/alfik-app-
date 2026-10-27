@@ -351,9 +351,8 @@ if (!db) return;
 try {
   const result = await db
     .from("alfik_pets")
-    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date,created_at")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: false });
+    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date")
+    .eq("owner_id", user.id);
 
   if (result.error) throw result.error;
 
@@ -420,7 +419,14 @@ try {
   await loadCareNotifications();
 } catch (error) {
   console.warn("ALFIK pet profiles:", error);
-  say("petMessage", "Pet profiles could not be loaded: " + readableError(error));
+  const message = "Pet profiles could not be loaded: " + readableError(error);
+  say("petMessage", message);
+  if (list) {
+    list.replaceChildren();
+    const p = document.createElement("p");
+    p.textContent = message;
+    list.appendChild(p);
+  }
 }
 
 }
