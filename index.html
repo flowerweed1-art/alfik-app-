@@ -1641,14 +1641,15 @@ async function renderAnimalReportsMap(){
   const foundCoords={};
   for(let i=0;i<locations.length;i++){
     const location=locations[i];
+    const wasCached=Boolean(mapGeocodeCache[normalise(location)]);
     let coords=await geocodeReportLocation(location);
     if(!coords){
       // Respect the public geocoder's usage policy: avoid rapid repeat requests.
-      if(i<locations.length-1)await new Promise(resolve=>setTimeout(resolve,1100));
+      if(!wasCached&&i<locations.length-1)await new Promise(resolve=>setTimeout(resolve,1100));
       continue;
     }
     foundCoords[normalise(location)]=coords;
-    if(!mapGeocodeCache[normalise(location)]||i<locations.length-1)await new Promise(resolve=>setTimeout(resolve,1100));
+    if(!wasCached&&i<locations.length-1)await new Promise(resolve=>setTimeout(resolve,1100));
   }
   const plotted=[];
   const visibleCandidates=candidates.filter(report=>{
@@ -1715,7 +1716,9 @@ document.querySelectorAll("[data-nearby-mode]").forEach(button=>{
   button.addEventListener("click",()=>startNearbySearch(button.dataset.nearbyMode));
 });
 $("showAllMapReportsBtn")?.addEventListener("click",()=>{
-  mapViewMode="all";mapUserLocation=null;renderAnimalReportsMap();
+  mapViewMode="all";mapUserLocation=null;
+  $("animalFilter").value="";$("typeFilter").value="";$("searchInput").value="";
+  applyFilters();renderAnimalReportsMap();
 });
 
 function renderMatches(){
