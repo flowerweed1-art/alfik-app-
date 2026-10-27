@@ -66,31 +66,32 @@ return result.data.user;
 
 async function getPlan() {
 const db = client();
-if (!db) return "free";
+if (!db) return "unknown";
 
 try {
   const result = await db.rpc("alfik_my_plan");
-  if (result.error) return "free";
-
-  const value = result.data;
-  if (typeof value === "string") return value.toLowerCase();
-
-  if (value && typeof value === "object") {
-    return String(value.plan || value.tier || "free").toLowerCase();
+  if (result.error) {
+    console.warn("ALFIK plan lookup failed:", result.error);
+    return "unknown";
   }
 
-  return "free";
+  const value = result.data;
+  let plan = "";
+  if (typeof value === "string") plan = value.toLowerCase().trim();
+  else if (value && typeof value === "object") plan = String(value.plan || value.tier || "").toLowerCase().trim();
+
+  return ["free", "premium", "pro"].includes(plan) ? plan : "unknown";
 } catch (error) {
   console.warn("ALFIK plan lookup:", error);
-  return "free";
+  return "unknown";
 }
-
 }
 
 async function hasPlan(required) {
 const plan = await getPlan();
 const levels = { free: 0, premium: 1, pro: 2 };
-return (levels[plan] || 0) >= (levels[required] || 0);
+if (plan === "unknown" || !Object.prototype.hasOwnProperty.call(levels, plan)) return false;
+return levels[plan] >= (levels[required] || 0);
 }
 
 function addText(container, label, value) {
@@ -132,11 +133,13 @@ const user = await currentUser();
 if (!user) return;
 
 const plan = await getPlan();
+const signedInAs = el("signedInAs");
+if (signedInAs) signedInAs.textContent = "Signed in as " + (user.email || "email address unavailable");
 const promo = el("premiumPromo");
 if (promo) {
   const paid = plan === "premium" || plan === "pro";
-  promo.classList.toggle("hidden", paid);
-  if (!paid) {
+  promo.classList.toggle("hidden", paid || plan === "unknown");
+  if (!paid && plan !== "unknown") {
     let compact = false;
     try {
       compact = localStorage.getItem("alfik-premium-promo-dismissed-" + user.id) === "yes";
@@ -152,47 +155,52 @@ if (promo) {
 }
 const badgeValue = el("accountPlanBadgeValue");
 const badgeDetail = el("accountPlanBadgeDetail");
-if (badgeValue) badgeValue.textContent = plan.toUpperCase() + (plan === "pro" ? " ★" : plan === "premium" ? " ✓" : "");
-if (badgeDetail) badgeDetail.textContent = plan === "pro"
-  ? "Pro account • Your plan is active on this account."
-  : plan === "premium"
-    ? "Premium account • Your plan is active on this account."
-    : "Free account • Lost-and-found reports and search remain free. Upgrade options are under Plans.";
-
-const planLabel = plan === "pro" ? "PRO ★" : plan === "premium" ? "PREMIUM ✓" : "FREE";
+const planLabel = plan === "pro" ? "PRO ★" : plan === "premium" ? "PREMIUM ✓" : plan === "free" ? "FREE" : "PLAN CHECK NEEDED";
 const planDetail = plan === "pro"
   ? "Pro membership • Health features and eligible veterinary tools."
   : plan === "premium"
     ? "Premium membership • Pet profiles and eligible rescue tools."
-    : "Free membership • Lost-and-found reports and search remain free.";
+    : plan === "free"
+      ? "Free membership • Lost-and-found reports and search remain free."
+      : "ALFIK could not verify your plan just now. This does not mean your subscription has been cancelled. Please try refreshing, and contact ALFIK support if this continues.";
+if (badgeValue) badgeValue.textContent = planLabel;
+if (badgeDetail) badgeDetail.textContent = planDetail;
 ["accountPlanBadgeValue","accountPlanAccountValue","accountPlanBillingValue"].forEach(id => { const node = el(id); if (node) node.textContent = planLabel; });
 ["accountPlanBadgeDetail","accountPlanAccountDetail","accountPlanBillingDetail"].forEach(id => { const node = el(id); if (node) node.textContent = planDetail; });
 
 const status = el("planStatus");
 
 if (status) {
-  status.textContent = "Your current plan: " + plan.toUpperCase();
+  status.textContent = plan === "unknown"
+    ? "We couldn't verify your plan. Your subscription may still be active."
+    : "Your current plan: " + plan.toUpperCase();
 }
 
 say(
   "healthPlanMessage",
-  plan === "pro"
-    ? "Your account has Pro access. Health records still require the database setup to be complete."
-    : "Pet health records require Pro access and the supporting database setup."
+  plan === "unknown"
+    ? "Your plan could not be verified. Please refresh before assuming you need to upgrade."
+    : plan === "pro"
+      ? "Your account has Pro access. Health records still require the database setup to be complete."
+      : "Pet health records require Pro access and the supporting database setup."
 );
 
 say(
   "rescuePlanMessage",
-  plan === "premium" || plan === "pro"
-    ? "Your account has a paid plan. Rescue features require the supporting database setup."
-    : "Rescue workspace access requires Premium or Pro and supporting database setup."
+  plan === "unknown"
+    ? "Your plan could not be verified. Please refresh before assuming you need to upgrade."
+    : plan === "premium" || plan === "pro"
+      ? "Your account has a paid plan. Rescue features require the supporting database setup."
+      : "Rescue workspace access requires Premium or Pro and supporting database setup."
 );
 
 say(
   "vetPlanMessage",
-  plan === "pro"
-    ? "Your account has Pro access. Veterinary features require the supporting database setup."
-    : "Veterinary workspace access requires Pro and supporting database setup."
+  plan === "unknown"
+    ? "Your plan could not be verified. Please refresh before assuming you need to upgrade."
+    : plan === "pro"
+      ? "Your account has Pro access. Veterinary features require the supporting database setup."
+      : "Veterinary workspace access requires Pro and supporting database setup."
 );
 await loadCareNotifications();
 
