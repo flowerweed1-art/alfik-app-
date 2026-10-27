@@ -351,7 +351,7 @@ if (!db) return;
 try {
   const result = await db
     .from("alfik_pets")
-    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date,life_status")
+    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date,life_status,photo_path,allergies,vet_name,vet_phone,vet_email,vet_address")
     .eq("owner_id", user.id);
 
   if (result.error) throw result.error;
@@ -378,12 +378,28 @@ try {
         status.textContent = "Forever loved";
         item.appendChild(status);
       }
+      if (pet.photo_path) {
+        const photo = document.createElement("img");
+        photo.className = "pet-profile-photo";
+        photo.alt = (pet.name || "Pet") + " profile photo";
+        photo.loading = "lazy";
+        item.appendChild(photo);
+        db.storage.from("alfik-pet-photos").createSignedUrl(pet.photo_path, 3600).then(({data, error}) => {
+          if (!error && data && data.signedUrl) photo.src = data.signedUrl;
+          else photo.alt = "Pet photo could not be loaded";
+        }).catch(() => { photo.alt = "Pet photo could not be loaded"; });
+      }
       const details = document.createElement("div");
       details.className = "pet-card-details hidden";
       addText(details, "Date of birth", pet.date_of_birth);
       addText(details, "Microchip", pet.microchip);
       addText(details, "Neutering status", ({neutered:"Neutered / spayed",not_neutered:"Not neutered",unknown:"Unknown / not confirmed"})[pet.neutering_status] || "Unknown / not confirmed");
       addText(details, "Date neutered", pet.neutered_date);
+      addText(details, "Allergies", pet.allergies);
+      addText(details, "Vet / practice", pet.vet_name);
+      addText(details, "Vet phone", pet.vet_phone);
+      addText(details, "Vet email", pet.vet_email);
+      addText(details, "Vet address", pet.vet_address);
       addText(details, "Notes", pet.notes);
       item.appendChild(details);
       const actions = document.createElement("div");
@@ -521,6 +537,13 @@ function beginEditPet(pet) {
   el("petMicrochip").value = pet.microchip || "";
   el("petNeuteringStatus").value = pet.neutering_status || "unknown";
   el("petNeuteredDate").value = pet.neutered_date || "";
+  el("petAllergies").value = pet.allergies || "";
+  el("petVetName").value = pet.vet_name || "";
+  el("petVetPhone").value = pet.vet_phone || "";
+  el("petVetEmail").value = pet.vet_email || "";
+  el("petVetAddress").value = pet.vet_address || "";
+  el("petPhotoPath").value = pet.photo_path || "";
+  el("petPhotoFile").value = "";
   el("petNotes").value = pet.notes || "";
   el("petFormHeading").textContent = "Edit " + (pet.name || "pet profile");
   el("savePetBtn").textContent = "Save changes";
@@ -532,6 +555,7 @@ function beginEditPet(pet) {
 function resetPetForm() {
   editingPetId = null;
   if (el("petForm")) el("petForm").reset();
+  if (el("petPhotoPath")) el("petPhotoPath").value = "";
   if (el("petFormHeading")) el("petFormHeading").textContent = "Add a pet";
   if (el("savePetBtn")) el("savePetBtn").textContent = "Save pet profile";
   if (el("cancelPetEditBtn")) el("cancelPetEditBtn").classList.add("hidden");
@@ -563,6 +587,12 @@ const pet = {
   microchip: el("petMicrochip").value.trim() || null,
   neutering_status: el("petNeuteringStatus")?.value || "unknown",
   neutered_date: el("petNeuteredDate")?.value || null,
+  allergies: el("petAllergies").value.trim() || null,
+  vet_name: el("petVetName").value.trim() || null,
+  vet_phone: el("petVetPhone").value.trim() || null,
+  vet_email: el("petVetEmail").value.trim() || null,
+  vet_address: el("petVetAddress").value.trim() || null,
+  photo_path: el("petPhotoPath").value || null,
   notes: el("petNotes").value.trim() || null
 };
 
@@ -571,10 +601,30 @@ if (!pet.name || !pet.species) {
   return;
 }
 
+const photoInput = el("petPhotoFile");
+const photoFile = photoInput?.files?.[0] || null;
+if (photoFile) {
+  if (!photoFile.type.startsWith("image/")) {
+    say("petMessage", "Please choose an image file for the pet photo.");
+    return;
+  }
+  if (photoFile.size > 5 * 1024 * 1024) {
+    say("petMessage", "Please choose a photo smaller than 5 MB.");
+    return;
+  }
+}
+
 const button = event.submitter;
 if (button) button.disabled = true;
 
 try {
+  if (photoFile) {
+    const safeName = photoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || "pet-photo";
+    const photoPath = user.id + "/" + Date.now() + "-" + safeName;
+    const upload = await db.storage.from("alfik-pet-photos").upload(photoPath, photoFile, { upsert: false, contentType: photoFile.type });
+    if (upload.error) throw upload.error;
+    pet.photo_path = photoPath;
+  }
   const result = editingPetId
     ? await db.from("alfik_pets").update(pet).eq("id", editingPetId).eq("owner_id", user.id)
     : await db.from("alfik_pets").insert([pet]);
