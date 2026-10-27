@@ -351,7 +351,7 @@ if (!db) return;
 try {
   const result = await db
     .from("alfik_pets")
-    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date")
+    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date,life_status")
     .eq("owner_id", user.id);
 
   if (result.error) throw result.error;
@@ -360,10 +360,24 @@ try {
     if (list) {
       const item = card(list, pet.name || "Unnamed pet");
       item.classList.add("pet-profile-card");
+      const isDeceased = pet.life_status === "deceased";
+      if (isDeceased) item.classList.add("pet-deceased");
       const species = document.createElement("p");
       species.className = "pet-card-subtitle";
       species.textContent = [pet.species, pet.breed].filter(Boolean).join(" • ") || "Pet profile";
       item.appendChild(species);
+      if (isDeceased) {
+        const rainbow = document.createElement("span");
+        rainbow.className = "pet-rainbow";
+        rainbow.textContent = "🌈";
+        rainbow.setAttribute("aria-label", "Remembering this pet");
+        rainbow.title = "Remembering this pet";
+        item.appendChild(rainbow);
+        const status = document.createElement("p");
+        status.className = "pet-deceased-label";
+        status.textContent = "Forever loved";
+        item.appendChild(status);
+      }
       const details = document.createElement("div");
       details.className = "pet-card-details hidden";
       addText(details, "Date of birth", pet.date_of_birth);
@@ -390,6 +404,18 @@ try {
       editButton.textContent = "Edit profile";
       editButton.addEventListener("click", () => beginEditPet(pet));
       actions.appendChild(editButton);
+      const lifeButton = document.createElement("button");
+      lifeButton.type = "button";
+      lifeButton.className = "secondary";
+      lifeButton.textContent = isDeceased ? "Mark as living" : "🌈 Mark deceased";
+      lifeButton.addEventListener("click", () => updatePetLifeStatus(pet, isDeceased ? "living" : "deceased"));
+      actions.appendChild(lifeButton);
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "danger pet-delete-button";
+      deleteButton.textContent = "Delete profile";
+      deleteButton.addEventListener("click", () => deletePetProfile(pet));
+      actions.appendChild(deleteButton);
       item.appendChild(actions);
     }
 
@@ -429,6 +455,61 @@ try {
   }
 }
 
+}
+
+async function updatePetLifeStatus(pet, newStatus) {
+  const label = pet.name || "this pet";
+  const promptText = newStatus === "deceased"
+    ? "Mark " + label + " as deceased? A rainbow will appear on the profile. You can change this back later."
+    : "Mark " + label + " as living again and remove the rainbow?";
+  if (!window.confirm(promptText)) return;
+
+  const db = client();
+  const user = await currentUser();
+  if (!db || !user) {
+    say("petMessage", "Please sign in again.");
+    return;
+  }
+  try {
+    const { error } = await db.from("alfik_pets")
+      .update({ life_status: newStatus })
+      .eq("id", pet.id)
+      .eq("owner_id", user.id);
+    if (error) throw error;
+    say("petMessage", newStatus === "deceased"
+      ? "Pet profile updated. Sending love and remembering " + label + " 🌈"
+      : "Pet profile updated.");
+    await loadPetWorkspace();
+  } catch (error) {
+    say("petMessage", "Could not update the pet's status: " + readableError(error));
+  }
+}
+
+async function deletePetProfile(pet) {
+  const label = pet.name || "this pet";
+  if (!window.confirm("Permanently delete " + label + "'s pet profile? This cannot be undone.")) return;
+
+  const db = client();
+  const user = await currentUser();
+  if (!db || !user) {
+    say("petMessage", "Please sign in again.");
+    return;
+  }
+  try {
+    const { error } = await db.from("alfik_pets")
+      .delete()
+      .eq("id", pet.id)
+      .eq("owner_id", user.id);
+    if (error) throw error;
+    if (editingPetId === pet.id) {
+      resetPetForm();
+      if (el("petForm")) el("petForm").classList.add("hidden");
+    }
+    say("petMessage", "Pet profile deleted.");
+    await loadPetWorkspace();
+  } catch (error) {
+    say("petMessage", "Could not delete the pet profile: " + readableError(error));
+  }
 }
 
 function beginEditPet(pet) {
