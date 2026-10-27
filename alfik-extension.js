@@ -560,19 +560,22 @@ try {
   dashboardPets = result.data || [];
   const dashboardSelect = el("dashboardPetSelect");
   if (dashboardSelect) {
-    const previousValue = dashboardSelect.value;
+    const previousValue = String(dashboardSelect.value || "");
     dashboardSelect.replaceChildren();
     const placeholder = document.createElement("option");
     placeholder.value = "";
-    placeholder.textContent = "Choose a pet";
+    placeholder.textContent = dashboardPets.length ? "Choose a pet…" : "No pet profiles found";
     dashboardSelect.appendChild(placeholder);
-    dashboardPets.forEach(pet => {
+    for (const pet of dashboardPets) {
+      if (!pet || !pet.id) continue;
       const option = document.createElement("option");
-      option.value = pet.id;
+      option.value = String(pet.id);
       option.textContent = pet.name || "Unnamed pet";
       dashboardSelect.appendChild(option);
-    });
-    dashboardSelect.value = dashboardPets.some(pet => String(pet.id) === previousValue) ? previousValue : (dashboardPets[0]?.id || "");
+    }
+    const selectedPet = dashboardPets.find(pet => String(pet.id) === previousValue) || dashboardPets.find(pet => pet && pet.id);
+    dashboardSelect.value = selectedPet ? String(selectedPet.id) : "";
+    dashboardSelect.disabled = dashboardSelect.options.length <= 1;
   }
 
   (result.data || []).forEach(pet => {
@@ -2185,7 +2188,9 @@ if (el("cancelPetEditBtn")) el("cancelPetEditBtn").addEventListener("click", () 
   say("petMessage", "");
 });
 if (el("saveHealthBtn")) el("saveHealthBtn").addEventListener("click", saveHealthRecord);
-if (el("dashboardPetSelect")) el("dashboardPetSelect").addEventListener("change", loadPetDashboard);
+if (el("dashboardPetSelect")) el("dashboardPetSelect").addEventListener("change", async () => {
+  await loadPetDashboard();
+});
 if (el("healthPet")) el("healthPet").addEventListener("change", loadHealthRecords);
 if (el("medicationPet")) el("medicationPet").addEventListener("change", loadMedicationList);
 if (el("carePet")) el("carePet").addEventListener("change", loadCareSchedules);
