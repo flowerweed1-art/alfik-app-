@@ -425,6 +425,22 @@ footer{background:#f8fbfe}
   #urgentAnimalHelp{padding:17px}
 }
 
+
+/* Compact pet profile cards */
+.pet-list-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:22px 0 12px}
+.pet-list-heading h3{margin:0}
+.pet-profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px;margin:0 0 18px}
+.pet-profile-card{min-width:0;padding:16px;border:1px solid #d5e3ef;border-radius:15px;background:linear-gradient(145deg,#fff,#f5faff);box-shadow:0 5px 16px #163d5b0a}
+.pet-profile-card h3{margin:0 0 5px;color:#123b63;font-size:19px;overflow-wrap:anywhere}
+.pet-card-subtitle{margin:0 0 10px;color:#58738a;font-size:13px;text-transform:capitalize}
+.pet-card-details{padding-top:8px;border-top:1px solid #e1ebf3;margin-top:8px}
+.pet-card-details p{font-size:13px;margin:7px 0;overflow-wrap:anywhere}
+.pet-card-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.pet-card-actions button{flex:1 1 90px;min-height:40px;font-size:13px;padding:8px}
+#petForm{margin:16px 0;padding:18px}
+#petForm h3{margin-top:0}
+.pet-form-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(max-width:520px){.pet-list-heading{align-items:center}.pet-profile-grid{grid-template-columns:1fr 1fr;gap:9px}.pet-profile-card{padding:12px}.pet-profile-card h3{font-size:16px}.pet-card-actions{gap:6px}.pet-card-actions button{flex-basis:100%;width:100%}.pet-form-actions{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -718,8 +734,13 @@ footer{background:#f8fbfe}
 <p>Keep useful information about your own animals in one place.</p>
 <p class="note">Pet profiles require the Premium plan or higher. Health records require Pro.</p>
 <div id="planStatus" class="feature-panel">Loading your ALFIK plan...</div>
-<form id="petForm">
-<h3>Add a pet</h3>
+<div class="pet-list-heading">
+<h3>Your pets</h3>
+<button class="primary" id="showAddPetBtn" type="button">＋ Add a pet</button>
+</div>
+<div id="petList" class="pet-profile-grid">Your pet profiles will appear here.</div>
+<form id="petForm" class="feature-panel hidden">
+<h3 id="petFormHeading">Add a pet</h3>
 <label for="petName">Pet's name</label><input id="petName" maxlength="100" required>
 <label for="petSpecies">Species</label>
 <select id="petSpecies" required><option value="">Choose species</option><option value="cat">Cat</option><option value="dog">Dog</option><option value="rabbit">Rabbit</option><option value="bird">Bird</option><option value="other">Other</option></select>
@@ -729,10 +750,12 @@ footer{background:#f8fbfe}
 <label for="petNeuteringStatus">Neutering status</label><select id="petNeuteringStatus"><option value="unknown">Unknown / not confirmed</option><option value="neutered">Neutered / spayed</option><option value="not_neutered">Not neutered</option></select>
 <label for="petNeuteredDate">Date neutered (optional)</label><input id="petNeuteredDate" type="date">
 <label for="petNotes">Notes (optional)</label><textarea id="petNotes" rows="3" maxlength="3000"></textarea>
-<button class="primary wide" type="submit">Save pet profile</button>
+<div class="pet-form-actions">
+<button class="primary wide" id="savePetBtn" type="submit">Save pet profile</button>
+<button class="secondary wide hidden" id="cancelPetEditBtn" type="button">Cancel</button>
+</div>
 </form>
 <p id="petMessage" class="message" role="status"></p>
-<h3>Your pets</h3><div id="petList">Your pet profiles will appear here.</div>
 <div class="feature-panel">
 <h3>Pet health records</h3>
 <p class="note">Health records are a Pro feature. Only store information you are comfortable keeping in your ALFIK account.</p>
