@@ -1,14 +1,30 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#1769aa">
+<meta name="theme-color" content="#0d2f50">
+<link rel="manifest" href="/manifest.json">
 <title>ALFIK | Animal Reunification</title>
 <style>
+.account-plan-badge{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:14px 0;padding:12px 15px;border:2px solid #1769aa;border-radius:12px;background:#eef6ff;color:#123b63}
+.account-plan-badge strong{font-size:1.05rem;font-weight:800}
+.account-plan-label{font-size:.75rem;font-weight:800;letter-spacing:.06em}
+.account-plan-badge span:last-child{flex-basis:100%;font-size:.9rem}
+.account-plan-badge-small{margin:8px 0 16px}
+.plan-tier-tag{display:inline-block;vertical-align:middle;padding:3px 7px;border-radius:6px;background:#edf1f5;color:#34495e;font-size:.68rem;letter-spacing:.05em}
+.plan-tier-premium{background:#e8f2ff;color:#14558b}
+.plan-tier-pro{background:#e9e8ff;color:#41338a}
+
+.account-plan-badge{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:14px 0 20px;padding:12px 15px;border:2px solid #1769aa;border-radius:12px;background:#eef6ff;color:#123b63}
+.account-plan-label{font-size:.75rem;font-weight:800;letter-spacing:.06em}
+#accountPlanBadgeValue{font-size:1.05rem;font-weight:800}
+#accountPlanBadgeDetail{flex-basis:100%;font-size:.9rem}
+
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f2f7fc;color:#183047;line-height:1.5}
-header{background:#123b63;color:white;text-align:center;padding:22px 14px}
+header{background:#0d2f50;color:white;text-align:center;padding:22px 14px}
 header img{width:130px;max-width:70%;height:auto;border-radius:50%;margin-bottom:8px}
 header h1{margin:0;font-size:32px;letter-spacing:3px}
 header p{margin:5px 0}
@@ -46,44 +62,172 @@ input[type=checkbox]{width:auto}
 .ai-card{background:#f0f8f4;border:1px solid #c7e2d4;border-radius:8px;padding:10px;margin:8px 0}
 nav{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
 nav button{flex:1 1 120px}
-.notification-nav{position:relative;white-space:nowrap}
-.notification-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:5px;padding:0 5px;border-radius:999px;background:#c93434;color:#fff;font-size:12px}
-.notification-count.hidden{display:none!important}
-.notification-item{border:1px solid #d6e5f2;border-radius:9px;padding:12px;margin:10px 0;background:#f8fbff}
-.notification-item p{margin:5px 0}
-footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
+.notification-nav{white-space:nowrap}
+footer{text-align:center;color:#52697c;padding:24px 16px;font-size:13px;border-top:1px solid #d6e5f2;background:#fff}
+nav{gap:6px}
+nav button{flex:1 1 135px;min-height:44px}
+button{transition:background-color .15s ease,transform .15s ease}
+button:active{transform:translateY(1px)}
+section{border-radius:14px}
+header{background:linear-gradient(135deg,#123b63,#1769aa)}
+.feature-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.feature-panel{background:#f6faff;border:1px solid #d6e5f2;border-radius:8px;padding:13px;margin:12px 0}
+@media(min-width:560px){.feature-grid{grid-template-columns:1fr 1fr}}
+.premium-promo{border:2px solid #9bc7e8;background:linear-gradient(135deg,#f1f8ff,#fff);padding:16px}
+.premium-promo h3{margin:0 0 6px;color:#14558b}
+.premium-promo .premium-promo-price{font-size:22px;font-weight:bold;color:#1769aa;margin:8px 0}
+.premium-promo .premium-promo-actions{display:flex;gap:8px;flex-wrap:wrap}
+.premium-promo .premium-promo-actions button{flex:1 1 140px}
+.premium-promo.compact .premium-promo-details{display:none}
+.premium-promo.compact{padding:10px 14px}
+.premium-promo.compact h3{font-size:16px}
+
+
+/* ALFIK visual polish: clean, calm, premium, mobile-first */
+:root{--alfik-navy:#0b2945;--alfik-blue:#1769aa;--alfik-blue-dark:#125487;--alfik-sky:#eaf4fc;--alfik-border:#d5e4f0;--alfik-ink:#183047;--alfik-muted:#5b7082;--alfik-radius:18px}
+html{scroll-behavior:smooth}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f3f7fb;color:var(--alfik-ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+header{background:linear-gradient(145deg,#081f36 0%,#0d2f50 55%,#174c76 100%);padding:34px 18px 30px;position:relative;overflow:hidden;box-shadow:0 8px 28px #08243b25}
+header:after{content:"";position:absolute;width:250px;height:250px;right:-100px;bottom:-155px;border:1px solid #ffffff20;border-radius:50%;box-shadow:0 0 0 25px #ffffff08,0 0 0 52px #ffffff06;pointer-events:none}
+header img{width:112px;border:3px solid #ffffffd9;box-shadow:0 8px 24px #06182c55;position:relative;z-index:1}
+header h1{font-size:clamp(30px,7vw,42px);letter-spacing:5px;font-weight:800;line-height:1.15}
+header p{color:#e7f2fc;font-size:clamp(14px,3.5vw,17px);margin:8px 0 0}
+header p:last-child{color:#fff;font-weight:600}
+main{max-width:900px;padding:20px 15px 32px}
+nav{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:10px;margin:0 -2px 18px;background:#f3f7fbef;backdrop-filter:blur(14px);border:1px solid #dbe7f1;border-radius:18px;box-shadow:0 6px 22px #173b5b0b}
+nav button{min-width:0;min-height:48px;margin:0;padding:11px 10px;border-radius:12px;font-size:14px;line-height:1.25;font-weight:700}
+button{font-family:inherit;border-radius:12px;padding:12px 16px;font-size:15px;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #64a9e5;outline-offset:2px}
+button.primary{background:linear-gradient(135deg,#1769aa,#125487);box-shadow:0 4px 10px #1769aa2b}
+button.primary:hover{background:#0e4c7e;box-shadow:0 6px 15px #1769aa38}
+button.secondary{background:#fff;color:#164f7a;border:1px solid #c9dceb}
+button.secondary:hover{background:#eaf4fc;border-color:#9fc4e2}
+section{border:1px solid #dce7f0;border-radius:var(--alfik-radius);padding:clamp(16px,4vw,25px);margin-bottom:18px;box-shadow:0 5px 22px #163d5b0b}
+h2{font-size:clamp(23px,5vw,30px);letter-spacing:-.5px;color:var(--alfik-navy);line-height:1.25}
+h3{font-size:18px;line-height:1.3;color:var(--alfik-blue-dark)}
+p{margin-top:8px}
+.feature-panel{background:linear-gradient(145deg,#f7fbff,#edf5fc);border:1px solid #d7e6f2;border-radius:14px;padding:16px;margin:14px 0}
+.report-card{border:1px solid #d9e5ef;border-left:5px solid var(--alfik-blue);border-radius:14px;padding:16px;margin:14px 0;box-shadow:0 4px 14px #163d5b0a}
+input,select,textarea{min-height:46px;border:1px solid #c6d6e3;border-radius:10px;padding:12px 13px}
+textarea{min-height:110px}
+label{font-size:14px;color:#29465e}
+.badge{padding:5px 10px;letter-spacing:.2px}
+.premium-promo{border:1px solid #9bc7e8;border-top:4px solid var(--alfik-blue);border-radius:16px;background:linear-gradient(135deg,#eaf5ff 0%,#fff 78%);box-shadow:0 8px 24px #1769aa12;padding:18px}
+.premium-promo h3{font-size:20px;color:var(--alfik-navy)}
+.premium-promo .premium-promo-price{font-size:26px;letter-spacing:-.5px;color:var(--alfik-blue-dark)}
+footer{background:#fff;color:var(--alfik-muted);padding:26px 16px;border-top:1px solid #dce7f0}
+@media(min-width:560px){nav{grid-template-columns:repeat(3,minmax(0,1fr));padding:12px}nav button{font-size:14px}}
+@media(min-width:760px){header{padding:38px 20px 34px}main{padding-top:24px}nav{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+
+
+/* Optional collapsible navigation */
+.menu-toggle{
+  display:flex;align-items:center;justify-content:flex-start;gap:10px;
+  width:100%;min-height:48px;margin:0 0 10px;padding:11px 14px;
+  border:1px solid #cbddeb;border-radius:14px;
+  background:#fff;color:#164f7a;font-weight:750;text-align:left;
+  box-shadow:0 4px 14px #173b5b0a;
+}
+.menu-toggle-icon{display:inline-flex;align-items:center;justify-content:center;width:26px;font-size:21px;line-height:1}
+.menu-toggle-hint{margin-left:auto;font-size:12px;font-weight:500;color:#5b7082}
+nav.menu-collapsed{display:none}
+@media(max-width:420px){.menu-toggle-hint{font-size:11px}}
 
 /* ALFIK premium homepage refinement */
-body{background:linear-gradient(180deg,#edf5fc 0,#f7faff 360px,#f4f8fc 100%);color:#183047;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;line-height:1.65}
-header{position:relative;overflow:hidden;padding:38px 18px 34px;background:radial-gradient(ellipse at 50% 0%,#245b88 0,#123b63 48%,#0b2947 100%);border-bottom:4px solid #83b9e5;box-shadow:0 12px 32px #123b631c}
-header img{width:112px;max-width:42%;padding:7px;margin-bottom:14px;border:1px solid #ffffff70;border-radius:50%;background:#ffffff12;box-shadow:0 8px 26px #071d3340}
-header h1{font-size:clamp(34px,6vw,44px);letter-spacing:5px;font-weight:800;line-height:1.15}
+body{
+  background:linear-gradient(180deg,#edf5fc 0,#f7faff 360px,#f4f8fc 100%);
+  color:#183047;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  line-height:1.65;
+}
+header{
+  position:relative;
+  overflow:hidden;
+  padding:38px 18px 34px;
+  background:radial-gradient(ellipse at 50% 0%,#245b88 0,#123b63 48%,#0b2947 100%);
+  border-bottom:4px solid #83b9e5;
+  box-shadow:0 12px 32px #123b631c;
+}
+header img{
+  width:112px;
+  max-width:42%;
+  padding:7px;
+  margin-bottom:14px;
+  border:1px solid #ffffff70;
+  border-radius:50%;
+  background:#ffffff12;
+  box-shadow:0 8px 26px #071d3340;
+}
+header h1{
+  font-size:clamp(34px,6vw,44px);
+  letter-spacing:5px;
+  font-weight:800;
+  line-height:1.15;
+}
 header p{margin:8px auto 0;max-width:620px;color:#e2effb}
 header p:last-child{font-size:15px;letter-spacing:.15px}
 main{max-width:900px;padding:24px 18px 30px}
-section{border:1px solid #d8e5f1;border-radius:18px;padding:clamp(18px,3.5vw,28px);margin-bottom:20px;box-shadow:0 8px 28px #153e5c0a}
+section{
+  border:1px solid #d8e5f1;
+  border-radius:18px;
+  padding:clamp(18px,3.5vw,28px);
+  margin-bottom:20px;
+  box-shadow:0 8px 28px #153e5c0a;
+}
 h2{font-size:clamp(23px,4vw,30px);line-height:1.25;letter-spacing:-.5px;color:#123b63}
 h3{font-size:18px;line-height:1.35;color:#1769aa}
-button{min-height:46px;border-radius:10px;padding:12px 16px;font-weight:700;letter-spacing:.05px;transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #83b9e5;outline-offset:2px}
+button{
+  min-height:46px;
+  border-radius:10px;
+  padding:12px 16px;
+  font-weight:700;
+  letter-spacing:.05px;
+  transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
+}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:3px solid #83b9e5;
+  outline-offset:2px;
+}
 button.primary{background:linear-gradient(135deg,#1769aa,#12558e);box-shadow:0 4px 12px #1769aa26}
 button.secondary{background:#edf5fc;border:1px solid #c9deef;color:#164f7a}
 button.primary:hover,button.secondary:hover,button.found:hover,button.lost:hover{transform:translateY(-1px);box-shadow:0 6px 16px #123b631a}
 input,select,textarea{min-height:45px;border-radius:9px;border-color:#c7d7e5}
 input:focus,select:focus,textarea:focus{border-color:#1769aa;box-shadow:0 0 0 3px #1769aa17;outline:none}
-#homeView{padding:clamp(22px,5vw,38px);border-color:#c8dced;background:linear-gradient(145deg,#fff 0%,#fbfdff 70%,#f0f7fd 100%);box-shadow:0 14px 40px #123b6312}
+#homeView{
+  padding:clamp(22px,5vw,38px);
+  border-color:#c8dced;
+  background:linear-gradient(145deg,#fff 0%,#fbfdff 70%,#f0f7fd 100%);
+  box-shadow:0 14px 40px #123b6312;
+}
 #homeView>h2{font-size:clamp(29px,5vw,40px);letter-spacing:-1px;margin-bottom:8px}
 #homeView>h2:after{content:"";display:block;width:58px;height:4px;border-radius:9px;background:#70a9d8;margin-top:15px}
 #homeView>p:first-of-type{font-size:17px;color:#47647c;margin:10px 0 22px}
-#urgentAnimalHelp{border:1px solid #c7dced;background:linear-gradient(135deg,#f4f9fe,#fff 75%)}
+#urgentAnimalHelp{
+  border:1px solid #c7dced;
+  background:linear-gradient(135deg,#f4f9fe,#fff 75%);
+}
 #urgentAnimalHelp h3{font-size:21px;color:#123b63}
 #urgentAnimalHelp button{margin-top:7px}
-.feature-panel{border-radius:14px;border-color:#d9e6f1;box-shadow:0 5px 18px #123b6308}
+.feature-panel{
+  border-radius:14px;
+  border-color:#d9e6f1;
+  box-shadow:0 5px 18px #123b6308;
+}
 .account-plan-badge{border-radius:13px!important}
 .report-card{border-radius:12px;box-shadow:0 4px 14px #123b6308}
 .badge{padding:5px 10px}
 .note{line-height:1.55}
-@media(max-width:520px){header{padding:28px 15px 25px}header img{width:94px}main{padding:14px 11px 24px}section{border-radius:14px;padding:17px;margin-bottom:14px}#homeView{padding:20px 16px}button{font-size:14px}}
+@media(max-width:520px){
+  header{padding:28px 15px 25px}
+  header img{width:94px}
+  main{padding:14px 11px 24px}
+  section{border-radius:14px;padding:17px;margin-bottom:14px}
+  #homeView{padding:20px 16px}
+  button{font-size:14px}
+}
+
+
 
 /* ALFIK visible homepage refresh */
 header{padding:46px 18px 42px;background:radial-gradient(ellipse at 50% -15%,#3979ad 0%,#164b77 38%,#092640 100%);border-bottom:5px solid #8ec5ef}
@@ -114,6 +258,173 @@ nav button{min-height:42px;border-radius:9px}
 footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
 @media(max-width:520px){header{padding:32px 14px 30px}header img{width:104px}header h1{letter-spacing:5px}header p:last-of-type{font-size:12px}#accountSection{margin:18px auto;padding:23px 18px;border-radius:18px}#homeView{padding:27px 20px;border-radius:19px}#homeView>h2{font-size:38px}#homeView button{min-height:52px}nav{padding:7px;gap:5px}nav button{flex:1 1 42%;font-size:13px}}
 
+
+
+
+/* ALFIK professional finish v2 */
+:root{
+  --alfik-ink:#17324a;
+  --alfik-navy:#0d2b47;
+  --alfik-blue:#1769aa;
+  --alfik-blue-deep:#104a78;
+  --alfik-muted:#5b7083;
+  --alfik-line:#d8e4ee;
+  --alfik-paper:#ffffff;
+}
+html{background:#f3f7fb}
+body{
+  color:var(--alfik-ink);
+  background:linear-gradient(180deg,#eaf2f9 0,#f5f8fc 330px,#f5f8fc 100%);
+  font-size:16px;
+}
+header{
+  isolation:isolate;
+  padding:42px 20px 38px;
+  background:linear-gradient(135deg,#091f35 0%,#103c62 58%,#1b5c8d 100%);
+  border-bottom:4px solid #9bc9ec;
+}
+header:before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:340px;height:340px;
+  left:-180px;top:-210px;
+  border:1px solid #ffffff20;border-radius:50%;
+  box-shadow:0 0 0 28px #ffffff08,0 0 0 58px #ffffff06;
+  pointer-events:none;
+}
+header img{
+  width:116px;
+  padding:7px;
+  background:#ffffff12;
+  border:1px solid #ffffff85;
+  box-shadow:0 10px 28px #03172955;
+}
+header h1{font-size:clamp(36px,6vw,46px);letter-spacing:6px}
+header p{max-width:640px;margin-left:auto;margin-right:auto}
+header p:last-child{font-weight:600;color:#fff}
+main{max-width:980px}
+section{
+  background:#fff;
+  border-color:var(--alfik-line);
+  box-shadow:0 8px 26px #1436530b;
+}
+#homeView{
+  padding:clamp(24px,5vw,44px);
+  border:1px solid #cbddea;
+  border-radius:22px;
+  background:linear-gradient(145deg,#fff 0%,#fcfdff 70%,#eef6fd 100%);
+  box-shadow:0 16px 42px #123b6312;
+}
+#homeView:before{
+  content:"HERE FOR EVERY ANIMAL";
+  display:inline-flex;
+  align-items:center;
+  margin:0 0 20px;
+  padding:7px 12px;
+  border:1px solid #c8dfee;
+  border-radius:999px;
+  background:#edf6fd;
+  color:#155582;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1.7px;
+}
+#homeView>h2{
+  max-width:690px;
+  color:#102f4b;
+  font-size:clamp(34px,6vw,48px);
+  font-weight:800;
+  line-height:1.1;
+  letter-spacing:-1.5px;
+}
+#homeView>h2:after{
+  content:"";
+  display:block;
+  width:64px;height:4px;
+  margin-top:17px;
+  border-radius:8px;
+  background:linear-gradient(90deg,#1769aa,#8bc8f5);
+}
+#homeView>p:first-of-type{
+  max-width:620px;
+  color:#506a80;
+  font-size:clamp(16px,2.3vw,19px);
+  line-height:1.7;
+  margin:14px 0 24px;
+}
+#urgentAnimalHelp{
+  margin-top:22px;
+  padding:clamp(18px,3vw,26px);
+  border:1px solid #cbddea;
+  border-radius:18px;
+  background:linear-gradient(135deg,#f2f8fd,#fff 75%);
+}
+#urgentAnimalHelp h3{font-size:22px;color:#123b63}
+#urgentAnimalHelp p{color:#526b80}
+.feature-panel{
+  border-radius:15px;
+  background:#f8fbfe;
+  border-color:#dbe7f1;
+}
+#careNotificationsPanel{background:#fff}
+#accountSection{
+  max-width:600px;
+  border:1px solid #d3e2ee;
+  border-radius:20px;
+  box-shadow:0 14px 38px #123b6314;
+}
+button{
+  min-height:46px;
+  border-radius:11px;
+  font-weight:700;
+}
+button.primary{
+  background:linear-gradient(135deg,#1769aa 0%,#104a78 100%);
+  box-shadow:0 4px 12px #1769aa25;
+}
+button.secondary{
+  background:#fff;
+  border:1px solid #c8dceb;
+  color:#164f7a;
+}
+button.lost{background:#b8323b}
+button.found{background:#237653}
+input,select,textarea{
+  background:#fff;
+  border-color:#c8d7e4;
+  border-radius:10px;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:#3987c3;
+  box-shadow:0 0 0 3px #3987c31a;
+  outline:none;
+}
+nav{
+  border-color:#d5e3ee;
+  border-radius:15px;
+  background:#ffffffed;
+  box-shadow:0 7px 22px #173b5b0d;
+}
+nav button{border-radius:10px}
+.report-card{
+  background:#fff;
+  border-color:#dbe6ef;
+  box-shadow:0 5px 16px #163d5b0a;
+}
+.badge{font-weight:750}
+footer{background:#f8fbfe}
+@media(max-width:520px){
+  header{padding:30px 15px 27px}
+  header img{width:98px}
+  header h1{letter-spacing:5px}
+  main{padding:14px 12px 26px}
+  #homeView{padding:24px 18px;border-radius:18px}
+  #homeView>h2{font-size:36px;letter-spacing:-1px}
+  #homeView>p:first-of-type{font-size:16px}
+  #urgentAnimalHelp{padding:17px}
+}
+
 </style>
 </head>
 <body>
@@ -127,7 +438,13 @@ footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
 <main>
 <section id="accountSection">
 <h2>Your ALFIK account</h2>
-<p>Sign in or create an account to report an animal.</p>
+<p>Sign in or create a free account. Choose the type that fits you when creating an account.</p>
+<label for="newAccountType">I am joining ALFIK as</label>
+<select id="newAccountType">
+<option value="public">A member of the public / pet owner</option>
+<option value="rescue">A rescue or animal welfare organisation</option>
+<option value="veterinary">A veterinary practice</option>
+</select>
 <label for="accountEmail">Email address</label>
 <input id="accountEmail" type="email" autocomplete="email">
 <label for="accountPassword">Password</label>
@@ -135,6 +452,11 @@ footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
 <button class="primary wide" id="signInBtn" type="button">Sign in</button>
 <button class="secondary wide" id="signUpBtn" type="button">Create account</button>
 <button class="secondary wide" id="forgotPasswordBtn" type="button">Forgot password?</button>
+<div class="feature-panel" id="alfikSecurityPanel">
+<p><strong>Cloudflare security check</strong></p>
+<p class="note">Complete this quick check before signing in or creating an account.</p>
+<div id="alfikTurnstile" class="cf-turnstile" data-sitekey="0x4AAAAAAFiK2Uh9rYAy9ril" data-callback="onAlfikCaptchaSuccess" data-expired-callback="onAlfikCaptchaExpired" data-error-callback="onAlfikCaptchaError" data-theme="light"></div>
+</div>
 <p id="accountMessage" class="message" role="status"></p>
 </section>
 
@@ -150,32 +472,98 @@ footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
 </section>
 
 <div id="siteContent" class="hidden">
-<nav>
+<button type="button" class="menu-toggle" id="alfikMenuToggle" aria-controls="alfikMainNav" aria-expanded="true">
+  <span class="menu-toggle-icon" aria-hidden="true">☰</span>
+  <span id="alfikMenuToggleLabel">Hide menu</span>
+  <span class="menu-toggle-hint">Choose what you want to see</span>
+</button>
+<nav id="alfikMainNav">
 <button class="secondary" data-view="homeView">Home</button>
-<button class="secondary" data-view="reportsView">All reports</button>
-<button class="secondary" data-view="myView">My ALFIK</button>
-<button class="secondary notification-nav" id="notificationBell" data-view="notificationsView" aria-label="Notifications">🔔 Notifications <span id="notificationCount" class="notification-count hidden">0</span></button>
-<button class="secondary" data-view="reportView">Report an animal</button>
-<!-- Email alerts temporarily hidden; use in-app notifications instead. -->
-<button class="secondary" data-view="billingView">⭐ Plans & billing</button>
-<button class="secondary" data-view="accountView">Account</button>
+<button class="secondary" data-view="reportsView">🔎 Find an animal</button>
+<button class="secondary" data-view="myView" data-account-types="public">My ALFIK</button>
+<button class="secondary notification-nav" id="notificationBell" data-view="homeView" aria-label="Notifications" data-account-types="public,rescue,veterinary">🔔 Notifications</button>
+<button class="secondary" data-view="messagesView" data-account-types="public,rescue,veterinary">Private messages</button>
+<button class="secondary" data-view="reportView" data-account-types="public">Report an animal</button>
+<!-- Email alerts are temporarily hidden while ALFIK moves to in-app notifications. -->
+<button class="secondary" data-view="petsView" data-account-types="public">My pets</button>
+<button class="secondary" data-view="rescueView" data-account-types="rescue">Rescue workspace</button>
+<button class="secondary" data-view="vetView" data-account-types="veterinary">Vet workspace</button>
+<button class="secondary" data-view="billingView" data-account-types="public,rescue,veterinary">Plans</button>
+<button class="secondary" data-view="accountView" data-account-types="public,rescue,veterinary">Account</button>
+<button class="secondary" data-view="adminView" data-account-types="public,rescue,veterinary">Admin Tools</button>
 </nav>
+<script>
+(function(){
+  const nav = document.getElementById("alfikMainNav");
+  const toggle = document.getElementById("alfikMenuToggle");
+  const label = document.getElementById("alfikMenuToggleLabel");
+  if (!nav || !toggle || !label) return;
+  let collapsed = false;
+  try { collapsed = localStorage.getItem("alfik-menu-collapsed") === "yes"; } catch (_) {}
+  function updateMenu() {
+    nav.classList.toggle("menu-collapsed", collapsed);
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    label.textContent = collapsed ? "Show menu" : "Hide menu";
+    toggle.querySelector(".menu-toggle-icon").textContent = collapsed ? "☰" : "×";
+  }
+  toggle.addEventListener("click", function() {
+    collapsed = !collapsed;
+    try { localStorage.setItem("alfik-menu-collapsed", collapsed ? "yes" : "no"); } catch (_) {}
+    updateMenu();
+  });
+  updateMenu();
+})();
+</script>
+
 
 <section id="homeView">
 <h2>Every animal matters.</h2>
 <p>Helping lost animals find their way home, with a community that cares.</p>
-<button class="primary wide" data-view="reportsView">🔎 View all animal reports</button>
-<button class="found wide" data-view="reportView">📝 Report a lost or found animal</button>
-<button class="secondary wide" data-view="myView">👤 My ALFIK and my reports</button>
+<div id="accountPlanBadge" class="account-plan-badge" aria-live="polite"><span class="account-plan-label">YOUR ALFIK PLAN</span><strong id="accountPlanBadgeValue">Checking your plan…</strong><span id="accountPlanBadgeDetail">Your account benefits will appear here.</span></div>
+<div class="feature-panel premium-promo hidden" id="premiumPromo" data-account-types="public,rescue,veterinary" aria-live="polite">
+  <h3 id="premiumPromoHeading">Make more of your ALFIK account 🐾</h3>
+  <div class="premium-promo-details">
+    <p>Keep your pet profiles and important details together with Premium.</p>
+    <p class="premium-promo-price">£5.99/month</p>
+    <p class="note">Free lost-and-found reports and searches always remain available. Premium features are optional.</p>
+  </div>
+  <div class="premium-promo-actions">
+    <button class="primary" id="premiumPromoUpgradeBtn" type="button" data-view="billingView">Explore Premium</button>
+    <button class="secondary" id="premiumPromoDismissBtn" type="button">Keep this reminder compact</button>
+  </div>
+</div>
+<div class="feature-panel" id="careNotificationsPanel" tabindex="-1">
+<h3>Your notifications</h3>
+<p class="note">Private in-app alerts for possible animal matches and care reminders for your pets or rescue animals.</p>
+<button class="secondary" id="refreshCareNotificationsBtn" type="button">Refresh notifications</button>
+<p id="careNotificationsMessage" class="message" role="status"></p>
+<div id="careNotificationsList">Sign in to view your care notifications.</div>
+</div>
+<div class="feature-panel" id="urgentAnimalHelp">
+  <h3>What do you need help with?</h3>
+  <p>Choose the option that best fits. You can take your time and change your search whenever you need.</p>
+  <button class="primary wide" type="button" data-view="reportsView" data-set-report-filter="lost">🔎 Find my lost animal</button>
+  <button class="secondary wide" type="button" data-view="reportsView" data-set-report-filter="found">🐾 I've found an animal</button>
+  <button class="lost wide" type="button" data-account-types="public" onclick="startNewReport('lost')">Report my lost animal</button>
+  <button class="secondary wide" type="button" data-account-types="public" onclick="startNewReport('found_deceased')">Report an animal found deceased</button>
+  <button class="secondary wide" type="button" data-view="myView" data-account-types="public">My reports and updates</button>
+</div>
+<button class="secondary wide hidden" id="rescueHomeShortcut" data-view="rescueView" data-account-types="rescue">Open rescue workspace</button>
+<button class="secondary wide hidden" id="vetHomeShortcut" data-view="vetView" data-account-types="veterinary">Open veterinary workspace</button>
+<div class="feature-panel" id="verifiedRescueDirectory">
+<h3>ALFIK Verified rescues</h3>
+<p class="note">Organisations listed here have been reviewed by an ALFIK administrator. A badge reflects ALFIK's checks, not a guarantee of every action or service.</p>
+<button class="secondary wide" id="refreshVerifiedRescuesBtn" type="button">Refresh verified rescues</button>
+<div id="verifiedRescueList" aria-live="polite">Loading verified rescues...</div>
+</div>
+<div class="feature-grid" data-account-types="public">
+<div class="feature-panel">
+<h3>My pets</h3>
+<p>Keep your pet profiles and records together.</p>
+<button class="secondary wide" data-view="petsView">Open pet profiles</button>
+</div>
+</div>
 <p class="note">Please don't include private contact details in public descriptions. Possible matches are suggestions, not confirmed identifications.</p>
-</section>
-
-<section id="notificationsView" class="hidden">
-<h2>🔔 Your notifications</h2>
-<p>Private in-app alerts for possible animal matches and care reminders.</p>
-<button class="primary wide" id="refreshNotificationsBtn" type="button">Refresh notifications</button>
-<p id="notificationsMessage" class="message" role="status"></p>
-<div id="notificationsList" aria-live="polite"><p>Loading notifications...</p></div>
 </section>
 
 <section id="reportView" class="hidden">
@@ -184,28 +572,19 @@ footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
 <button class="lost wide" type="button" onclick="startNewReport('lost')">🔴 Report a Lost Animal</button>
 <button class="found wide" type="button" onclick="startNewReport('found')">🟢 Report a Found Animal</button>
 <button class="deceased wide" type="button" onclick="startNewReport('found_deceased')">⚪ Report an Animal Found Deceased</button>
-
 <form id="reportForm" class="hidden">
 <label for="animal">Animal type</label>
 <select id="animal" required>
-<option value="">Choose an animal</option>
-<option value="cat">Cat</option>
-<option value="dog">Dog</option>
-<option value="other">Other</option>
+<option value="">Choose an animal</option><option value="cat">Cat</option><option value="dog">Dog</option><option value="other">Other</option>
 </select>
-
 <label for="animalName">Animal's name, if known</label>
 <input id="animalName" maxlength="100" placeholder="e.g. Luna">
-
 <label for="description">Description</label>
 <textarea id="description" rows="4" maxlength="4000" required placeholder="Colour, breed, collar and identifying details"></textarea>
-
 <label for="location">Town or general location</label>
 <input id="location" maxlength="250" required placeholder="Town or general location">
-
 <label for="dateSeen">Date last seen or found</label>
 <input id="dateSeen" type="date" required>
-
 <label for="photo">Animal photo (optional)</label>
 <input id="photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
 <p class="note">JPG, PNG or WebP, maximum 5 MB. Photos are publicly viewable with the report.</p>
@@ -215,38 +594,28 @@ footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
 <button id="cancelReportBtn" class="secondary wide" type="button">Cancel</button>
 </form>
 <p id="reportMessage" class="message" role="status"></p>
+<div id="reportAdvicePanel" class="feature-panel hidden" aria-live="polite">
+  <h3 id="reportAdviceHeading">Helpful advice for your report</h3>
+  <p id="reportAdviceIntro">Here is ALFIK's guidance for this situation.</p>
+  <a id="reportAdviceLink" href="#" target="_blank" rel="noopener noreferrer">Read ALFIK's advice ↗</a>
+</div>
 </section>
 
 <section id="reportsView" class="hidden">
-<h2>Community animal reports</h2>
-<p>Search active reports shared on ALFIK.</p>
-
-<label for="searchInput">Search name, town or description</label>
-<input id="searchInput" type="search" placeholder="e.g. black cat, Buckhaven">
-
+<h2>Find an animal</h2>
+<p>Search reports of lost and found animals. If you are worried or upset, start with the option above that best matches your situation.</p>
+<label for="searchInput">Name, town, area or details</label>
+<input id="searchInput" type="search" placeholder="Try a town, street, colour or animal name" autocomplete="off">
 <label for="animalFilter">Animal type</label>
-<select id="animalFilter">
-<option value="">All animals</option>
-<option value="cat">Cats</option>
-<option value="dog">Dogs</option>
-<option value="other">Other animals</option>
-</select>
-
-<label for="typeFilter">Report type</label>
-<select id="typeFilter">
-<option value="">All reports</option>
-<option value="lost">Lost animals</option>
-<option value="found">Found animals</option>
-<option value="found_deceased">Found deceased</option>
-</select>
-
-<button class="primary wide" id="searchBtn" type="button">Search reports</button>
-<button class="secondary wide" id="clearBtn" type="button">Clear filters</button>
-
-<h3>Possible text matches</h3>
+<select id="animalFilter"><option value="">All animals</option><option value="cat">Cats</option><option value="dog">Dogs</option><option value="other">Other animals</option></select>
+<label for="typeFilter">Show me</label>
+<select id="typeFilter"><option value="">Lost and found animals</option><option value="lost">Lost animals only</option><option value="found">Found animals only</option><option value="found_deceased">Animals found deceased</option></select>
+<button class="primary wide" id="searchBtn" type="button">Search animals</button>
+<button class="secondary wide" id="clearBtn" type="button">Clear search</button>
+<p id="searchStatus" class="note" role="status" aria-live="polite"></p>
+<h3>Possible matches</h3>
 <p class="note">Suggestions based on animal type, location, descriptions and dates. These are not confirmed matches.</p>
 <div id="matchResults" aria-live="polite"></div>
-
 <h3>Animal reports</h3>
 <div id="reportsList" aria-live="polite">Loading reports...</div>
 </section>
@@ -258,6 +627,83 @@ footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
 <div id="myReportsList" aria-live="polite">Loading your reports...</div>
 </section>
 
+<section id="messagesView" class="hidden">
+<h2>🔒 Private messages</h2>
+<p>Contact the person who reported a lost or found animal without publishing email addresses or phone numbers.</p>
+<p class="note">For your safety, do not share your home address, phone number, email address, passwords or payment details in messages. Arrange any reunion carefully and meet in a safe public place where appropriate.</p>
+<div class="feature-panel">
+<h3>Your conversations</h3>
+<button class="secondary wide" id="refreshConversationsBtn" type="button">Refresh conversations</button>
+<div id="conversationList" aria-live="polite">Your private conversations will appear here.</div>
+</div>
+<div class="feature-panel">
+<h3>Members you've blocked</h3>
+<p class="note">Blocked members cannot start new conversations with you or send messages to existing conversations. You can unblock someone here if you change your mind.</p>
+<div id="blockedMembersList" aria-live="polite">Loading blocked members...</div>
+</div>
+<div class="feature-panel">
+<h3 id="messageThreadHeading">Choose a conversation</h3>
+<div id="messageThread" aria-live="polite">Select a conversation to read messages.</div>
+<label for="privateMessageDraft">Your message</label>
+<textarea id="privateMessageDraft" rows="3" maxlength="2000" placeholder="Write a message about the animal."></textarea>
+<button class="primary wide" id="sendPrivateMessageBtn" type="button" disabled>Send private message</button>
+<div class="actions">
+  <button class="secondary" id="blockConversationUserBtn" type="button" disabled>🚫 Block this member</button>
+  <button class="secondary" id="reportConversationUserBtn" type="button" disabled>⚑ Report this member</button>
+</div>
+<div id="reportMemberForm" class="hidden">
+  <h3>Report a member</h3>
+  <p class="note">Reports are private and sent for ALFIK review. Only report behaviour that raises a genuine safety or conduct concern.</p>
+  <label for="memberReportReason">Reason</label>
+  <select id="memberReportReason" required>
+    <option value="harassment">Harassment or repeated unwanted contact</option>
+    <option value="threats">Threats or intimidation</option>
+    <option value="scam">Scam or suspicious request</option>
+    <option value="inappropriate">Inappropriate messages</option>
+    <option value="other">Other safety or conduct concern</option>
+  </select>
+  <label for="memberReportDetails">Additional details (optional)</label>
+  <textarea id="memberReportDetails" rows="3" maxlength="2000" placeholder="Describe what happened. Please don't include passwords or payment details."></textarea>
+  <button class="primary wide" id="submitMemberReportBtn" type="button">Send private report to ALFIK</button>
+  <button class="secondary wide" id="cancelMemberReportBtn" type="button">Cancel</button>
+  <p id="memberReportStatus" class="message" role="status"></p>
+</div>
+<p id="privateMessageStatus" class="message" role="status"></p>
+</div>
+</section>
+
+<section id="adminView" class="hidden">
+<h2>ALFIK Admin Tools</h2>
+<p class="note">Administrator controls appear only when Supabase confirms that your signed-in account is authorised.</p>
+<div class="feature-panel hidden" id="verificationAdminPanel">
+<h3>ALFIK administrator: verification reviews</h3>
+<p>Only authorised ALFIK administrators can approve or reject rescue organisations.</p>
+<button class="secondary" id="refreshVerificationQueueBtn" type="button">Refresh review queue</button>
+<p id="verificationAdminMessage" class="message" role="status"></p>
+<div id="verificationQueue">Checking administrator access...</div>
+</div>
+<div class="feature-panel hidden" id="verificationHistoryPanel">
+<h3>Admin history: rescue verification</h3>
+<p>Completed approvals and rejections are kept here, including rejection reasons.</p>
+<button class="secondary" id="refreshVerificationHistoryBtn" type="button">Refresh verification history</button>
+<div id="verificationHistory">Loading completed decisions...</div>
+</div>
+<div class="feature-panel hidden" id="memberReportsAdminPanel">
+<h3>ALFIK administrator: member safety reports</h3>
+<p>Review reports about harassment, threats, scams or other conduct concerns. Report details are private and should only be accessed for moderation.</p>
+<button class="secondary" id="refreshMemberReportsBtn" type="button">Refresh safety reports</button>
+<p id="memberReportsAdminMessage" class="message" role="status"></p>
+<div id="memberReportsAdminQueue">Checking administrator access...</div>
+</div>
+<div class="feature-panel hidden" id="memberReportsAdminHistoryPanel">
+<h3>Admin history: member safety reports</h3>
+<p>Actioned and dismissed reports are retained for moderation history.</p>
+<button class="secondary" id="refreshMemberReportsHistoryBtn" type="button">Refresh safety history</button>
+<div id="memberReportsAdminHistory">Loading completed reports...</div>
+</div>
+<p id="adminAccessNote" class="note">If no review panels appear, this account may not have administrator permissions.</p>
+</section>
+
 <section id="emailView" class="hidden">
 <h2>Email match alerts</h2>
 <p>Choose whether ALFIK may email you about possible matches.</p>
@@ -267,46 +713,219 @@ footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
 <p id="emailMessage" class="message" role="status"></p>
 </section>
 
+<section id="petsView" class="hidden">
+<h2>My pet profiles 🐾</h2>
+<p>Keep useful information about your own animals in one place.</p>
+<p class="note">Pet profiles require the Premium plan or higher. Health records require Pro.</p>
+<div id="planStatus" class="feature-panel">Loading your ALFIK plan...</div>
+<form id="petForm">
+<h3>Add a pet</h3>
+<label for="petName">Pet's name</label><input id="petName" maxlength="100" required>
+<label for="petSpecies">Species</label>
+<select id="petSpecies" required><option value="">Choose species</option><option value="cat">Cat</option><option value="dog">Dog</option><option value="rabbit">Rabbit</option><option value="bird">Bird</option><option value="other">Other</option></select>
+<label for="petBreed">Breed (optional)</label><input id="petBreed" maxlength="100">
+<label for="petDob">Date of birth (optional)</label><input id="petDob" type="date">
+<label for="petMicrochip">Microchip number (optional)</label><input id="petMicrochip" maxlength="100">
+<label for="petNeuteringStatus">Neutering status</label><select id="petNeuteringStatus"><option value="unknown">Unknown / not confirmed</option><option value="neutered">Neutered / spayed</option><option value="not_neutered">Not neutered</option></select>
+<label for="petNeuteredDate">Date neutered (optional)</label><input id="petNeuteredDate" type="date">
+<label for="petNotes">Notes (optional)</label><textarea id="petNotes" rows="3" maxlength="3000"></textarea>
+<button class="primary wide" type="submit">Save pet profile</button>
+</form>
+<p id="petMessage" class="message" role="status"></p>
+<h3>Your pets</h3><div id="petList">Your pet profiles will appear here.</div>
+<div class="feature-panel">
+<h3>Pet health records</h3>
+<p class="note">Health records are a Pro feature. Only store information you are comfortable keeping in your ALFIK account.</p>
+<label for="healthPet">Pet</label><select id="healthPet"><option value="">Choose a pet</option></select>
+<label for="healthType">Record type</label>
+<select id="healthType"><option value="vaccination">Vaccination</option><option value="medication">Medication</option><option value="vet_visit">Vet visit</option><option value="weight">Weight</option><option value="other">Other</option></select>
+<label for="healthDate">Date</label><input id="healthDate" type="date">
+<label for="healthTitle">Record title</label><input id="healthTitle" maxlength="150">
+<label for="healthDetails">Details</label><textarea id="healthDetails" rows="3" maxlength="3000"></textarea>
+<label for="healthValue">Value (optional, e.g. weight)</label><input id="healthValue" maxlength="100">
+<button class="primary wide" id="saveHealthBtn" type="button">Save health record</button>
+<p id="healthRecordMessage" class="message" role="status"></p>
+<div id="healthRecords">Health records will appear here.</div>
+<p id="healthPlanMessage" class="note"></p>
+</div>
+<div class="feature-panel">
+<h3>Medication list</h3>
+<p class="note">Private to your account. Follow your veterinary professional's instructions.</p>
+<label for="medicationPet">Pet</label><select id="medicationPet"><option value="">Choose a pet</option></select>
+<label for="medicationName">Medication name</label><input id="medicationName" maxlength="160">
+<label for="medicationDose">Dose (optional)</label><input id="medicationDose" maxlength="160">
+<label for="medicationFrequency">How often? (optional)</label><input id="medicationFrequency" maxlength="160" placeholder="As prescribed">
+<label for="medicationStart">Start date (optional)</label><input id="medicationStart" type="date">
+<label for="medicationEnd">End date (optional)</label><input id="medicationEnd" type="date">
+<label for="medicationInstructions">Instructions (optional)</label><textarea id="medicationInstructions" rows="2" maxlength="1500"></textarea>
+<button class="primary wide" id="saveMedicationBtn" type="button">Save medication</button>
+<p id="medicationMessage" class="message" role="status"></p>
+<div id="medicationList">Your medications will appear here.</div>
+</div>
+<div class="feature-panel">
+<h3>Flea and worming reminders</h3>
+<p class="note">Set dates using the product label or your vet's advice. Flea reminders default to every 28 days; worming defaults to every month (calendar month). These are reminders, not treatment instructions.</p>
+<label for="carePet">Pet</label><select id="carePet"><option value="">Choose a pet</option></select>
+<label for="careType">Reminder type</label><select id="careType"><option value="flea">Flea treatment</option><option value="worming">Worming</option><option value="medication">Medication</option></select>
+<label for="careName">Product or medication name (optional)</label><input id="careName" maxlength="160">
+<label for="careInterval">Repeat every (days)</label><input id="careInterval" type="number" min="1" max="730" value="28">
+<label for="careDue">Next due date</label><input id="careDue" type="date" required>
+<label><input id="careEnabled" type="checkbox" checked> Reminders on</label>
+<button class="primary wide" id="saveCareBtn" type="button">Save reminder</button>
+<p id="careMessage" class="message" role="status"></p>
+<div id="careList">Your reminders will appear here.</div>
+</div>
+</section>
+
+<section id="rescueView" class="hidden">
+<h2>Rescue workspace</h2>
+<p>Tools for animal rescue and welfare organisations.</p>
+<p class="note">Organisation access and plan eligibility are checked by Supabase.</p>
+<div class="feature-panel">
+<h3>Create or select an organisation</h3>
+<label for="rescueOrgName">Organisation name</label><input id="rescueOrgName" maxlength="200">
+<label for="rescueOrgType">Organisation type</label><select id="rescueOrgType"><option value="rescue">Rescue</option></select><p class="note">Rescue workspaces require a Premium or Pro plan. Veterinary workspaces are available separately on the Pro plan.</p>
+<label for="rescueOrgContact">Contact information (optional)</label><input id="rescueOrgContact" maxlength="250">
+<button class="primary wide" id="createRescueOrgBtn" type="button">Create rescue organisation</button>
+<p id="rescueOrgMessage" class="message" role="status"></p>
+<label for="rescueOrgSelect">Your rescue organisation</label><select id="rescueOrgSelect"><option value="">Choose an organisation</option></select>
+</div>
+<div class="feature-panel">
+<h3>Organisation verification</h3>
+<p>Verification is reviewed by an ALFIK administrator. Creating a workspace does not automatically verify it.</p>
+<p>Tell us who you are, how the rescue operates, and how we can independently check your details. Registration is helpful where applicable but is not compulsory for every legitimate rescue.</p>
+<label for="verificationApplicantRole">Your role in the organisation</label>
+<input id="verificationApplicantRole" maxlength="150" placeholder="e.g. Director, trustee, rescue coordinator">
+<label for="verificationWebsite">Official website (optional)</label>
+<input id="verificationWebsite" name="alfik_optional_official_website" type="url" maxlength="500" placeholder="https://" autocomplete="off" autocapitalize="off" spellcheck="false">
+<label for="verificationSocial">Public social media page (optional)</label>
+<input id="verificationSocial" name="alfik_optional_public_social_page" type="url" maxlength="500" placeholder="https://" autocomplete="off" autocapitalize="off" spellcheck="false">
+<label for="verificationRegistrationType">Registration type (if applicable)</label>
+<select id="verificationRegistrationType">
+<option value="">Not registered / not applicable</option>
+<option value="charity">Registered charity</option>
+<option value="company">Companies House company</option>
+<option value="scottish_charity">Scottish charity (OSCR)</option>
+<option value="other">Other registration or licence</option>
+</select>
+<label for="verificationRegistrationNumber">Registration or licence number (optional)</label>
+<input id="verificationRegistrationNumber" maxlength="150" placeholder="Registration number">
+<label for="verificationDetails">About your rescue and evidence</label>
+<textarea id="verificationDetails" rows="5" maxlength="3000" placeholder="Describe your animal welfare work, areas served, how animals are cared for, and any independent references. Do not include passwords, bank details, or unnecessary personal data."></textarea>
+<label for="verificationEvidenceFiles">Supporting evidence documents (optional)</label>
+<input id="verificationEvidenceFiles" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp">
+<p class="note">Up to 5 files, maximum 5 MB each. Accepted formats: PDF, JPG, PNG and WebP. Documents are private and visible only to authorised members of your organisation and ALFIK administrators. Redact unrelated personal information before uploading.</p>
+<button class="primary wide" id="submitVerificationBtn" type="button">Submit details and evidence for verification</button>
+<p id="verificationMessage" class="message" role="status"></p>
+<p id="verificationStatusNote" class="note">Choose your organisation above to see its current verification status.</p>
+</div>
+
+<div class="feature-panel">
+<h3>Rescue animal records</h3>
+<label for="rescueAnimalName">Animal name or reference</label><input id="rescueAnimalName" maxlength="150">
+<label for="rescueAnimalType">Animal type</label><select id="rescueAnimalType"><option value="cat">Cat</option><option value="dog">Dog</option><option value="other">Other</option></select>
+<label for="rescueAnimalStatus">Status</label><select id="rescueAnimalStatus"><option value="in_care">In care</option><option value="foster">In foster</option><option value="available">Available for adoption</option><option value="reunited">Reunited</option><option value="rehomed">Rehomed</option><option value="closed">Closed</option></select>
+<label for="rescueAnimalMicrochip">Microchip number (optional)</label><input id="rescueAnimalMicrochip" maxlength="100">
+<label for="rescueAnimalNeuteringStatus">Neutering status</label><select id="rescueAnimalNeuteringStatus"><option value="unknown">Unknown / not confirmed</option><option value="neutered">Neutered / spayed</option><option value="not_neutered">Not neutered</option></select>
+<label for="rescueAnimalNeuteredDate">Date neutered (optional)</label><input id="rescueAnimalNeuteredDate" type="date">
+<label for="rescueAnimalNotes">Notes</label><textarea id="rescueAnimalNotes" rows="3" maxlength="3000"></textarea>
+<p class="note">Rehomed animals should have reminders disabled in their care settings.</p>
+<button class="primary wide" id="saveRescueAnimalBtn" type="button">Save rescue animal record</button>
+<p id="rescueAnimalMessage" class="message" role="status"></p>
+<div id="rescueAnimalList">Rescue animal records will appear here.</div>
+<div class="feature-panel">
+<h3>Rescue care reminders</h3>
+<p class="note">Set reminders for animals in your care. Disable reminders or mark the animal rehomed when responsibility ends.</p>
+<label for="rescueCareAnimal">Rescue animal</label><select id="rescueCareAnimal"><option value="">Choose an animal</option></select>
+<label for="rescueCareType">Reminder type</label><select id="rescueCareType"><option value="flea">Flea treatment</option><option value="worming">Worming</option><option value="medication">Medication</option></select>
+<label for="rescueCareName">Product or medication name (optional)</label><input id="rescueCareName" maxlength="160">
+<label for="rescueCareInterval">Repeat every (days)</label><input id="rescueCareInterval" type="number" min="1" max="730" value="28">
+<label for="rescueCareDue">Next due date</label><input id="rescueCareDue" type="date">
+<label><input id="rescueCareEnabled" type="checkbox" checked> Reminders on</label>
+<button class="primary wide" id="saveRescueCareBtn" type="button">Save rescue reminder</button>
+<p id="rescueCareMessage" class="message" role="status"></p>
+<div id="rescueCareList">Rescue reminders will appear here.</div>
+</div>
+<div class="feature-panel">
+<h3>Rescue medication list</h3>
+<label for="rescueMedicationAnimal">Rescue animal</label><select id="rescueMedicationAnimal"><option value="">Choose an animal</option></select>
+<label for="rescueMedicationName">Medication name</label><input id="rescueMedicationName" maxlength="160">
+<label for="rescueMedicationDose">Dose (optional)</label><input id="rescueMedicationDose" maxlength="160">
+<label for="rescueMedicationFrequency">How often? (optional)</label><input id="rescueMedicationFrequency" maxlength="160">
+<label for="rescueMedicationStart">Start date (optional)</label><input id="rescueMedicationStart" type="date">
+<label for="rescueMedicationEnd">End date (optional)</label><input id="rescueMedicationEnd" type="date">
+<label for="rescueMedicationInstructions">Instructions (optional)</label><textarea id="rescueMedicationInstructions" rows="2" maxlength="1500"></textarea>
+<button class="primary wide" id="saveRescueMedicationBtn" type="button">Save rescue medication</button>
+<p id="rescueMedicationMessage" class="message" role="status"></p>
+<div id="rescueMedicationList">Rescue medications will appear here.</div>
+</div>
+<p id="rescuePlanMessage" class="note"></p>
+</div>
+</section>
+
+<section id="vetView" class="hidden">
+<h2>Veterinary workspace</h2>
+<p>Workspace for authorised veterinary teams to manage patient references.</p>
+<p class="note">This is not a substitute for a regulated clinical record system. Do not enter information unless you have appropriate permission and access.</p>
+<div class="feature-panel">
+<h3>Veterinary organisation</h3>
+<label for="vetOrgName">Practice or organisation name</label><input id="vetOrgName" maxlength="200">
+<label for="vetOrgContact">Contact information (optional)</label><input id="vetOrgContact" maxlength="250">
+<button class="primary wide" id="createVetOrgBtn" type="button">Create veterinary organisation</button>
+<p id="vetOrgMessage" class="message" role="status"></p>
+<label for="vetOrgSelect">Your veterinary organisation</label><select id="vetOrgSelect"><option value="">Choose an organisation</option></select>
+</div>
+<div class="feature-panel">
+<h3>Patient references</h3>
+<label for="vetPatientName">Animal name</label><input id="vetPatientName" maxlength="150">
+<label for="vetSpecies">Species</label><select id="vetSpecies"><option value="cat">Cat</option><option value="dog">Dog</option><option value="rabbit">Rabbit</option><option value="bird">Bird</option><option value="other">Other</option></select>
+<label for="vetOwnerReference">Owner reference (avoid unnecessary personal data)</label><input id="vetOwnerReference" maxlength="150">
+<label for="vetPatientNotes">Notes</label><textarea id="vetPatientNotes" rows="3" maxlength="3000"></textarea>
+<button class="primary wide" id="saveVetPatientBtn" type="button">Save patient reference</button>
+<p id="vetPatientMessage" class="message" role="status"></p>
+<div id="vetPatientList">Patient references will appear here.</div>
+<p id="vetPlanMessage" class="note"></p>
+</div>
+</section>
+
 <section id="billingView" class="hidden">
-<h2>ALFIK plans & billing</h2>
-<div class="report-card" id="currentPlanCard"><h3>Your current plan</h3><p id="currentPlanText" role="status">Checking your plan…</p><p class="note">Paid access is based on verified PayPal subscription status, not simply returning from checkout.</p></div>
-<p>Choose the membership that suits your work. Payments are processed securely by PayPal.</p>
-<div class="report-card">
-  <h3>Free</h3>
-  <p>Community animal reports and reunification tools.</p>
-  <p><strong>£0</strong></p>
-  <p class="note">Your current plan stays active unless you choose to upgrade.</p>
+<h2>ALFIK plans</h2>
+<div class="account-plan-badge" aria-live="polite"><span class="account-plan-label">YOUR CURRENT PLAN</span><strong id="accountPlanBillingValue">Checking your plan…</strong><span id="accountPlanBillingDetail">Your current membership and included features.</span></div>
+<p>Core lost-and-found reports, search and browser-based photo comparison remain free.</p>
+<div class="feature-panel">
+<h3>Free <span class="plan-tier-tag">FREE FOREVER</span></h3><p>Community reports, lost-and-found search, text suggestions and browser-based photo comparison.</p>
 </div>
-<div class="report-card">
-  <h3>Premium</h3>
-  <p>For rescue and animal welfare work.</p>
-  <p><strong>£5.99 per month</strong></p>
-  <button class="primary wide" id="paypal-premium" type="button">Subscribe to Premium</button>
+<div class="feature-panel">
+<h3>Premium <span class="plan-tier-tag plan-tier-premium">PREMIUM</span> · £5.99/month</h3><p>Personal pet profiles and eligible rescue workspace features.</p>
+<div id="paypal-premium"></div>
 </div>
-<div class="report-card">
-  <h3>Pro</h3>
-  <p>For advanced pet health and veterinary workspace features.</p>
-  <p><strong>£9.99 per month</strong></p>
-  <button class="primary wide" id="paypal-pro" type="button">Subscribe to Pro</button>
+<div class="feature-panel">
+<h3>Pro <span class="plan-tier-tag plan-tier-pro">PRO</span> · £9.99/month</h3><p>Pet health records and eligible veterinary workspace features.</p>
+<div id="paypal-pro"></div>
 </div>
-<p id="billingMessage" class="message" role="status" aria-live="polite">Choose a plan to continue to PayPal.</p>
-<p class="note">Your paid access will be enabled after ALFIK receives and verifies PayPal's subscription confirmation. Returning from PayPal alone does not activate a plan.</p>
+<p id="billingMessage" class="message" role="status">Secure subscription checkout is not enabled yet. ALFIK must verify PayPal subscriptions on the server before activating paid plans. You will not be charged from this screen.</p>
+<p id="healthPlanMessage" class="note"></p>
 </section>
 
 <section id="accountView" class="hidden">
 <h2>Your account</h2>
 <p id="signedInAs" class="note">Signed in to ALFIK</p>
-<div class="report-card">
-  <h3>Account type</h3>
-  <p id="accountPlanText" role="status" aria-live="polite">Checking your account type…</p>
-  <p class="note">Your account type is based on the subscription status recorded by ALFIK.</p>
-</div>
+<div class="account-plan-badge account-plan-badge-small" aria-live="polite"><strong id="accountPlanAccountValue">Checking plan…</strong><span id="accountPlanAccountDetail">Your membership level</span></div>
+<label for="accountTypeSetting">Your account type</label>
+<select id="accountTypeSetting">
+<option value="public">Member of the public / pet owner</option>
+<option value="rescue">Rescue or animal welfare organisation</option>
+<option value="veterinary">Veterinary practice</option>
+</select>
+<p class="note">This only changes which tools you see. Rescue and veterinary data still requires the correct organisation access and plan.</p>
+<button class="primary wide" id="saveAccountTypeBtn" type="button">Save account type</button>
+<p id="accountTypeMessage" class="message" role="status"></p>
 <button class="secondary wide" id="signOutBtn" type="button">Sign out</button>
 </section>
 </div>
 </main>
 
-<footer>ALFIK | Animals Lost and Found Information Keeper</footer>
+<footer>Powered by Animals Lost and found in Kent Ltd.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -315,13 +934,14 @@ footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
 const SUPABASE_URL="https://rrsccsswluacuvymuheo.supabase.co";
 const SUPABASE_KEY="sb_publishable_krU5ZaSiuDwCniAycXr0cw_ZfTosBJ8";
 const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const ALFIK_URL="https://alfik.co.uk/";
+window.supabaseClient=supabaseClient;
+
+const ALFIK_URL="https://flowerweed1-art.github.io/alfik-app-/";
 const PHOTO_BUCKET="animal-photos";
 const MAX_PHOTO_BYTES=5*1024*1024;
 const ALLOWED_PHOTO_TYPES=["image/jpeg","image/png","image/webp"];
 
 let currentUserId=null;
-let passwordRecoveryMode=false;
 let reportStatus="lost";
 let editingReportId=null;
 let editingPhotoUrl=null;
@@ -337,7 +957,22 @@ const reportForm=$("reportForm");
 const photoInput=$("photo");
 
 function message(id,text){
-  $(id).textContent=text||"";
+  const target=$(id);
+  if(target)target.textContent=text||"";
+}
+
+let alfikCaptchaToken="";
+window.onAlfikCaptchaSuccess=function(token){alfikCaptchaToken=token||"";};
+window.onAlfikCaptchaExpired=function(){alfikCaptchaToken="";};
+window.onAlfikCaptchaError=function(errorCode){
+  alfikCaptchaToken="";
+  console.error("ALFIK Turnstile error code:",errorCode);
+  message("accountMessage","Cloudflare security check could not load (error "+(errorCode||"unknown")+"). Please tell ALFIK support this error code.");
+  return true;
+};
+function resetAlfikCaptcha(){
+  alfikCaptchaToken="";
+  if(window.turnstile){try{window.turnstile.reset();}catch(error){console.warn("Could not reset Turnstile.",error);}}
 }
 
 function element(tag,text){
@@ -346,16 +981,52 @@ function element(tag,text){
   return e;
 }
 
+let activeAccountType="public";
+const accountTypeLabels={
+  public:"Member of the public / pet owner",
+  rescue:"Rescue or animal welfare organisation",
+  veterinary:"Veterinary practice"
+};
+const roleViews={
+  public:["homeView","reportView","reportsView","myView","messagesView","emailView","accountView","petsView","billingView","adminView"],
+  rescue:["homeView","reportsView","messagesView","accountView","rescueView","billingView","adminView"],
+  veterinary:["homeView","reportsView","messagesView","accountView","vetView","billingView","adminView"]
+};
+function applyAccountType(user){
+  const metadata=user?.user_metadata||{};
+  const allowed=["public","rescue","veterinary"];
+  activeAccountType=allowed.includes(metadata.alfik_account_type)?metadata.alfik_account_type:"public";
+  document.querySelectorAll("[data-account-types]").forEach(node=>{
+    const types=(node.getAttribute("data-account-types")||"").split(",").map(value=>value.trim());
+    node.classList.toggle("hidden",!types.includes(activeAccountType));
+  });
+  const selector=$("accountTypeSetting");
+  if(selector)selector.value=activeAccountType;
+  if($("signedInAs"))$("signedInAs").textContent="Account type: "+accountTypeLabels[activeAccountType]+".";
+  if($("rescueHomeShortcut"))$("rescueHomeShortcut").classList.toggle("hidden",activeAccountType!=="rescue");
+  if($("vetHomeShortcut"))$("vetHomeShortcut").classList.toggle("hidden",activeAccountType!=="veterinary");
+}
 function showView(id){
-  ["homeView","reportView","reportsView","myView","emailView","accountView","notificationsView","billingView"].forEach(view=>{
-    $(view).classList.toggle("hidden",view!==id);
+  const allowedViews=roleViews[activeAccountType]||roleViews.public;
+  if(!allowedViews.includes(id))id="homeView";
+  [
+    "homeView","reportView","reportsView","myView","messagesView","emailView","accountView",
+    "petsView","rescueView","vetView","billingView","adminView"
+  ].forEach(view=>{
+    const section=$(view);
+    if(section)section.classList.toggle("hidden",view!==id);
   });
 
   if(id==="reportsView")loadReports();
   if(id==="myView")loadMyReports();
+  if(id==="messagesView"){loadPrivateConversations();loadBlockedMembers();}
   if(id==="emailView")loadEmailPreference();
-  if(id==="notificationsView")loadNotifications();
-  if(id==="billingView" || id==="accountView")loadPlanStatus();
+  if(id==="petsView"&&window.loadPetWorkspace)window.loadPetWorkspace();
+  if(id==="rescueView"&&window.loadRescueWorkspace)window.loadRescueWorkspace();
+  if(id==="adminView"&&window.loadAlfikAdminTools)window.loadAlfikAdminTools();
+  if(id==="vetView"&&window.loadVetWorkspace)window.loadVetWorkspace();
+  if(id==="billingView"&&window.renderPayPalButtons)window.renderPayPalButtons();
+  if(window.refreshAlfikProfile)window.refreshAlfikProfile();
 
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -363,6 +1034,19 @@ function showView(id){
 document.querySelectorAll("[data-view]").forEach(button=>{
   button.addEventListener("click",()=>showView(button.dataset.view));
 });
+
+const notificationBell=$( "notificationBell" );
+if(notificationBell){
+  notificationBell.addEventListener("click",()=>{
+    showView("homeView");
+    window.setTimeout(()=>{
+      const panel=$( "careNotificationsPanel" );
+      if(panel){panel.scrollIntoView({behavior:"smooth",block:"start"});panel.focus({preventScroll:true});}
+      const refresh=$( "refreshCareNotificationsBtn" );
+      if(refresh)refresh.click();
+    },100);
+  });
+}
 
 function clearPhotoPreview(){
   if(previewUrl){
@@ -389,7 +1073,6 @@ photoInput.addEventListener("change",()=>{
     photoInput.value="";
     return;
   }
-
   if(file.size>MAX_PHOTO_BYTES){
     message("reportMessage","The photo must be 5 MB or smaller.");
     photoInput.value="";
@@ -407,46 +1090,47 @@ $("removePhotoBtn").addEventListener("click",resetPhoto);
 
 async function uploadAnimalPhoto(file,userId){
   if(!file)return null;
-
   if(!ALLOWED_PHOTO_TYPES.includes(file.type)||file.size>MAX_PHOTO_BYTES){
     throw new Error("Choose a JPG, PNG or WebP photo no larger than 5 MB.");
   }
 
-  const ext={
-    "image/jpeg":"jpg",
-    "image/png":"png",
-    "image/webp":"webp"
-  }[file.type];
-
+  const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"}[file.type];
   const path=userId+"/"+crypto.randomUUID()+"."+ext;
 
-  const {error}=await supabaseClient.storage
-    .from(PHOTO_BUCKET)
-    .upload(path,file,{
-      cacheControl:"3600",
-      contentType:file.type,
-      upsert:false
-    });
-
+  const {error}=await supabaseClient.storage.from(PHOTO_BUCKET).upload(path,file,{
+    cacheControl:"3600",contentType:file.type,upsert:false
+  });
   if(error)throw new Error("Photo upload failed: "+error.message);
-
   return supabaseClient.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
+function showReportAdvicePanel(report){
+  const panel=$("reportAdvicePanel");
+  const heading=$("reportAdviceHeading");
+  const intro=$("reportAdviceIntro");
+  const link=$("reportAdviceLink");
+  if(!panel||!heading||!intro||!link)return;
+  const advice=reportAdviceFor(report);
+  if(!advice){panel.classList.add("hidden");return;}
+  heading.textContent="Helpful advice for your report";
+  intro.textContent="Your report has been published. These practical next steps may help while you look for the animal or help one you've found.";
+  link.href=advice.url;
+  link.textContent=advice.title+" ↗";
+  panel.classList.remove("hidden");
+}
+
 function startNewReport(type){
+  $("reportAdvicePanel")?.classList.add("hidden");
   editingReportId=null;
   editingPhotoUrl=null;
   editingOriginalStatus="active";
   reportStatus=type;
-
   reportForm.reset();
   resetPhoto();
   reportForm.classList.remove("hidden");
-
   $("reportHeading").textContent="Create a new report";
   $("submitReportBtn").textContent="Publish report";
   message("reportMessage","");
-
   showView("reportView");
   reportForm.scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -456,19 +1140,16 @@ function editReport(report){
   editingPhotoUrl=report.photo_url||null;
   editingOriginalStatus=report.status||"active";
   reportStatus=report.report_type;
-
   $("animal").value=report.animal_type||"";
   $("animalName").value=report.animal_name||"";
   $("description").value=report.description||"";
   $("location").value=report.location_text||"";
   $("dateSeen").value=report.date_seen||"";
-
   resetPhoto();
   reportForm.classList.remove("hidden");
   $("reportHeading").textContent="Edit your report";
   $("submitReportBtn").textContent="Save changes";
   message("reportMessage","Leave the photo blank to keep your existing photo.");
-
   showView("reportView");
   reportForm.scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -485,14 +1166,9 @@ $("cancelReportBtn").addEventListener("click",()=>{
 
 $("reportForm").addEventListener("submit",async event=>{
   event.preventDefault();
-
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-
-  if(!user){
-    message("reportMessage","Please sign in again.");
-    return;
-  }
+  if(!user){message("reportMessage","Please sign in again.");return;}
 
   const animal=$("animal").value;
   const animalName=$("animalName").value.trim();
@@ -517,42 +1193,20 @@ $("reportForm").addEventListener("submit",async event=>{
     if(file)photoUrl=await uploadAnimalPhoto(file,user.id);
 
     const report={
-      report_type:reportStatus,
-      animal_type:animal,
-      animal_name:animalName||null,
-      description,
-      location_text:location,
-      date_seen:dateSeen,
-      photo_url:photoUrl,
-      status:wasEditing?editingOriginalStatus:"active",
-      owner_id:user.id
+      report_type:reportStatus,animal_type:animal,animal_name:animalName||null,
+      description,location_text:location,date_seen:dateSeen,photo_url:photoUrl,
+      status:wasEditing?editingOriginalStatus:"active",owner_id:user.id
     };
 
     let savedReportId=null;
-
     if(wasEditing){
-      const result=await supabaseClient
-        .from("animal_reports")
-        .update(report)
-        .eq("id",editingReportId)
-        .eq("owner_id",user.id)
-        .select("id")
-        .maybeSingle();
-
+      const result=await supabaseClient.from("animal_reports").update(report)
+        .eq("id",editingReportId).eq("owner_id",user.id).select("id").maybeSingle();
       if(result.error)throw result.error;
-
-      if(!result.data){
-        throw new Error("No report was updated. Check your report ownership and Supabase permissions.");
-      }
-
+      if(!result.data)throw new Error("No report was updated. Check your report ownership and Supabase permissions.");
       savedReportId=result.data.id;
     }else{
-      const result=await supabaseClient
-        .from("animal_reports")
-        .insert([report])
-        .select("id")
-        .single();
-
+      const result=await supabaseClient.from("animal_reports").insert([report]).select("id").single();
       if(result.error)throw result.error;
       savedReportId=result.data.id;
     }
@@ -566,10 +1220,11 @@ $("reportForm").addEventListener("submit",async event=>{
 
     if(!wasEditing){
       message("reportMessage","Your report has been published.");
-
-      // Possible-match notifications are created by the Supabase database trigger.
-      // Do not invoke the email-alert Edge Function here.
-      await loadNotifications();
+      showReportAdvicePanel({report_type:reportStatus,animal_type:animal});
+      try{
+        const alertResult=await supabaseClient.functions.invoke("alfik-match-alerts",{body:{report_id:savedReportId}});
+        if(alertResult.error)console.warn("Email alert function reported an issue:",alertResult.error);
+      }catch(alertError){console.warn("Email alerts could not be triggered:",alertError);}
     }else{
       message("reportMessage","Your report has been updated.");
     }
@@ -577,7 +1232,6 @@ $("reportForm").addEventListener("submit",async event=>{
     await loadReports();
     await loadMyReports();
     showView("myView");
-
   }catch(error){
     console.error("Report save error:",error);
     message("reportMessage","Could not save the report. "+(error.message||"Please try again."));
@@ -587,17 +1241,23 @@ $("reportForm").addEventListener("submit",async event=>{
   }
 });
 
+function reportAdviceFor(report){
+  const type=String(report.report_type||"").toLowerCase();
+  const animal=String(report.animal_type||"").toLowerCase();
+  if(type==="lost"&&animal==="cat")return {title:"What to do when your cat is missing",url:"https://www.animalslostandfoundinkent.co.uk/what-to-do-if-you-have-lost-your-cat/"};
+  if(type==="lost"&&animal==="dog")return {title:"What to do when your dog is missing",url:"https://www.animalslostandfoundinkent.co.uk/what-to-do-if-you-have-lost-your-dog/"};
+  if(type==="found_deceased"&&animal==="cat")return {title:"Advice for a found deceased cat",url:"https://www.animalslostandfoundinkent.co.uk/found-an-alive-or-deceased-cat/"};
+  if(type==="found"&&animal==="cat")return {title:"What to do if you've found a live or deceased cat",url:"https://www.animalslostandfoundinkent.co.uk/found-an-alive-or-deceased-cat/"};
+  if(type==="found"&&animal==="dog")return {title:"What to do if you've found a stray dog",url:"https://www.animalslostandfoundinkent.co.uk/what-to-do-if-you-have-found-a-stray-lost-dog-in-kent/"};
+  return null;
+}
+
 function reportTypeLabel(type){
-  return {
-    lost:"🔴 LOST",
-    found:"🟢 FOUND",
-    found_deceased:"⚪ FOUND DECEASED"
-  }[type]||"ANIMAL REPORT";
+  return {lost:"🔴 LOST",found:"🟢 FOUND",found_deceased:"⚪ FOUND DECEASED"}[type]||"ANIMAL REPORT";
 }
 
 function addPhoto(card,url,alt){
   if(!url)return;
-
   const img=document.createElement("img");
   img.className="animal-photo";
   img.src=url;
@@ -609,8 +1269,7 @@ function addPhoto(card,url,alt){
 
 function addField(card,label,value){
   const p=document.createElement("p");
-  const strong=element("strong",label+": ");
-  p.appendChild(strong);
+  p.appendChild(element("strong",label+": "));
   p.appendChild(document.createTextNode(value||"Not provided"));
   card.appendChild(p);
 }
@@ -618,16 +1277,10 @@ function addField(card,label,value){
 function makeReportCard(report,isOwn){
   const card=document.createElement("article");
   card.className="report-card status-"+report.report_type;
-
   const badge=element("span",isOwn?"YOUR REPORT":"COMMUNITY REPORT");
   badge.className="badge"+(isOwn?" own":"");
   card.appendChild(badge);
-
-  card.appendChild(element(
-    "h3",
-    reportTypeLabel(report.report_type)+" | "+(report.animal_type||"animal").toUpperCase()
-  ));
-
+  card.appendChild(element("h3",reportTypeLabel(report.report_type)+" | "+(report.animal_type||"animal").toUpperCase()));
   addPhoto(card,report.photo_url,"Photo of "+(report.animal_name||"reported animal"));
   addField(card,"Name",report.animal_name||"Unknown");
   addField(card,"Description",report.description);
@@ -635,19 +1288,37 @@ function makeReportCard(report,isOwn){
   addField(card,"Date",report.date_seen);
   addField(card,"Status",report.status==="resolved"?"Resolved / reunited":"Active");
 
+  if(!isOwn && report.status==="active" && (report.report_type==="lost" || report.report_type==="found") && report.owner_id){
+    const contact=element("button","🔒 Message privately about this animal");
+    contact.className="primary wide";
+    contact.onclick=()=>startPrivateConversation(report);
+    card.appendChild(contact);
+  }
+
   if(isOwn){
+    const advice=reportAdviceFor(report);
+    if(advice){
+      const adviceBox=document.createElement("div");
+      adviceBox.className="feature-panel";
+      const adviceHeading=element("h3","Helpful advice for this report");
+      const adviceText=element("p","ALFIK's guidance explains practical next steps for this situation.");
+      const adviceLink=document.createElement("a");
+      adviceLink.href=advice.url;
+      adviceLink.target="_blank";
+      adviceLink.rel="noopener noreferrer";
+      adviceLink.textContent=advice.title+" ↗";
+      adviceLink.style.fontWeight="700";
+      adviceBox.append(adviceHeading,adviceText,adviceLink);
+      card.appendChild(adviceBox);
+    }
     const actions=document.createElement("div");
     actions.className="actions";
-
     const edit=element("button","✏️ Edit report");
     edit.className="secondary";
     edit.onclick=()=>editReport(report);
     actions.appendChild(edit);
 
-    const statusButton=element(
-      "button",
-      report.status==="resolved"?"Reopen report":"Mark resolved / reunited"
-    );
+    const statusButton=element("button",report.status==="resolved"?"Reopen report":"Mark resolved / reunited");
     statusButton.className="secondary";
     statusButton.onclick=()=>changeReportStatus(report);
     actions.appendChild(statusButton);
@@ -658,241 +1329,106 @@ function makeReportCard(report,isOwn){
       visual.onclick=()=>runFreePhotoMatch(report,visual,card);
       actions.appendChild(visual);
     }
-
     const del=element("button","Delete report");
     del.className="danger";
     del.onclick=()=>deleteReport(report);
     actions.appendChild(del);
-
     card.appendChild(actions);
   }
-
   return card;
 }
 
 async function changeReportStatus(report){
   const next=report.status==="resolved"?"active":"resolved";
-  const promptText=next==="resolved"
-    ?"Mark this report as resolved or reunited?"
-    :"Reopen this report?";
-
-  if(!confirm(promptText))return;
-
+  if(!confirm(next==="resolved"?"Mark this report as resolved or reunited?":"Reopen this report?"))return;
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-
-  if(!user){
-    alert("Please sign in again.");
-    return;
-  }
-
-  const {data,error}=await supabaseClient
-    .from("animal_reports")
-    .update({status:next})
-    .eq("id",report.id)
-    .eq("owner_id",user.id)
-    .select("id")
-    .maybeSingle();
-
-  if(error||!data){
-    alert("Could not change the status. Check your Supabase permissions."+(error?" "+error.message:""));
-    return;
-  }
-
+  if(!user){alert("Please sign in again.");return;}
+  const {data,error}=await supabaseClient.from("animal_reports").update({status:next})
+    .eq("id",report.id).eq("owner_id",user.id).select("id").maybeSingle();
+  if(error||!data){alert("Could not change the status. Check your Supabase permissions."+(error?" "+error.message:""));return;}
   await loadReports();
   await loadMyReports();
 }
 
 async function deleteReport(report){
   if(!confirm("Permanently delete this report? This cannot be undone."))return;
-
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-
-  if(!user){
-    alert("Please sign in again.");
-    return;
-  }
-
-  const {data,error}=await supabaseClient
-    .from("animal_reports")
-    .delete()
-    .eq("id",report.id)
-    .eq("owner_id",user.id)
-    .select("id")
-    .maybeSingle();
-
-  if(error||!data){
-    alert("Could not delete the report. Check your Supabase permissions."+(error?" "+error.message:""));
-    return;
-  }
-
+  if(!user){alert("Please sign in again.");return;}
+  const {data,error}=await supabaseClient.from("animal_reports").delete()
+    .eq("id",report.id).eq("owner_id",user.id).select("id").maybeSingle();
+  if(error||!data){alert("Could not delete the report. Check your Supabase permissions."+(error?" "+error.message:""));return;}
   await loadReports();
   await loadMyReports();
 }
 
-/* FREE PHOTO COMPARISON
-   This works locally in the browser.
-   It does not call OpenAI or another paid AI API.
-   It compares coarse image brightness and colour patterns.
-   Similar colours do not prove that two photos show the same animal.
-*/
-
+/* Free browser-side photo comparison. Similar colours do not identify an animal. */
 function getImageSignature(url){
   return new Promise((resolve,reject)=>{
     const img=new Image();
     img.crossOrigin="anonymous";
-
     img.onload=()=>{
       try{
         const canvas=document.createElement("canvas");
-        canvas.width=16;
-        canvas.height=16;
-
+        canvas.width=16;canvas.height=16;
         const ctx=canvas.getContext("2d",{willReadFrequently:true});
         if(!ctx)throw new Error("Image processing is unavailable in this browser.");
-
         ctx.drawImage(img,0,0,16,16);
         const pixels=ctx.getImageData(0,0,16,16).data;
-
-        const grey=[];
-        const histogram=new Array(12).fill(0);
-
+        const grey=[],histogram=new Array(12).fill(0);
         for(let i=0;i<pixels.length;i+=4){
-          const r=pixels[i]/255;
-          const g=pixels[i+1]/255;
-          const b=pixels[i+2]/255;
-
-          grey.push(0.299*r+0.587*g+0.114*b);
-
-          const ri=Math.min(3,Math.floor(r*4));
-          const gi=Math.min(3,Math.floor(g*4));
-          const bi=Math.min(3,Math.floor(b*4));
-
-          histogram[ri]+=1/256;
-          histogram[4+gi]+=1/256;
-          histogram[8+bi]+=1/256;
+          const r=pixels[i]/255,g=pixels[i+1]/255,b=pixels[i+2]/255;
+          grey.push(.299*r+.587*g+.114*b);
+          histogram[Math.min(3,Math.floor(r*4))]+=1/256;
+          histogram[4+Math.min(3,Math.floor(g*4))]+=1/256;
+          histogram[8+Math.min(3,Math.floor(b*4))]+=1/256;
         }
-
         resolve({grey,histogram});
-      }catch(error){
-        reject(error);
-      }
+      }catch(error){reject(error);}
     };
-
     img.onerror=()=>reject(new Error("This photo could not be analysed. The image may block browser access."));
     img.src=url;
   });
 }
 
 function compareSignatures(a,b){
-  let greyDifference=0;
-
-  for(let i=0;i<a.grey.length;i++){
-    greyDifference+=Math.abs(a.grey[i]-b.grey[i]);
-  }
-
-  greyDifference/=a.grey.length;
-
-  let colourDifference=0;
-  for(let i=0;i<a.histogram.length;i++){
-    colourDifference+=Math.abs(a.histogram[i]-b.histogram[i]);
-  }
-
-  colourDifference/=2;
-
-  const score=Math.max(
-    0,
-    Math.min(100,Math.round(100*(1-(greyDifference*0.7+colourDifference*0.3))))
-  );
-
-  return score;
+  let gd=0,cd=0;
+  for(let i=0;i<a.grey.length;i++)gd+=Math.abs(a.grey[i]-b.grey[i]);
+  gd/=a.grey.length;
+  for(let i=0;i<a.histogram.length;i++)cd+=Math.abs(a.histogram[i]-b.histogram[i]);
+  cd/=2;
+  return Math.max(0,Math.min(100,Math.round(100*(1-(gd*.7+cd*.3)))));
 }
 
 async function runFreePhotoMatch(report,button,card){
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-
-  if(!user||user.id!==report.owner_id){
-    alert("Please sign in to the account that owns this report.");
-    return;
-  }
-
-  if(!report.photo_url){
-    alert("Add a photo to your report first.");
-    return;
-  }
-
+  if(!user||user.id!==report.owner_id){alert("Please sign in to the account that owns this report.");return;}
+  if(!report.photo_url){alert("Add a photo to your report first.");return;}
   button.disabled=true;
   button.textContent="Comparing photos...";
-
   let results=card.querySelector(".ai-results");
-  if(!results){
-    results=document.createElement("div");
-    results.className="ai-results";
-    card.appendChild(results);
-  }
-
-  results.replaceChildren(
-    element("p","Checking other active reports with photos. This runs in your browser and uses no paid AI API.")
-  );
+  if(!results){results=document.createElement("div");results.className="ai-results";card.appendChild(results);}
+  results.replaceChildren(element("p","Checking other active reports with photos. This runs in your browser and uses no paid AI API."));
 
   try{
-    const baseSignature=await getImageSignature(report.photo_url);
-    const candidates=activeReports.filter(other=>
-      other.id!==report.id &&
-      other.status==="active" &&
-      other.animal_type===report.animal_type &&
-      other.photo_url &&
-      (
-        (report.report_type==="lost"&&other.report_type==="found") ||
-        (report.report_type==="found"&&other.report_type==="lost")
-      )
-    );
-
-    if(!candidates.length){
-      results.replaceChildren(
-        element("p","No opposite-type active reports with photos are currently available to compare.")
-      );
-      return;
-    }
-
+    const base=await getImageSignature(report.photo_url);
+    const candidates=activeReports.filter(other=>other.id!==report.id&&other.status==="active"&&other.animal_type===report.animal_type&&other.photo_url&&((report.report_type==="lost"&&other.report_type==="found")||(report.report_type==="found"&&other.report_type==="lost")));
+    if(!candidates.length){results.replaceChildren(element("p","No opposite-type active reports with photos are currently available to compare."));return;}
     const comparisons=[];
-
     for(const other of candidates){
-      try{
-        const signature=await getImageSignature(other.photo_url);
-        comparisons.push({
-          report:other,
-          score:compareSignatures(baseSignature,signature)
-        });
-      }catch(error){
-        console.warn("Could not compare one report photo:",error);
-      }
+      try{comparisons.push({report:other,score:compareSignatures(base,await getImageSignature(other.photo_url))});}
+      catch(error){console.warn("Could not compare one report photo:",error);}
     }
-
     comparisons.sort((a,b)=>b.score-a.score);
     results.replaceChildren();
-
     results.appendChild(element("h4","Free photo comparison results"));
-    results.appendChild(element(
-      "p",
-      "Higher scores mean the sampled colours and brightness patterns were more similar. This is not animal recognition, and backgrounds can affect the scores."
-    ));
-
-    if(!comparisons.length){
-      results.appendChild(element(
-        "p",
-        "The other photos could not be analysed. This can happen when image access is restricted by the storage settings."
-      ));
-      return;
-    }
-
+    results.appendChild(element("p","Higher scores mean the sampled colours and brightness patterns were more similar. This is not animal recognition, and backgrounds can affect the scores."));
+    if(!comparisons.length){results.appendChild(element("p","The other photos could not be analysed. Image access may be restricted by storage settings."));return;}
     comparisons.slice(0,5).forEach((item,index)=>{
-      const match=item.report;
-      const box=document.createElement("div");
+      const match=item.report,box=document.createElement("div");
       box.className="ai-card";
-
       box.appendChild(element("strong","Comparison "+(index+1)));
       addField(box,"Visual similarity score",item.score+"%");
       addField(box,"Report type",reportTypeLabel(match.report_type));
@@ -901,20 +1437,12 @@ async function runFreePhotoMatch(report,button,card){
       addField(box,"Date",match.date_seen);
       addField(box,"Description",match.description);
       addPhoto(box,match.photo_url,"Photo from possible matching report");
-
-      box.appendChild(element(
-        "p",
-        "Please inspect both photos yourself. This score does not establish that the animals are the same."
-      ));
-
+      box.appendChild(element("p","Please inspect both photos yourself. This score does not establish that the animals are the same."));
       results.appendChild(box);
     });
-
   }catch(error){
     console.error("Free photo comparison error:",error);
-    results.replaceChildren(
-      element("p","Could not compare this photo. "+(error.message||"Please try again."))
-    );
+    results.replaceChildren(element("p","Could not compare this photo. "+(error.message||"Please try again.")));
   }finally{
     button.disabled=false;
     button.textContent="🆓 Compare photos for possible matches";
@@ -922,284 +1450,442 @@ async function runFreePhotoMatch(report,button,card){
 }
 
 function normalise(value){
-  return (value||"")
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g," ")
-    .replace(/\s+/g," ")
-    .trim();
+  return (value||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
+}
+
+const MATCH_STOP_WORDS=new Set(["the","and","for","with","from","that","this","was","were","has","had","have","near","area","found","lost","animal","cat","dog","small","large","very","black","white","brown"]);
+
+function matchWords(value){
+  return normalise(value||"").split(" ").filter(word=>word.length>2&&!MATCH_STOP_WORDS.has(word));
+}
+
+function locationMatch(a,b){
+  const la=normalise(a||"").trim(),lb=normalise(b||"").trim();
+  if(!la||!lb)return {score:0,reason:""};
+  if(la===lb)return {score:5,reason:"same location wording"};
+  if(la.includes(lb)||lb.includes(la))return {score:4,reason:"overlapping location"};
+  const wa=new Set(matchWords(la)),wb=new Set(matchWords(lb));
+  const shared=[...wa].filter(word=>wb.has(word));
+  if(shared.length){
+    const ratio=shared.length/Math.max(wa.size,wb.size,1);
+    if(ratio>=0.5)return {score:3,reason:"shared place details"};
+    return {score:2,reason:"some location wording"};
+  }
+  return {score:0,reason:""};
+}
+
+function dateMatch(a,b){
+  if(!a||!b)return {score:0,reason:""};
+  const days=Math.abs(new Date(a).getTime()-new Date(b).getTime())/86400000;
+  if(!Number.isFinite(days))return {score:0,reason:""};
+  if(days<=1)return {score:4,reason:"dates within 1 day"};
+  if(days<=3)return {score:3,reason:"dates within 3 days"};
+  if(days<=7)return {score:2,reason:"dates within a week"};
+  if(days<=14)return {score:1,reason:"dates within 2 weeks"};
+  return {score:0,reason:""};
 }
 
 function similarity(a,b){
-  let score=a.animal_type===b.animal_type?4:0;
-
-  const la=normalise(a.location_text);
-  const lb=normalise(b.location_text);
-
-  if(la&&lb){
-    if(la===lb)score+=5;
-    else if(la.includes(lb)||lb.includes(la))score+=3;
-  }
-
-  const wordsA=new Set(
-    normalise((a.description||"")+" "+(a.animal_name||"")).split(" ")
-  );
-
-  normalise((b.description||"")+" "+(b.animal_name||""))
-    .split(" ")
-    .forEach(word=>{
-      if(word.length>2&&wordsA.has(word))score++;
-    });
-
-  if(a.date_seen&&b.date_seen){
-    const days=Math.abs(new Date(a.date_seen)-new Date(b.date_seen))/86400000;
-    if(days<=3)score+=3;
-    else if(days<=7)score+=2;
-    else if(days<=14)score++;
-  }
-
-  return score;
+  if(a.animal_type!==b.animal_type)return {score:0,reasons:[]};
+  let score=4;
+  const reasons=["same animal type"];
+  const place=locationMatch(a.location_text,b.location_text);
+  score+=place.score;if(place.reason)reasons.push(place.reason);
+  const date=dateMatch(a.date_seen,b.date_seen);
+  score+=date.score;if(date.reason)reasons.push(date.reason);
+  const wordsA=new Set(matchWords((a.description||"")+" "+(a.animal_name||"")));
+  const wordsB=new Set(matchWords((b.description||"")+" "+(b.animal_name||"")));
+  const shared=[...wordsA].filter(word=>wordsB.has(word));
+  const distinctive=shared.filter(word=>word.length>=4);
+  const wordScore=Math.min(4,distinctive.length*2+Math.max(0,shared.length-distinctive.length));
+  score+=wordScore;
+  if(shared.length)reasons.push("shared description details: "+shared.slice(0,5).join(", "));
+  return {score,reasons};
 }
 
 function renderMatches(){
   const box=$("matchResults");
   box.replaceChildren();
-
+  const query=normalise($("searchInput").value);
   const lost=activeReports.filter(r=>r.report_type==="lost");
   const found=activeReports.filter(r=>r.report_type==="found");
   const matches=[];
-
-  lost.forEach(a=>{
-    found.forEach(b=>{
-      if(a.animal_type===b.animal_type){
-        const score=similarity(a,b);
-        if(score>=7)matches.push({a,b,score});
-      }
-    });
-  });
-
-  matches.sort((a,b)=>b.score-a.score).slice(0,10).forEach(match=>{
+  lost.forEach(a=>found.forEach(b=>{
+    if(a.animal_type!==b.animal_type)return;
+    // When a town or location is searched, only show pairings where BOTH reports
+    // mention that searched location. This prevents distant-town suggestions
+    // from cluttering a location-specific search.
+    if(query){
+      const lostLocation=normalise(a.location_text||"");
+      const foundLocation=normalise(b.location_text||"");
+      if(!lostLocation.includes(query)||!foundLocation.includes(query))return;
+    }
+    const result=similarity(a,b);
+    if(result.score>=5)matches.push({a,b,score:result.score,reasons:result.reasons});
+  }));
+  matches.sort((a,b)=>b.score-a.score);
+  matches.slice(0,10).forEach(match=>{
     const card=document.createElement("article");
     card.className="report-card";
-
-    card.appendChild(element("h3","Possible match: "+match.a.animal_type));
+    const title=element("h3","Possible match: "+match.a.animal_type);
+    card.appendChild(title);
+    const scoreLabel=match.score>=13?"Several details line up":match.score>=9?"Some useful details line up":"Worth checking";
+    card.appendChild(element("p",scoreLabel+" · Match score "+match.score));
+    card.appendChild(element("p","Why it appeared: "+match.reasons.join(" · ")));
     addField(card,"Lost location",match.a.location_text);
     addField(card,"Lost date",match.a.date_seen);
     addField(card,"Lost description",match.a.description);
     addPhoto(card,match.a.photo_url,"Lost animal");
-
     addField(card,"Found location",match.b.location_text);
     addField(card,"Found date",match.b.date_seen);
     addField(card,"Found description",match.b.description);
     addPhoto(card,match.b.photo_url,"Found animal");
-
-    card.appendChild(element(
-      "p",
-      "Automated text suggestion only. This is not a confirmed match."
-    ));
-
+    card.appendChild(element("p","Automated suggestion only, not a confirmed identification. Compare the photos and details carefully."));
     box.appendChild(card);
   });
-
-  if(!box.children.length){
-    box.appendChild(element("p","No possible text matches found yet."));
-  }
+  if(!box.children.length)box.appendChild(element("p",query
+    ?"No possible matches found with both reports mentioning “"+query+"”. Try a broader search if you want to check nearby areas."
+    :"No possible text matches found yet. Try checking that the location, date and description are as detailed as possible."));
 }
 
 async function loadReports(){
   const box=$("reportsList");
   box.replaceChildren(element("p","Loading community reports..."));
-
-  const {data,error}=await supabaseClient
-    .from("animal_reports")
+  const {data,error}=await supabaseClient.from("animal_reports")
     .select("id,report_type,animal_type,animal_name,description,location_text,date_seen,photo_url,status,owner_id,created_at")
-    .eq("status","active")
-    .order("created_at",{ascending:false})
-    .limit(100);
-
-  if(error){
-    box.replaceChildren(element("p","Could not load reports: "+error.message));
-    return;
-  }
-
+    .eq("status","active").order("created_at",{ascending:false}).limit(100);
+  if(error){box.replaceChildren(element("p","Could not load reports: "+error.message));return;}
   activeReports=data||[];
   applyFilters();
 }
 
 function applyFilters(){
   const query=normalise($("searchInput").value);
+  const status=$("searchStatus");
+  if(status)status.textContent="";
   const animal=$("animalFilter").value;
   const type=$("typeFilter").value;
   const list=$("reportsList");
-
   list.replaceChildren();
-
   const filtered=activeReports.filter(report=>
-    (!animal||report.animal_type===animal) &&
-    (!type||report.report_type===type) &&
-    (!query||normalise([
-      report.animal_name,
-      report.animal_type,
-      report.description,
-      report.location_text
-    ].join(" ")).includes(query))
+    (!animal||report.animal_type===animal)&&(!type||report.report_type===type)&&
+    (!query||normalise([report.animal_name,report.animal_type,report.description,report.location_text].join(" ")).includes(query))
   );
-
-  if(!filtered.length){
-    list.appendChild(element("p","No active reports match your search."));
-  }
-
-  filtered.forEach(report=>{
-    list.appendChild(makeReportCard(report,report.owner_id===currentUserId));
-  });
-
+  if(!filtered.length)list.appendChild(element("p","No active reports match your search."));
+  filtered.forEach(report=>list.appendChild(makeReportCard(report,report.owner_id===currentUserId)));
+  if(status)status.textContent=query ? (filtered.length+" report"+(filtered.length===1?"":"s")+" found for “"+$("searchInput").value.trim()+"”.") : (filtered.length+" active reports shown.");
   renderMatches();
 }
+
+let activeConversationId=null;
+let privateConversations=[];
+
+function otherConversationUser(conversation){
+  return conversation.owner_id===currentUserId ? conversation.contact_user_id : conversation.owner_id;
+}
+
+async function getConversationBlockState(otherUserId){
+  const {data,error}=await supabaseClient.rpc("alfik_private_message_block_state",{
+    p_other_user_id:otherUserId
+  });
+  if(error)throw error;
+  return {
+    blockedByMe:data?.blockedByMe===true,
+    blockedMe:data?.blockedMe===true,
+    blocked:data?.blockedByMe===true||data?.blockedMe===true
+  };
+}
+
+async function loadBlockedMembers(){
+  const box=$("blockedMembersList");
+  if(!box)return;
+  box.replaceChildren(element("p","Loading blocked members..."));
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  if(!sessionData.session?.user){box.replaceChildren(element("p","Sign in to manage blocked members."));return;}
+  const {data,error}=await supabaseClient.from("alfik_user_blocks")
+    .select("id,blocked_id,created_at").order("created_at",{ascending:false}).limit(200);
+  if(error){box.replaceChildren(element("p","Could not load blocked members: "+error.message+". The block/report migration may not be active yet."));return;}
+  box.replaceChildren();
+  if(!data||!data.length){box.appendChild(element("p","You haven't blocked any members."));return;}
+  data.forEach(block=>{
+    const row=document.createElement("div");
+    row.className="report-card";
+    row.appendChild(element("p","Blocked member account ending …"+String(block.blocked_id).slice(-8)));
+    const unblock=element("button","Unblock this member");
+    unblock.className="secondary";
+    unblock.onclick=async()=>{
+      if(!confirm("Unblock this member? They may be able to message you again unless they have blocked you too."))return;
+      unblock.disabled=true;
+      const result=await supabaseClient.from("alfik_user_blocks").delete().eq("id",block.id);
+      if(result.error){alert("Could not unblock this member: "+result.error.message);unblock.disabled=false;return;}
+      await loadBlockedMembers();
+      if(activeConversationId)await loadPrivateMessages(activeConversationId);
+    };
+    row.appendChild(unblock);
+    box.appendChild(row);
+  });
+}
+
+async function startPrivateConversation(report){
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  const user=sessionData.session?.user;
+  if(!user){alert("Please sign in to send a private message.");return;}
+  if(report.owner_id===user.id){alert("This is your own report. You cannot message yourself.");return;}
+  const buttonLabel="🔒 Message privately about this animal";
+  try{
+    const result=await supabaseClient.rpc("alfik_start_conversation",{p_report_id:report.id});
+    if(result.error)throw result.error;
+    activeConversationId=result.data;
+    showView("messagesView");
+    await loadPrivateConversations(activeConversationId);
+  }catch(error){
+    alert("Private messaging is not ready yet. "+(error.message||"Please try again later.")+" If this continues, the ALFIK messaging database migration needs to be applied.");
+  }
+}
+
+function conversationLabel(conversation){
+  const report=activeReports.find(item=>item.id===conversation.report_id);
+  const context=report
+    ? reportTypeLabel(report.report_type)+" · "+(report.animal_type||"animal")+" · "+(report.location_text||"location not provided")
+    : "Animal report";
+  const role=conversation.owner_id===currentUserId?"Your report":"You contacted the reporter";
+  return role+" · "+context;
+}
+
+async function loadPrivateConversations(selectedId){
+  const list=$("conversationList");
+  if(!list)return;
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  const user=sessionData.session?.user;
+  if(!user){list.replaceChildren(element("p","Please sign in to view private messages."));return;}
+  list.replaceChildren(element("p","Loading private conversations..."));
+  $("sendPrivateMessageBtn").disabled=true;
+  try{
+    const {data,error}=await supabaseClient.from("alfik_message_conversations")
+      .select("id,report_id,owner_id,contact_user_id,status,created_at,last_message_at")
+      .order("last_message_at",{ascending:false}).limit(100);
+    if(error)throw error;
+    privateConversations=data||[];
+    list.replaceChildren();
+    if(!privateConversations.length){
+      list.appendChild(element("p","No private conversations yet. Open an active lost or found report and choose “Message privately about this animal”."));
+      $("messageThreadHeading").textContent="Choose a conversation";
+      $("messageThread").replaceChildren(element("p","Your messages will appear here."));
+      activeConversationId=null;
+      return;
+    }
+    privateConversations.forEach(conversation=>{
+      const button=element("button",conversationLabel(conversation));
+      button.type="button";
+      button.className="secondary wide";
+      button.style.marginBottom="8px";
+      button.onclick=()=>loadPrivateMessages(conversation.id);
+      list.appendChild(button);
+    });
+    const target=selectedId||activeConversationId;
+    const chosen=privateConversations.find(item=>item.id===target)||privateConversations[0];
+    await loadPrivateMessages(chosen.id);
+  }catch(error){
+    list.replaceChildren(element("p","Could not load private conversations: "+(error.message||"Please try again.")+". If the messaging migration has not been applied, this is expected."));
+  }
+}
+
+async function loadPrivateMessages(conversationId){
+  const thread=$("messageThread");
+  const conversation=privateConversations.find(item=>item.id===conversationId);
+  if(!thread||!conversation)return;
+  activeConversationId=conversationId;
+  $("messageThreadHeading").textContent=conversationLabel(conversation);
+  thread.replaceChildren(element("p","Loading messages..."));
+  $("sendPrivateMessageBtn").disabled=true;
+  $("blockConversationUserBtn").disabled=true;
+  $("reportConversationUserBtn").disabled=true;
+  $("reportMemberForm").classList.add("hidden");
+  $("memberReportStatus").textContent="";
+  $("privateMessageStatus").textContent="";
+  try{
+    const otherUserId=otherConversationUser(conversation);
+    const blockState=await getConversationBlockState(otherUserId);
+    $("blockConversationUserBtn").textContent=blockState.blockedByMe?"Unblock this member":"🚫 Block this member";
+    $("blockConversationUserBtn").disabled=false;
+    $("reportConversationUserBtn").disabled=false;
+    $("sendPrivateMessageBtn").disabled=conversation.status!=="open"||blockState.blocked;
+    if(blockState.blocked){
+      $("privateMessageStatus").textContent=blockState.blockedByMe
+        ?"You have blocked this member. Unblock them to send messages."
+        :"This member has blocked you. You cannot send messages in this conversation.";
+    }
+    const {data,error}=await supabaseClient.from("alfik_private_messages")
+      .select("id,conversation_id,sender_id,body,created_at")
+      .eq("conversation_id",conversationId).order("created_at",{ascending:true}).limit(500);
+    if(error)throw error;
+    thread.replaceChildren();
+    if(!data||!data.length){
+      thread.appendChild(element("p","No messages yet. Start by asking about the animal's description, location or safe reunion arrangements."));
+    }else{
+      data.forEach(item=>{
+        const bubble=document.createElement("article");
+        bubble.className="report-card";
+        bubble.appendChild(element("strong",item.sender_id===currentUserId?"You":"Other participant"));
+        const date=new Date(item.created_at);
+        bubble.appendChild(element("p",date.toLocaleString()));
+        const body=element("p",item.body);
+        body.style.whiteSpace="pre-wrap";
+        bubble.appendChild(body);
+        thread.appendChild(bubble);
+      });
+    }
+    thread.scrollTop=thread.scrollHeight;
+  }catch(error){
+    thread.replaceChildren(element("p","Could not load messages: "+(error.message||"Please try again.")));
+  }
+}
+
+async function toggleConversationBlock(){
+  const conversation=privateConversations.find(item=>item.id===activeConversationId);
+  if(!conversation)return;
+  const otherUserId=otherConversationUser(conversation);
+  const state=await getConversationBlockState(otherUserId);
+  if(state.blockedByMe){
+    if(!confirm("Unblock this member? They may be able to message you again unless they have blocked you too."))return;
+    const {error}=await supabaseClient.from("alfik_user_blocks").delete()
+      .eq("blocker_id",currentUserId).eq("blocked_id",otherUserId);
+    if(error){$("privateMessageStatus").textContent="Could not unblock this member: "+error.message;return;}
+    $("privateMessageStatus").textContent="Member unblocked. You can message again if neither member has blocked the other.";
+  }else{
+    if(!confirm("Block this member? They won't be able to send you messages, and you won't be able to message them. You can unblock them later."))return;
+    const {error}=await supabaseClient.from("alfik_user_blocks").insert({
+      blocker_id:currentUserId,blocked_id:otherUserId
+    });
+    if(error&&error.code!=="23505"){$("privateMessageStatus").textContent="Could not block this member: "+error.message;return;}
+    $("privateMessageStatus").textContent="Member blocked. They cannot send you private messages.";
+    $("reportMemberForm").classList.add("hidden");
+  }
+  await loadBlockedMembers();
+  await loadPrivateMessages(activeConversationId);
+}
+
+async function submitMemberReport(){
+  const conversation=privateConversations.find(item=>item.id===activeConversationId);
+  if(!conversation){$("memberReportStatus").textContent="Choose a conversation first.";return;}
+  const reason=$("memberReportReason").value;
+  const details=$("memberReportDetails").value.trim();
+  const button=$("submitMemberReportBtn");
+  button.disabled=true;
+  $("memberReportStatus").textContent="Sending your private report...";
+  try{
+    const {error}=await supabaseClient.from("alfik_user_reports").insert({
+      reporter_id:currentUserId,
+      reported_user_id:otherConversationUser(conversation),
+      conversation_id:conversation.id,
+      reason,
+      details
+    });
+    if(error)throw error;
+    $("memberReportDetails").value="";
+    $("reportMemberForm").classList.add("hidden");
+    $("memberReportStatus").textContent="Your report has been sent privately to ALFIK for review.";
+  }catch(error){
+    $("memberReportStatus").textContent="Could not submit the report: "+(error.message||"Please try again.")+". The block/report migration may not be active yet.";
+  }finally{button.disabled=false;}
+}
+
+$("blockConversationUserBtn").addEventListener("click",async()=>{
+  try{await toggleConversationBlock();}
+  catch(error){$("privateMessageStatus").textContent="Could not update block settings: "+(error.message||"Please try again.");}
+});
+$("reportConversationUserBtn").addEventListener("click",()=>{
+  $("reportMemberForm").classList.toggle("hidden");
+});
+$("submitMemberReportBtn").addEventListener("click",submitMemberReport);
+$("cancelMemberReportBtn").addEventListener("click",()=> $("reportMemberForm").classList.add("hidden"));
+
+async function sendPrivateMessage(){
+  const draft=$("privateMessageDraft");
+  const body=draft.value.trim();
+  if(!activeConversationId){$("privateMessageStatus").textContent="Choose a conversation first.";return;}
+  if(!body){$("privateMessageStatus").textContent="Write a message first.";return;}
+  if(body.length>2000){$("privateMessageStatus").textContent="Messages must be 2,000 characters or fewer.";return;}
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  const user=sessionData.session?.user;
+  if(!user){$("privateMessageStatus").textContent="Please sign in again.";return;}
+  const button=$("sendPrivateMessageBtn");
+  button.disabled=true;
+  $("privateMessageStatus").textContent="Sending privately...";
+  try{
+    const {error}=await supabaseClient.from("alfik_private_messages").insert({
+      conversation_id:activeConversationId,
+      sender_id:user.id,
+      body
+    });
+    if(error)throw error;
+    draft.value="";
+    $("privateMessageStatus").textContent="Private message sent.";
+    await loadPrivateConversations(activeConversationId);
+  }catch(error){
+    $("privateMessageStatus").textContent="Could not send the message: "+(error.message||"Please try again.")+". The messaging migration may not yet be active.";
+  }finally{
+    const active=privateConversations.find(item=>item.id===activeConversationId);
+    if(!active){
+      button.disabled=true;
+    }else{
+      try{
+        const state=await getConversationBlockState(otherConversationUser(active));
+        button.disabled=active.status!=="open"||state.blocked;
+      }catch(error){
+        button.disabled=true;
+      }
+    }
+  }
+}
+
+$("sendPrivateMessageBtn").addEventListener("click",sendPrivateMessage);
+$("refreshConversationsBtn").addEventListener("click",()=>loadPrivateConversations(activeConversationId));
 
 async function loadMyReports(){
   const box=$("myReportsList");
   box.replaceChildren(element("p","Loading your reports..."));
-
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-
-  if(!user){
-    box.replaceChildren(element("p","Please sign in to view your reports."));
-    return;
-  }
-
-  const {data,error}=await supabaseClient
-    .from("animal_reports")
+  if(!user){box.replaceChildren(element("p","Please sign in to view your reports."));return;}
+  const {data,error}=await supabaseClient.from("animal_reports")
     .select("id,report_type,animal_type,animal_name,description,location_text,date_seen,photo_url,status,owner_id,created_at")
-    .eq("owner_id",user.id)
-    .order("created_at",{ascending:false})
-    .limit(200);
-
+    .eq("owner_id",user.id).order("created_at",{ascending:false}).limit(200);
   box.replaceChildren();
-
-  if(error){
-    box.appendChild(element("p","Could not load your reports: "+error.message));
-    return;
-  }
-
+  if(error){box.appendChild(element("p","Could not load your reports: "+error.message));return;}
   myReports=data||[];
-
-  if(!myReports.length){
-    box.appendChild(element("p","You haven't submitted any reports yet."));
-    return;
-  }
-
+  if(!myReports.length){box.appendChild(element("p","You haven't submitted any reports yet."));return;}
   myReports.forEach(report=>box.appendChild(makeReportCard(report,true)));
 }
 
-$("searchBtn").addEventListener("click",applyFilters);
-
+$("searchBtn").addEventListener("click",()=>{applyFilters();const status=$("searchStatus");if(status)status.textContent="Search updated. "+status.textContent;$("reportsList").scrollIntoView({behavior:"smooth",block:"start"});});
 $("clearBtn").addEventListener("click",()=>{
   $("searchInput").value="";
   $("animalFilter").value="";
   $("typeFilter").value="";
   applyFilters();
 });
-
+$("searchInput").addEventListener("input",applyFilters);
 $("searchInput").addEventListener("keydown",event=>{
-  if(event.key==="Enter"){
-    event.preventDefault();
-    applyFilters();
-  }
+  if(event.key==="Enter"){event.preventDefault();applyFilters();}
 });
-
+document.querySelectorAll("[data-set-report-filter]").forEach(button=>button.addEventListener("click",()=>{
+  $("typeFilter").value=button.dataset.setReportFilter;
+  $("searchInput").value="";
+  applyFilters();
+}));
 $("animalFilter").addEventListener("change",applyFilters);
 $("typeFilter").addEventListener("change",applyFilters);
-
-
-async function loadNotifications(){
-  const list=$("notificationsList");
-  const count=$("notificationCount");
-  if(!list)return;
-  list.replaceChildren(element("p","Loading notifications..."));
-  message("notificationsMessage","");
-  try{
-    const {data:sessionData}=await supabaseClient.auth.getSession();
-    const user=sessionData.session?.user;
-    if(!user){
-      list.replaceChildren(element("p","Please sign in to view your notifications."));
-      if(count){count.textContent="0";count.classList.add("hidden");}
-      return;
-    }
-    const {data,error}=await supabaseClient
-      .from("alfik_in_app_notifications")
-      .select("id,notification_type,title,body,due_date,related_report_id,created_at,read_at")
-      .eq("user_id",user.id)
-      .order("created_at",{ascending:false})
-      .limit(50);
-    if(error)throw error;
-    const rows=data||[];
-    const unread=rows.filter(n=>!n.read_at).length;
-    if(count){
-      count.textContent=unread>99?"99+":String(unread);
-      count.classList.toggle("hidden",unread===0);
-    }
-    list.replaceChildren();
-    if(!rows.length){
-      list.appendChild(element("p","No notifications yet. Possible matches and care reminders will appear here."));
-      return;
-    }
-    rows.forEach(n=>{
-      const item=document.createElement("article");
-      item.className="notification-item";
-      item.appendChild(element("h3",(n.read_at?"":"🔵 ")+(n.title||"ALFIK notification")));
-      if(n.body)item.appendChild(element("p",n.body));
-      if(n.due_date)item.appendChild(element("p","Due date: "+n.due_date));
-      item.appendChild(element("p","Status: "+(n.read_at?"Read":"Unread")));
-      item.appendChild(element("p","Received: "+new Date(n.created_at).toLocaleString()));
-      if(!n.read_at){
-        const btn=element("button","Mark as read");
-        btn.className="secondary";
-        btn.addEventListener("click",async()=>{
-          btn.disabled=true;
-          const {error:updateError}=await supabaseClient
-            .from("alfik_in_app_notifications")
-            .update({read_at:new Date().toISOString()})
-            .eq("id",n.id)
-            .eq("user_id",user.id);
-          if(updateError){
-            btn.disabled=false;
-            message("notificationsMessage","Could not mark as read: "+updateError.message);
-          }else{
-            await loadNotifications();
-          }
-        });
-        item.appendChild(btn);
-      }
-      list.appendChild(item);
-    });
-  }catch(error){
-    list.replaceChildren(element("p","Could not load notifications: "+(error.message||"Please try again.")));
-    if(count)count.classList.add("hidden");
-  }
-}
-
-$("refreshNotificationsBtn").addEventListener("click",loadNotifications);
 
 async function loadEmailPreference(){
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
   if(!user)return;
-
   $("emailAlertsEnabled").checked=false;
   message("emailMessage","Loading preference...");
-
-  const {data,error}=await supabaseClient
-    .from("email_alert_preferences")
-    .select("enabled")
-    .eq("user_id",user.id)
-    .maybeSingle();
-
-  if(error){
-    message("emailMessage","Could not load your preference. "+error.message);
-    console.error(error);
-    return;
-  }
-
+  const {data,error}=await supabaseClient.from("email_alert_preferences")
+    .select("enabled").eq("user_id",user.id).maybeSingle();
+  if(error){message("emailMessage","Could not load your preference. "+error.message);console.error(error);return;}
   $("emailAlertsEnabled").checked=data?.enabled===true;
   message("emailMessage","");
 }
@@ -1207,94 +1893,56 @@ async function loadEmailPreference(){
 $("saveEmailBtn").addEventListener("click",async()=>{
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
-
-  if(!user){
-    message("emailMessage","Please sign in again.");
-    return;
-  }
-
+  if(!user){message("emailMessage","Please sign in again.");return;}
   const button=$("saveEmailBtn");
   button.disabled=true;
   message("emailMessage","Saving...");
-
   try{
-    const {error}=await supabaseClient
-      .from("email_alert_preferences")
-      .upsert({
-        user_id:user.id,
-        enabled:$("emailAlertsEnabled").checked,
-        updated_at:new Date().toISOString()
-      },{onConflict:"user_id"});
-
+    const {error}=await supabaseClient.from("email_alert_preferences").upsert({
+      user_id:user.id,enabled:$("emailAlertsEnabled").checked,updated_at:new Date().toISOString()
+    },{onConflict:"user_id"});
     if(error)throw error;
-
-    message(
-      "emailMessage",
-      $("emailAlertsEnabled").checked
-        ?"Email match alerts are switched on."
-        :"Email match alerts are switched off."
-    );
-  }catch(error){
-    message("emailMessage","Could not save preference: "+error.message);
-  }finally{
-    button.disabled=false;
-  }
+    message("emailMessage",$("emailAlertsEnabled").checked?"Email match alerts are switched on.":"Email match alerts are switched off.");
+  }catch(error){message("emailMessage","Could not save preference: "+error.message);}
+  finally{button.disabled=false;}
 });
 
 $("signUpBtn").addEventListener("click",async()=>{
-  const email=$("accountEmail").value.trim();
-  const password=$("accountPassword").value;
-
-  if(!email||!password){
-    message("accountMessage","Enter your email and password.");
-    return;
-  }
-
+  const email=$("accountEmail").value.trim(),password=$("accountPassword").value;
+  const accountType=$("newAccountType").value||"public";
+  if(!email||!password){message("accountMessage","Enter your email and password.");return;}
+  if(!alfikCaptchaToken){message("accountMessage","Please complete the Cloudflare security check before continuing.");return;}
+  const captchaToken=alfikCaptchaToken;
   message("accountMessage","Creating account...");
   $("signUpBtn").disabled=true;
-
   try{
-    const {data,error}=await supabaseClient.auth.signUp({
-      email,
-      password,
-      options:{emailRedirectTo:ALFIK_URL}
-    });
-
+    const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:ALFIK_URL,captchaToken,data:{alfik_account_type:accountType}}});
     if(error)throw error;
-
-    if(data.session){
-      message("accountMessage","Account created.");
-      showSignedIn(data.session);
-    }else{
-      message("accountMessage","Account created. Check your email to confirm, then sign in.");
-    }
-  }catch(error){
-    message("accountMessage",error.message||"Could not create the account.");
-  }finally{
-    $("signUpBtn").disabled=false;
-  }
+    if(data.session){message("accountMessage","Account created.");showSignedIn(data.session);}
+    else message("accountMessage","Account created. Check your email to confirm, then sign in.");
+  }catch(error){message("accountMessage",error.message||"Could not create the account.");}
+  finally{resetAlfikCaptcha();$("signUpBtn").disabled=false;}
 });
+
+
+let passwordRecoveryMode=false;
+const ALFIK_PASSWORD_RESET_URL="https://alfik.co.uk/";
 
 $("forgotPasswordBtn").addEventListener("click",async()=>{
   const email=$("accountEmail").value.trim();
-
   if(!email){
     message("accountMessage","Enter your email address first.");
     $("accountEmail").focus();
     return;
   }
-
   const button=$("forgotPasswordBtn");
   button.disabled=true;
   message("accountMessage","Requesting password reset...");
-
   try{
     const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{
-      redirectTo:ALFIK_URL
+      redirectTo:ALFIK_PASSWORD_RESET_URL
     });
-
     if(error)throw error;
-
     message("accountMessage","If an account exists for that email, a password-reset link will be sent. Check your inbox and spam folder.");
   }catch(error){
     message("accountMessage",error.message||"Could not request a password reset. Please try again.");
@@ -1306,25 +1954,20 @@ $("forgotPasswordBtn").addEventListener("click",async()=>{
 $("saveNewPasswordBtn").addEventListener("click",async()=>{
   const password=$("newPassword").value;
   const confirmation=$("confirmNewPassword").value;
-
   if(password.length<8){
     message("passwordRecoveryMessage","Your new password must be at least 8 characters long.");
     return;
   }
-
   if(password!==confirmation){
     message("passwordRecoveryMessage","The passwords do not match.");
     return;
   }
-
   const button=$("saveNewPasswordBtn");
   button.disabled=true;
   message("passwordRecoveryMessage","Updating your password...");
-
   try{
     const {error}=await supabaseClient.auth.updateUser({password});
     if(error)throw error;
-
     passwordRecoveryMode=false;
     $("passwordRecoverySection").classList.add("hidden");
     await supabaseClient.auth.signOut();
@@ -1338,75 +1981,84 @@ $("saveNewPasswordBtn").addEventListener("click",async()=>{
 });
 
 $("signInBtn").addEventListener("click",async()=>{
-  const email=$("accountEmail").value.trim();
-  const password=$("accountPassword").value;
-
-  if(!email||!password){
-    message("accountMessage","Enter your email and password.");
-    return;
-  }
-
+  const email=$("accountEmail").value.trim(),password=$("accountPassword").value;
+  if(!email||!password){message("accountMessage","Enter your email and password.");return;}
+  if(!alfikCaptchaToken){message("accountMessage","Please complete the Cloudflare security check before continuing.");return;}
+  const captchaToken=alfikCaptchaToken;
   message("accountMessage","Signing in...");
   $("signInBtn").disabled=true;
-
   try{
-    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password,options:{captchaToken}});
     if(error)throw error;
-
     message("accountMessage","");
     showSignedIn(data.session);
+  }catch(error){message("accountMessage",error.message||"Could not sign in.");}
+  finally{resetAlfikCaptcha();$("signInBtn").disabled=false;}
+});
+
+$("saveAccountTypeBtn").addEventListener("click",async()=>{
+  const user=(await supabaseClient.auth.getUser()).data?.user;
+  if(!user){message("accountTypeMessage","Please sign in again.");return;}
+  const accountType=$("accountTypeSetting").value||"public";
+  message("accountTypeMessage","Saving your account type...");
+  $("saveAccountTypeBtn").disabled=true;
+  try{
+    const {data,error}=await supabaseClient.auth.updateUser({data:{alfik_account_type:accountType}});
+    if(error)throw error;
+    applyAccountType(data.user);
+    showView("homeView");
+    message("accountTypeMessage","Saved. Your ALFIK menu has been simplified.");
   }catch(error){
-    message("accountMessage",error.message||"Could not sign in.");
-  }finally{
-    $("signInBtn").disabled=false;
-  }
+    message("accountTypeMessage",error.message||"Could not save your account type.");
+  }finally{$("saveAccountTypeBtn").disabled=false;}
 });
 
 $("signOutBtn").addEventListener("click",async()=>{
   const {error}=await supabaseClient.auth.signOut();
-
-  if(error){
-    alert("Could not sign out: "+error.message);
-    return;
-  }
-
+  if(error){alert("Could not sign out: "+error.message);return;}
   showSignedIn(null);
   message("accountMessage","You have signed out.");
 });
 
 function showSignedIn(session){
-  if(passwordRecoveryMode)return;
   const user=session?.user||null;
   const newId=user?.id||null;
   const changed=newId!==currentUserId;
-
   currentUserId=newId;
-
   accountSection.classList.toggle("hidden",!!user);
   siteContent.classList.toggle("hidden",!user);
+  applyAccountType(user);
 
   if(user){
     $("signedInAs").textContent="Signed in to your ALFIK account.";
-
+    if(window.loadVerifiedRescueDirectory) window.loadVerifiedRescueDirectory();
     if(changed){
       showView("homeView");
       loadReports();
       loadMyReports();
       loadEmailPreference();
-      loadNotifications();
-      loadPlanStatus();
+      if(window.refreshAlfikProfile)window.refreshAlfikProfile();
     }
   }else{
+    activeAccountType="public";
+    document.querySelectorAll("[data-account-types]").forEach(node=>node.classList.remove("hidden"));
+    if($("accountTypeMessage"))$("accountTypeMessage").textContent="";
     activeReports=[];
     myReports=[];
-
+    privateConversations=[];
+    activeConversationId=null;
+    if($("conversationList"))$("conversationList").replaceChildren(element("p","Sign in to view private conversations."));
+    if($("messageThread"))$("messageThread").replaceChildren(element("p","Select a conversation to read messages."));
+    if($("privateMessageDraft"))$("privateMessageDraft").value="";
+    if($("sendPrivateMessageBtn"))$("sendPrivateMessageBtn").disabled=true;
+    if($("blockConversationUserBtn"))$("blockConversationUserBtn").disabled=true;
+    if($("reportConversationUserBtn"))$("reportConversationUserBtn").disabled=true;
+    if($("reportMemberForm"))$("reportMemberForm").classList.add("hidden");
+    if($("blockedMembersList"))$("blockedMembersList").replaceChildren(element("p","Sign in to manage blocked members."));
     $("reportsList").textContent="Please sign in to view reports.";
     $("myReportsList").textContent="Please sign in to view your reports.";
     $("matchResults").replaceChildren();
     $("emailAlertsEnabled").checked=false;
-    if($("notificationCount"))$("notificationCount").classList.add("hidden");
-    if($("notificationsList"))$("notificationsList").replaceChildren(element("p","Please sign in to view your notifications."));
-
     reportForm.reset();
     resetPhoto();
     reportForm.classList.add("hidden");
@@ -1416,136 +2068,37 @@ function showSignedIn(session){
   }
 }
 
-async function loadPlanStatus() {
-  const nodes = [$("currentPlanText"), $("accountPlanText")].filter(Boolean);
-  const setPlanText = text => nodes.forEach(node => { node.textContent = text; });
-
-  if (!currentUserId) {
-    setPlanText("Sign in to view your account type.");
-    return;
-  }
-
-  setPlanText("Checking your account type…");
-  try {
-    const { data, error } = await supabaseClient
-      .from("alfik_profiles")
-      .select("plan_tier, subscription_status")
-      .eq("user_id", currentUserId)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    const tier = String(data?.plan_tier || "free").toLowerCase();
-    const status = String(data?.subscription_status || "free").toLowerCase();
-    const isActive = ["active", "activated", "approved"].includes(status);
-    const paidTier = ["premium", "pro"].includes(tier);
-
-    if (isActive && paidTier) {
-      const name = tier.charAt(0).toUpperCase() + tier.slice(1);
-      setPlanText(name + " account · subscription active.");
-    } else if (status === "past_due") {
-      setPlanText("Payment needs attention · your subscription status is past due. Please check your PayPal account.");
-    } else if (["cancelled", "canceled", "suspended", "expired"].includes(status)) {
-      setPlanText("Free account · paid subscription status: " + status + ".");
-    } else {
-      setPlanText("Free account · no active paid subscription is recorded.");
-    }
-  } catch (error) {
-    setPlanText("Account type could not be checked. Please refresh and try again.");
-    console.error("ALFIK plan status lookup failed:", error);
-  }
-}
-
-async function startAlfikCheckout(plan, buttonId) {
-  const button = $(buttonId);
-  const otherButton = $(plan === "premium" ? "paypal-pro" : "paypal-premium");
-  const messageNode = $("billingMessage");
-
-  if (!button || !messageNode) return;
-
-  button.disabled = true;
-  if (otherButton) otherButton.disabled = true;
-  messageNode.textContent = "Connecting securely to PayPal...";
-
-  try {
-    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-    const session = sessionData && sessionData.session;
-
-    if (sessionError || !session) {
-      throw new Error("Please sign in to ALFIK before choosing a paid plan.");
-    }
-
-    const { data, error } = await supabaseClient.functions.invoke(
-      "alfik-create-subscription",
-      { body: { plan } }
-    );
-
-    if (error) {
-      let detail = error.message || "Checkout could not start.";
-      if (error.context && typeof error.context.json === "function") {
-        try {
-          const body = await error.context.json();
-          if (body && body.error) detail = body.error;
-        } catch (_) {}
-      }
-      throw new Error(detail);
-    }
-
-    if (!data || !data.approvalUrl || !data.subscriptionId) {
-      throw new Error((data && data.error) || "PayPal did not return a checkout link.");
-    }
-
-    messageNode.textContent = "Opening PayPal. Please approve the subscription there.";
-    window.location.assign(data.approvalUrl);
-  } catch (error) {
-    messageNode.textContent = (error && error.message)
-      ? error.message
-      : "Checkout could not start. Please try again.";
-    button.disabled = false;
-    if (otherButton) otherButton.disabled = false;
-  }
-}
-
-$("paypal-premium").addEventListener("click", () => startAlfikCheckout("premium", "paypal-premium"));
-$("paypal-pro").addEventListener("click", () => startAlfikCheckout("pro", "paypal-pro"));
-
-const subscriptionReturn = new URLSearchParams(window.location.search).get("subscription");
-if (subscriptionReturn === "return") {
-  const billingMessage = $("billingMessage");
-  if (billingMessage) {
-    billingMessage.textContent = "You've returned from PayPal. ALFIK will activate paid access only after the verified PayPal confirmation arrives.";
-  }
-} else if (subscriptionReturn === "cancelled") {
-  const billingMessage = $("billingMessage");
-  if (billingMessage) billingMessage.textContent = "Checkout was cancelled. No paid access has been activated.";
-}
-
 supabaseClient.auth.onAuthStateChange((event,session)=>{
   if(event==="PASSWORD_RECOVERY"){
     passwordRecoveryMode=true;
-    accountSection.classList.add("hidden");
-    siteContent.classList.add("hidden");
+    $("accountSection").classList.add("hidden");
+    $("siteContent").classList.add("hidden");
     $("passwordRecoverySection").classList.remove("hidden");
     message("passwordRecoveryMessage","");
     return;
   }
-
-  if(!passwordRecoveryMode){
-    showSignedIn(session);
-  }
+  if(!passwordRecoveryMode)showSignedIn(session);
 });
 
 (async()=>{
   const {data,error}=await supabaseClient.auth.getSession();
+  if(error){message("accountMessage",error.message);return;}
+  if(!passwordRecoveryMode)showSignedIn(data?.session||null);
+})();
+</script>
 
-  if(error){
-    message("accountMessage",error.message);
-    return;
-  }
-
-  if(!passwordRecoveryMode){
-    showSignedIn(data?.session||null);
-  }
+<script src="alfik-config.js"></script>
+<script src="alfik-extension.js?v=20261027-plan-check-fix"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script>
+/* Register ALFIK's service worker where supported. */
+(function ALFIKServiceWorkerRegistration(){
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("/service-worker.js").catch(function(error){
+      console.warn("ALFIK service worker registration failed:", error);
+    });
+  });
 })();
 </script>
 </body>
