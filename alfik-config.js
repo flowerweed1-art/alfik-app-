@@ -1,10 +1,12 @@
-
 /*
  * ALFIK configuration
- * PayPal details will be added after the PayPal plans are created.
+ * Public PayPal client ID and subscription plan IDs only.
  * Never put a PayPal client secret or Supabase service-role key here.
+ *
+ * NOTE: The IDs below were copied from PayPal Business button code.
+ * Checkout must not be treated as verified payment until server-side
+ * PayPal webhook verification is implemented and tested.
  */
-
 window.ALFIK_CONFIG = {
   PAYPAL_CLIENT_ID: "BAAmGftSPPI536zKFVUyHTuTrAEWOlZkhrPbFdekTiTlZ_M_UUDUdH2vvahtMm0mswxKlHwW4HGoYGCMpY",
 
