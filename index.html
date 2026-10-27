@@ -436,6 +436,18 @@ footer{background:#f8fbfe}
 .pet-deceased-label{margin:0 0 8px;color:#81518c;font-size:12px;font-weight:700;letter-spacing:.03em}
 .pet-delete-button{border-color:#c74343!important;color:#a32626!important}
 .pet-profile-photo{display:block;width:100%;max-height:220px;aspect-ratio:4/3;object-fit:cover;border-radius:10px;margin:0 0 10px;background:#edf4fa}
+#petDashboardPanel{margin:16px 0;border:2px solid #1769aa;background:#f4f9ff}
+.pet-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.pet-dashboard-stat{padding:13px;border:1px solid #d7e6f3;border-radius:12px;background:#fff;min-width:0}
+.pet-dashboard-stat strong{display:block;font-size:22px;color:#123b63;overflow-wrap:anywhere}
+.pet-dashboard-stat span{font-size:12px;color:#58738a}
+.pet-dashboard-section{margin-top:14px;padding-top:12px;border-top:1px solid #d7e6f3}
+.pet-dashboard-section h4{margin:0 0 8px;color:#123b63}
+.pet-dashboard-alert{padding:10px;border-radius:9px;background:#fff3d9;color:#704b00;margin:8px 0}
+.pet-dashboard-ok{padding:10px;border-radius:9px;background:#e7f6ec;color:#185b32;margin:8px 0}
+.pet-dashboard-line{margin:7px 0;overflow-wrap:anywhere}
+.pet-weight-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #e1ebf3}
+@media print{body.alfik-print-dashboard *{visibility:hidden!important}body.alfik-print-dashboard #petDashboardPanel,body.alfik-print-dashboard #petDashboardPanel *{visibility:visible!important}body.alfik-print-dashboard #petDashboardPanel{position:absolute;left:0;top:0;width:100%;border:0;background:#fff}}
 .pet-profile-card h3{margin:0 0 5px;color:#123b63;font-size:19px;overflow-wrap:anywhere}
 .pet-card-subtitle{margin:0 0 10px;color:#58738a;font-size:13px;text-transform:capitalize}
 .pet-card-details{padding-top:8px;border-top:1px solid #e1ebf3;margin-top:8px}
@@ -739,6 +751,13 @@ footer{background:#f8fbfe}
 <p>Keep useful information about your own animals in one place.</p>
 <p class="note">Pet profiles require the Premium plan or higher. Health records require Pro.</p>
 <div id="planStatus" class="feature-panel">Loading your ALFIK plan...</div>
+<div class="feature-panel" id="petDashboardPanel">
+<h3>Pet dashboard 💙</h3>
+<p class="note">A quick overview of health records, care reminders and emergency details. Information is based on what you have saved in ALFIK.</p>
+<label for="dashboardPetSelect">Choose a pet</label>
+<select id="dashboardPetSelect"><option value="">Choose a pet</option></select>
+<div id="petDashboardContent"><p>Select a pet to see their dashboard.</p></div>
+</div>
 <div class="pet-list-heading">
 <h3>Your pets</h3>
 <button class="primary" id="showAddPetBtn" type="button">＋ Add a pet</button>
@@ -2124,7 +2143,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261027-auto-photo-compression-1"></script>
+<script src="alfik-extension.js?v=20261027-pet-dashboard-1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
 /* Register ALFIK's service worker where supported. */
