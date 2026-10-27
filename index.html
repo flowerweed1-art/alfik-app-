@@ -1363,7 +1363,7 @@ function addField(card,label,value){
 
 function alfikShareUrl(report){
   const base=window.location.origin||"https://alfik.co.uk";
-  return base+"/?shareReport="+encodeURIComponent(report.id)+"#reportsView";
+  return base+"/?shareReport="+encodeURIComponent(report.id);
 }
 function alfikShareText(report){
   const lost=report.report_type==="lost";
@@ -1525,6 +1525,7 @@ function addShareStudio(card,report){
 function makeReportCard(report,isOwn){
   const card=document.createElement("article");
   card.className="report-card status-"+report.report_type;
+  card.dataset.reportId=String(report.id);
   const badge=element("span",isOwn?"YOUR REPORT":"COMMUNITY REPORT");
   badge.className="badge"+(isOwn?" own":"");
   card.appendChild(badge);
@@ -1979,6 +1980,17 @@ function applyFilters(){
   });
   if(!filtered.length)list.appendChild(element("p","No active reports match your search."));
   filtered.forEach(report=>list.appendChild(makeReportCard(report,report.owner_id===currentUserId)));
+  const sharedReportId=new URLSearchParams(window.location.search).get("shareReport");
+  if(sharedReportId){
+    const target=[...list.querySelectorAll("[data-report-id]")].find(node=>node.dataset.reportId===sharedReportId);
+    if(target){
+      target.style.outline="3px solid #83b9e5";
+      target.style.boxShadow="0 0 0 7px #83b9e52b";
+      window.setTimeout(()=>target.scrollIntoView({behavior:"smooth",block:"center"}),180);
+    }else if(!activeReports.some(report=>String(report.id)===sharedReportId)){
+      if(status)status.textContent="This shared report may have been resolved, removed, or is no longer available.";
+    }
+  }
   if(status)status.textContent=query ? (filtered.length+" report"+(filtered.length===1?"":"s")+" found for “"+$("searchInput").value.trim()+"”.") : (filtered.length+" active reports shown.");
   renderMatches();
 }
@@ -2439,7 +2451,8 @@ function showSignedIn(session){
     $("signedInAs").textContent="Signed in to your ALFIK account.";
     if(window.loadVerifiedRescueDirectory) window.loadVerifiedRescueDirectory();
     if(changed){
-      showView("homeView");
+      const sharedReportId=new URLSearchParams(window.location.search).get("shareReport");
+      showView(sharedReportId?"reportsView":"homeView");
       loadReports();
       loadMyReports();
       loadEmailPreference();
