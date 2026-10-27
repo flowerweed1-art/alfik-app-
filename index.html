@@ -258,6 +258,173 @@ nav button{min-height:42px;border-radius:9px}
 footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
 @media(max-width:520px){header{padding:32px 14px 30px}header img{width:104px}header h1{letter-spacing:5px}header p:last-of-type{font-size:12px}#accountSection{margin:18px auto;padding:23px 18px;border-radius:18px}#homeView{padding:27px 20px;border-radius:19px}#homeView>h2{font-size:38px}#homeView button{min-height:52px}nav{padding:7px;gap:5px}nav button{flex:1 1 42%;font-size:13px}}
 
+
+
+
+/* ALFIK professional finish v2 */
+:root{
+  --alfik-ink:#17324a;
+  --alfik-navy:#0d2b47;
+  --alfik-blue:#1769aa;
+  --alfik-blue-deep:#104a78;
+  --alfik-muted:#5b7083;
+  --alfik-line:#d8e4ee;
+  --alfik-paper:#ffffff;
+}
+html{background:#f3f7fb}
+body{
+  color:var(--alfik-ink);
+  background:linear-gradient(180deg,#eaf2f9 0,#f5f8fc 330px,#f5f8fc 100%);
+  font-size:16px;
+}
+header{
+  isolation:isolate;
+  padding:42px 20px 38px;
+  background:linear-gradient(135deg,#091f35 0%,#103c62 58%,#1b5c8d 100%);
+  border-bottom:4px solid #9bc9ec;
+}
+header:before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:340px;height:340px;
+  left:-180px;top:-210px;
+  border:1px solid #ffffff20;border-radius:50%;
+  box-shadow:0 0 0 28px #ffffff08,0 0 0 58px #ffffff06;
+  pointer-events:none;
+}
+header img{
+  width:116px;
+  padding:7px;
+  background:#ffffff12;
+  border:1px solid #ffffff85;
+  box-shadow:0 10px 28px #03172955;
+}
+header h1{font-size:clamp(36px,6vw,46px);letter-spacing:6px}
+header p{max-width:640px;margin-left:auto;margin-right:auto}
+header p:last-child{font-weight:600;color:#fff}
+main{max-width:980px}
+section{
+  background:#fff;
+  border-color:var(--alfik-line);
+  box-shadow:0 8px 26px #1436530b;
+}
+#homeView{
+  padding:clamp(24px,5vw,44px);
+  border:1px solid #cbddea;
+  border-radius:22px;
+  background:linear-gradient(145deg,#fff 0%,#fcfdff 70%,#eef6fd 100%);
+  box-shadow:0 16px 42px #123b6312;
+}
+#homeView:before{
+  content:"HERE FOR EVERY ANIMAL";
+  display:inline-flex;
+  align-items:center;
+  margin:0 0 20px;
+  padding:7px 12px;
+  border:1px solid #c8dfee;
+  border-radius:999px;
+  background:#edf6fd;
+  color:#155582;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1.7px;
+}
+#homeView>h2{
+  max-width:690px;
+  color:#102f4b;
+  font-size:clamp(34px,6vw,48px);
+  font-weight:800;
+  line-height:1.1;
+  letter-spacing:-1.5px;
+}
+#homeView>h2:after{
+  content:"";
+  display:block;
+  width:64px;height:4px;
+  margin-top:17px;
+  border-radius:8px;
+  background:linear-gradient(90deg,#1769aa,#8bc8f5);
+}
+#homeView>p:first-of-type{
+  max-width:620px;
+  color:#506a80;
+  font-size:clamp(16px,2.3vw,19px);
+  line-height:1.7;
+  margin:14px 0 24px;
+}
+#urgentAnimalHelp{
+  margin-top:22px;
+  padding:clamp(18px,3vw,26px);
+  border:1px solid #cbddea;
+  border-radius:18px;
+  background:linear-gradient(135deg,#f2f8fd,#fff 75%);
+}
+#urgentAnimalHelp h3{font-size:22px;color:#123b63}
+#urgentAnimalHelp p{color:#526b80}
+.feature-panel{
+  border-radius:15px;
+  background:#f8fbfe;
+  border-color:#dbe7f1;
+}
+#careNotificationsPanel{background:#fff}
+#accountSection{
+  max-width:600px;
+  border:1px solid #d3e2ee;
+  border-radius:20px;
+  box-shadow:0 14px 38px #123b6314;
+}
+button{
+  min-height:46px;
+  border-radius:11px;
+  font-weight:700;
+}
+button.primary{
+  background:linear-gradient(135deg,#1769aa 0%,#104a78 100%);
+  box-shadow:0 4px 12px #1769aa25;
+}
+button.secondary{
+  background:#fff;
+  border:1px solid #c8dceb;
+  color:#164f7a;
+}
+button.lost{background:#b8323b}
+button.found{background:#237653}
+input,select,textarea{
+  background:#fff;
+  border-color:#c8d7e4;
+  border-radius:10px;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:#3987c3;
+  box-shadow:0 0 0 3px #3987c31a;
+  outline:none;
+}
+nav{
+  border-color:#d5e3ee;
+  border-radius:15px;
+  background:#ffffffed;
+  box-shadow:0 7px 22px #173b5b0d;
+}
+nav button{border-radius:10px}
+.report-card{
+  background:#fff;
+  border-color:#dbe6ef;
+  box-shadow:0 5px 16px #163d5b0a;
+}
+.badge{font-weight:750}
+footer{background:#f8fbfe}
+@media(max-width:520px){
+  header{padding:30px 15px 27px}
+  header img{width:98px}
+  header h1{letter-spacing:5px}
+  main{padding:14px 12px 26px}
+  #homeView{padding:24px 18px;border-radius:18px}
+  #homeView>h2{font-size:36px;letter-spacing:-1px}
+  #homeView>p:first-of-type{font-size:16px}
+  #urgentAnimalHelp{padding:17px}
+}
+
 </style>
 </head>
 <body>
