@@ -8,6 +8,15 @@
 <link rel="manifest" href="/manifest.json">
 <title>ALFIK | Animal Reunification</title>
 <style>
+.account-plan-badge{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:14px 0;padding:12px 15px;border:2px solid #1769aa;border-radius:12px;background:#eef6ff;color:#123b63}
+.account-plan-badge strong{font-size:1.05rem;font-weight:800}
+.account-plan-label{font-size:.75rem;font-weight:800;letter-spacing:.06em}
+.account-plan-badge span:last-child{flex-basis:100%;font-size:.9rem}
+.account-plan-badge-small{margin:8px 0 16px}
+.plan-tier-tag{display:inline-block;vertical-align:middle;padding:3px 7px;border-radius:6px;background:#edf1f5;color:#34495e;font-size:.68rem;letter-spacing:.05em}
+.plan-tier-premium{background:#e8f2ff;color:#14558b}
+.plan-tier-pro{background:#e9e8ff;color:#41338a}
+
 .account-plan-badge{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:14px 0 20px;padding:12px 15px;border:2px solid #1769aa;border-radius:12px;background:#eef6ff;color:#123b63}
 .account-plan-label{font-size:.75rem;font-weight:800;letter-spacing:.06em}
 #accountPlanBadgeValue{font-size:1.05rem;font-weight:800}
@@ -577,16 +586,17 @@ nav.menu-collapsed{display:none}
 
 <section id="billingView" class="hidden">
 <h2>ALFIK plans</h2>
+<div class="account-plan-badge" aria-live="polite"><span class="account-plan-label">YOUR CURRENT PLAN</span><strong id="accountPlanBillingValue">Checking your plan…</strong><span id="accountPlanBillingDetail">Your current membership and included features.</span></div>
 <p>Core lost-and-found reports, search and browser-based photo comparison remain free.</p>
 <div class="feature-panel">
-<h3>Free</h3><p>Community reports, lost-and-found search, text suggestions and browser-based photo comparison.</p>
+<h3>Free <span class="plan-tier-tag">FREE FOREVER</span></h3><p>Community reports, lost-and-found search, text suggestions and browser-based photo comparison.</p>
 </div>
 <div class="feature-panel">
-<h3>Premium · £5.99/month</h3><p>Personal pet profiles and eligible rescue workspace features.</p>
+<h3>Premium <span class="plan-tier-tag plan-tier-premium">PREMIUM</span> · £5.99/month</h3><p>Personal pet profiles and eligible rescue workspace features.</p>
 <div id="paypal-premium"></div>
 </div>
 <div class="feature-panel">
-<h3>Pro · £9.99/month</h3><p>Pet health records and eligible veterinary workspace features.</p>
+<h3>Pro <span class="plan-tier-tag plan-tier-pro">PRO</span> · £9.99/month</h3><p>Pet health records and eligible veterinary workspace features.</p>
 <div id="paypal-pro"></div>
 </div>
 <p id="billingMessage" class="message" role="status">Secure subscription checkout is not enabled yet. ALFIK must verify PayPal subscriptions on the server before activating paid plans. You will not be charged from this screen.</p>
@@ -596,6 +606,7 @@ nav.menu-collapsed{display:none}
 <section id="accountView" class="hidden">
 <h2>Your account</h2>
 <p id="signedInAs" class="note">Signed in to ALFIK</p>
+<div class="account-plan-badge account-plan-badge-small" aria-live="polite"><strong id="accountPlanAccountValue">Checking plan…</strong><span id="accountPlanAccountDetail">Your membership level</span></div>
 <label for="accountTypeSetting">Your account type</label>
 <select id="accountTypeSetting">
 <option value="public">Member of the public / pet owner</option>
