@@ -8,6 +8,11 @@
 <link rel="manifest" href="/manifest.json">
 <title>ALFIK | Animal Reunification</title>
 <style>
+.account-plan-badge{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:14px 0 20px;padding:12px 15px;border:2px solid #1769aa;border-radius:12px;background:#eef6ff;color:#123b63}
+.account-plan-label{font-size:.75rem;font-weight:800;letter-spacing:.06em}
+#accountPlanBadgeValue{font-size:1.05rem;font-weight:800}
+#accountPlanBadgeDetail{flex-basis:100%;font-size:.9rem}
+
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f2f7fc;color:#183047;line-height:1.5}
 header{background:#0d2f50;color:white;text-align:center;padding:22px 14px}
@@ -201,6 +206,7 @@ nav.menu-collapsed{display:none}
 <section id="homeView">
 <h2>Welcome to ALFIK 🐾</h2>
 <p>Helping lost animals find their way home.</p>
+<div id="accountPlanBadge" class="account-plan-badge" aria-live="polite"><span class="account-plan-label">YOUR ALFIK PLAN</span><strong id="accountPlanBadgeValue">Checking your plan…</strong><span id="accountPlanBadgeDetail">Your account benefits will appear here.</span></div>
 <div class="feature-panel premium-promo hidden" id="premiumPromo" data-account-types="public,rescue,veterinary" aria-live="polite">
   <h3 id="premiumPromoHeading">Make more of your ALFIK account 🐾</h3>
   <div class="premium-promo-details">
