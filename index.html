@@ -1708,7 +1708,7 @@ function startNearbySearch(mode){
       renderAnimalReportsMap();
     },{enableHighAccuracy:false,timeout:8000,maximumAge:300000});
   }
-  loadReports();
+  // showView("reportsView") already loads reports.
   setTimeout(()=>{if(animalReportsMap)animalReportsMap.invalidateSize();$("nearbyMapPanel")?.scrollIntoView({behavior:"smooth",block:"start"});},350);
 }
 
