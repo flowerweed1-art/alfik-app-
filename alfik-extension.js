@@ -32,6 +32,7 @@ return null;
 }
 
 let editingPetId = null;
+let dashboardPets = [];
 
 function el(id) {
 return document.getElementById(id);
@@ -316,6 +317,206 @@ async function renderPayPalButtons() {
   }
 }
 
+function dashboardAddLine(parent, label, value) {
+  if (value === null || value === undefined || String(value).trim() === "") return;
+  const line = document.createElement("p");
+  line.className = "pet-dashboard-line";
+  const strong = document.createElement("strong");
+  strong.textContent = label + ": ";
+  line.appendChild(strong);
+  line.appendChild(document.createTextNode(String(value)));
+  parent.appendChild(line);
+}
+
+function petAgeText(dateValue) {
+  if (!dateValue) return "Not recorded";
+  const birth = new Date(dateValue + "T12:00:00");
+  if (Number.isNaN(birth.getTime()) || birth > new Date()) return "Check date";
+  const today = new Date();
+  let months = (today.getFullYear() - birth.getFullYear()) * 12 + today.getMonth() - birth.getMonth();
+  if (today.getDate() < birth.getDate()) months--;
+  months = Math.max(0, months);
+  const years = Math.floor(months / 12);
+  const remainder = months % 12;
+  if (years === 0) return months + (months === 1 ? " month" : " months");
+  return years + (years === 1 ? " year" : " years") + (remainder ? " " + remainder + (remainder === 1 ? " month" : " months") : "");
+}
+
+function dashboardStat(parent, value, label) {
+  const tile = document.createElement("div");
+  tile.className = "pet-dashboard-stat";
+  const strong = document.createElement("strong");
+  strong.textContent = String(value);
+  const span = document.createElement("span");
+  span.textContent = label;
+  tile.append(strong, span);
+  parent.appendChild(tile);
+}
+
+async function loadPetDashboard() {
+  const content = el("petDashboardContent");
+  const petId = el("dashboardPetSelect")?.value;
+  const db = client();
+  const user = await currentUser();
+  if (!content) return;
+  content.replaceChildren();
+  const pet = dashboardPets.find(item => String(item.id) === String(petId));
+  if (!pet) {
+    content.textContent = "Add a pet profile or choose a pet to see their dashboard.";
+    return;
+  }
+  const summary = document.createElement("div");
+  summary.className = "pet-dashboard-grid";
+  dashboardStat(summary, petAgeText(pet.date_of_birth), "Age");
+  dashboardStat(summary, pet.microchip ? "Recorded" : "Missing", "Microchip");
+  content.appendChild(summary);
+
+  const emergency = document.createElement("div");
+  emergency.className = "pet-dashboard-section";
+  const emergencyHeading = document.createElement("h4");
+  emergencyHeading.textContent = "Emergency pet card";
+  emergency.appendChild(emergencyHeading);
+  dashboardAddLine(emergency, "Pet", pet.name);
+  dashboardAddLine(emergency, "Species / breed", [pet.species, pet.breed].filter(Boolean).join(" / "));
+  dashboardAddLine(emergency, "Microchip", pet.microchip);
+  dashboardAddLine(emergency, "Allergies", pet.allergies || "None recorded");
+  dashboardAddLine(emergency, "Medication note", "Check the medication list below for current doses and instructions.");
+  dashboardAddLine(emergency, "Vet / practice", pet.vet_name);
+  dashboardAddLine(emergency, "Vet phone", pet.vet_phone);
+  dashboardAddLine(emergency, "Vet email", pet.vet_email);
+  dashboardAddLine(emergency, "Vet address", pet.vet_address);
+  const printButton = document.createElement("button");
+  printButton.type = "button";
+  printButton.className = "secondary";
+  printButton.textContent = "Print emergency pet card";
+  printButton.addEventListener("click", () => {
+    document.body.classList.add("alfik-print-dashboard");
+    window.print();
+    document.body.classList.remove("alfik-print-dashboard");
+  });
+  emergency.appendChild(printButton);
+  content.appendChild(emergency);
+
+  if (!db || !user) {
+    const note = document.createElement("p");
+    note.className = "pet-dashboard-alert";
+    note.textContent = "Sign in again to load health records, medications and reminders.";
+    content.appendChild(note);
+    return;
+  }
+
+  const [recordsResult, medicationResult, scheduleResult] = await Promise.all([
+    db.from("alfik_pet_records").select("record_type,record_date,title,numeric_value").eq("owner_id", user.id).eq("pet_id", pet.id).order("record_date", { ascending: false }).limit(100),
+    db.from("alfik_animal_medications").select("medication_name,dose,frequency,start_date,end_date,instructions,active").eq("owner_id", user.id).eq("pet_id", pet.id).order("created_at", { ascending: false }),
+    db.from("alfik_care_schedules").select("schedule_type,treatment_name,interval_days,next_due_date,enabled").eq("owner_id", user.id).eq("pet_id", pet.id).order("next_due_date")
+  ]);
+
+  const records = recordsResult.error ? [] : (recordsResult.data || []);
+  const medications = medicationResult.error ? [] : (medicationResult.data || []).filter(m => m.active !== false);
+  const schedules = scheduleResult.error ? [] : (scheduleResult.data || []);
+  const today = new Date().toISOString().slice(0, 10);
+  const activeSchedules = schedules.filter(item => item.enabled);
+  const overdue = activeSchedules.filter(item => item.next_due_date && item.next_due_date < today);
+  const upcoming = activeSchedules.filter(item => item.next_due_date && item.next_due_date >= today).sort((a,b) => a.next_due_date.localeCompare(b.next_due_date));
+  const stats = document.createElement("div");
+  stats.className = "pet-dashboard-grid";
+  dashboardStat(stats, records.length, "Health records");
+  dashboardStat(stats, medications.length, "Active medications");
+  dashboardStat(stats, overdue.length, "Overdue care tasks");
+  dashboardStat(stats, upcoming.length, "Upcoming care tasks");
+  content.insertBefore(stats, emergency);
+
+  const care = document.createElement("div");
+  care.className = "pet-dashboard-section";
+  const careHeading = document.createElement("h4");
+  careHeading.textContent = "Care overview";
+  care.appendChild(careHeading);
+  if (overdue.length) {
+    const warning = document.createElement("div");
+    warning.className = "pet-dashboard-alert";
+    warning.textContent = overdue.length + " care reminder(s) are past their due date. Check the schedule and your vet or product instructions.";
+    care.appendChild(warning);
+  } else {
+    const okay = document.createElement("div");
+    okay.className = "pet-dashboard-ok";
+    okay.textContent = "No overdue enabled care reminders recorded.";
+    care.appendChild(okay);
+  }
+  if (upcoming.length) {
+    upcoming.slice(0, 5).forEach(item => {
+      dashboardAddLine(care, item.next_due_date, (item.treatment_name || item.schedule_type || "Care task") + (item.interval_days ? " · repeats every " + item.interval_days + " days" : ""));
+    });
+  } else {
+    dashboardAddLine(care, "Next due", "No future care reminders recorded.");
+  }
+  content.appendChild(care);
+
+  const medicationSection = document.createElement("div");
+  medicationSection.className = "pet-dashboard-section";
+  const medicationHeading = document.createElement("h4");
+  medicationHeading.textContent = "Medication schedule";
+  medicationSection.appendChild(medicationHeading);
+  if (medicationResult.error) {
+    medicationSection.textContent = "Medication details could not be loaded. Open the medication list below to check access.";
+  } else if (medications.length) {
+    medications.forEach(m => {
+      const item = document.createElement("div");
+      item.className = "pet-dashboard-line";
+      const name = document.createElement("strong");
+      name.textContent = m.medication_name || "Medication";
+      item.appendChild(name);
+      const details = [m.dose, m.frequency, m.start_date ? "from " + m.start_date : "", m.end_date ? "until " + m.end_date : ""].filter(Boolean).join(" · ");
+      if (details) item.appendChild(document.createTextNode(" · " + details));
+      if (m.instructions) {
+        const instructions = document.createElement("div");
+        instructions.textContent = m.instructions;
+        item.appendChild(instructions);
+      }
+      medicationSection.appendChild(item);
+    });
+  } else {
+    medicationSection.textContent = "No active medications recorded for this pet.";
+  }
+  content.appendChild(medicationSection);
+
+  const weights = records.filter(record => String(record.record_type).toLowerCase() === "weight" && record.numeric_value !== null && record.numeric_value !== undefined).sort((a,b) => (a.record_date || "").localeCompare(b.record_date || ""));
+  const trend = document.createElement("div");
+  trend.className = "pet-dashboard-section";
+  const trendHeading = document.createElement("h4");
+  trendHeading.textContent = "Weight history";
+  trend.appendChild(trendHeading);
+  if (weights.length) {
+    weights.slice(-6).forEach(record => {
+      const row = document.createElement("div");
+      row.className = "pet-weight-row";
+      const date = document.createElement("span");
+      date.textContent = record.record_date || "Date not recorded";
+      const value = document.createElement("strong");
+      value.textContent = String(record.numeric_value) + (record.title && /kg|lb|lbs/i.test(record.title) ? " (" + record.title + ")" : "");
+      row.append(date, value);
+      trend.appendChild(row);
+    });
+    const note = document.createElement("p");
+    note.className = "note";
+    note.textContent = "Record weights consistently and discuss concerning changes with your vet. Values are shown as entered.";
+    trend.appendChild(note);
+  } else {
+    trend.textContent = "No weight records yet. Add a Weight health record to start tracking trends.";
+  }
+  content.appendChild(trend);
+
+  const errors = [];
+  if (recordsResult.error) errors.push("health record statistics");
+  if (medicationResult.error) errors.push("medication details");
+  if (scheduleResult.error) errors.push("care reminders");
+  if (errors.length) {
+    const note = document.createElement("p");
+    note.className = "note";
+    note.textContent = "Some dashboard information could not be loaded (" + errors.join(", ") + "). Your profile and emergency details are still available.";
+    content.appendChild(note);
+  }
+}
+
 async function loadPetWorkspace() {
 const db = client();
 const list = el("petList");
@@ -355,6 +556,24 @@ try {
     .eq("owner_id", user.id);
 
   if (result.error) throw result.error;
+
+  dashboardPets = result.data || [];
+  const dashboardSelect = el("dashboardPetSelect");
+  if (dashboardSelect) {
+    const previousValue = dashboardSelect.value;
+    dashboardSelect.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Choose a pet";
+    dashboardSelect.appendChild(placeholder);
+    dashboardPets.forEach(pet => {
+      const option = document.createElement("option");
+      option.value = pet.id;
+      option.textContent = pet.name || "Unnamed pet";
+      dashboardSelect.appendChild(option);
+    });
+    dashboardSelect.value = dashboardPets.some(pet => String(pet.id) === previousValue) ? previousValue : (dashboardPets[0]?.id || "");
+  }
 
   (result.data || []).forEach(pet => {
     if (list) {
@@ -455,6 +674,7 @@ try {
     list.textContent = "No pet profiles saved yet.";
   }
 
+  await loadPetDashboard();
   await loadHealthRecords();
   await loadMedicationList();
   await loadCareSchedules();
@@ -1965,6 +2185,7 @@ if (el("cancelPetEditBtn")) el("cancelPetEditBtn").addEventListener("click", () 
   say("petMessage", "");
 });
 if (el("saveHealthBtn")) el("saveHealthBtn").addEventListener("click", saveHealthRecord);
+if (el("dashboardPetSelect")) el("dashboardPetSelect").addEventListener("change", loadPetDashboard);
 if (el("healthPet")) el("healthPet").addEventListener("change", loadHealthRecords);
 if (el("medicationPet")) el("medicationPet").addEventListener("change", loadMedicationList);
 if (el("carePet")) el("carePet").addEventListener("change", loadCareSchedules);
