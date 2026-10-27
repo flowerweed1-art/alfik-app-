@@ -222,6 +222,11 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <section id="accountView" class="hidden">
 <h2>Your account</h2>
 <p id="signedInAs" class="note">Signed in to ALFIK</p>
+<div class="report-card">
+  <h3>Account type</h3>
+  <p id="accountPlanText" role="status" aria-live="polite">Checking your account type…</p>
+  <p class="note">Your account type is based on the subscription status recorded by ALFIK.</p>
+</div>
 <button class="secondary wide" id="signOutBtn" type="button">Sign out</button>
 </section>
 </div>
@@ -275,7 +280,7 @@ function showView(id){
   if(id==="myView")loadMyReports();
   if(id==="emailView")loadEmailPreference();
   if(id==="notificationsView")loadNotifications();
-  if(id==="billingView")loadPlanStatus();
+  if(id==="billingView" || id==="accountView")loadPlanStatus();
 
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -1274,13 +1279,15 @@ function showSignedIn(session){
 }
 
 async function loadPlanStatus() {
-  const node = $("currentPlanText");
-  if (!node || !currentUserId) {
-    if (node) node.textContent = "Sign in to view your plan.";
+  const nodes = [$("currentPlanText"), $("accountPlanText")].filter(Boolean);
+  const setPlanText = text => nodes.forEach(node => { node.textContent = text; });
+
+  if (!currentUserId) {
+    setPlanText("Sign in to view your account type.");
     return;
   }
 
-  node.textContent = "Checking your plan…";
+  setPlanText("Checking your account type…");
   try {
     const { data, error } = await supabaseClient
       .from("alfik_profiles")
@@ -1294,13 +1301,19 @@ async function loadPlanStatus() {
     const status = String(data?.subscription_status || "free").toLowerCase();
     const isActive = ["active", "activated", "approved"].includes(status);
     const paidTier = ["premium", "pro"].includes(tier);
+
     if (isActive && paidTier) {
-      node.textContent = tier.charAt(0).toUpperCase() + tier.slice(1) + " is active.";
+      const name = tier.charAt(0).toUpperCase() + tier.slice(1);
+      setPlanText(name + " account · subscription active.");
+    } else if (status === "past_due") {
+      setPlanText("Payment needs attention · your subscription status is past due. Please check your PayPal account.");
+    } else if (["cancelled", "canceled", "suspended", "expired"].includes(status)) {
+      setPlanText("Free account · paid subscription status: " + status + ".");
     } else {
-      node.textContent = "Free plan. No active paid subscription is recorded.";
+      setPlanText("Free account · no active paid subscription is recorded.");
     }
   } catch (error) {
-    node.textContent = "Your plan status could not be checked just now. Please try refreshing this page.";
+    setPlanText("Account type could not be checked. Please refresh and try again.");
     console.error("ALFIK plan status lookup failed:", error);
   }
 }
