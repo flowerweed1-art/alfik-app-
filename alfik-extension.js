@@ -94,6 +94,20 @@ if (plan === "unknown" || !Object.prototype.hasOwnProperty.call(levels, plan)) r
 return levels[plan] >= (levels[required] || 0);
 }
 
+async function planAccessMessage(required) {
+const plan = await getPlan();
+if (plan === "unknown") {
+  return "ALFIK couldn't verify your plan just now. Please refresh and try again before assuming you need to upgrade.";
+}
+const levels = { free: 0, premium: 1, pro: 2 };
+if ((levels[plan] || 0) < (levels[required] || 0)) {
+  return required === "pro"
+    ? "This feature requires the Pro plan."
+    : "This feature requires Premium or Pro.";
+}
+return "";
+}
+
 function addText(container, label, value) {
 const p = document.createElement("p");
 const strong = document.createElement("strong");
@@ -312,10 +326,11 @@ if (list) list.replaceChildren();
 const user = await currentUser();
 if (!user) return;
 
-if (!(await hasPlan("premium"))) {
+const planMessage = await planAccessMessage("premium");
+if (planMessage) {
   if (list) {
     const p = document.createElement("p");
-    p.textContent = "Upgrade to Premium to use pet profiles and Pro for health records.";
+    p.textContent = planMessage;
     list.appendChild(p);
   }
   return;
@@ -386,8 +401,9 @@ if (!db || !user) {
   return;
 }
 
-if (!(await hasPlan("premium"))) {
-  say("petMessage", "Saving pet profiles requires Premium or Pro.");
+const planMessage = await planAccessMessage("premium");
+if (planMessage) {
+  say("petMessage", planMessage);
   return;
 }
 
@@ -834,7 +850,8 @@ async function saveMedication() {
 const db = client();
 const user = await currentUser();
 if (!db || !user) return say("medicationMessage", "Please sign in again.");
-if (!(await hasPlan("premium"))) return say("medicationMessage", "The medication list requires Premium or Pro.");
+const planMessage = await planAccessMessage("premium");
+if (planMessage) return say("medicationMessage", planMessage);
 const petId = el("medicationPet").value;
 const name = el("medicationName").value.trim();
 if (!petId || !name) return say("medicationMessage", "Choose a pet and enter a medication name.");
@@ -858,7 +875,8 @@ async function loadMedicationList() {
 const db=client(), user=await currentUser(), list=el("medicationList"), petId=el("medicationPet")?.value;
 if(!db||!user||!list)return;
 list.replaceChildren();
-if(!(await hasPlan("premium"))){list.textContent="Medication lists require Premium or Pro.";return;}
+const planMessage = await planAccessMessage("premium");
+if(planMessage){list.textContent=planMessage;return;}
 if(!petId){list.textContent="Choose a pet to view medications.";return;}
 try{
  const r=await db.from("alfik_animal_medications").select("id,medication_name,dose,frequency,start_date,end_date,instructions,active").eq("owner_id",user.id).eq("pet_id",petId).order("created_at",{ascending:false});
@@ -871,7 +889,8 @@ try{
 async function saveCareSchedule() {
 const db=client(),user=await currentUser();
 if(!db||!user)return say("careMessage","Please sign in again.");
-if(!(await hasPlan("premium")))return say("careMessage","Care reminders require Premium or Pro.");
+const planMessage = await planAccessMessage("premium");
+if(planMessage)return say("careMessage",planMessage);
 const petId=el("carePet").value, due=el("careDue").value, type=el("careType").value;
 if(!petId||!due)return say("careMessage","Choose a pet and next due date.");
 try{
@@ -888,7 +907,8 @@ try{
 async function loadCareSchedules() {
 const db=client(),user=await currentUser(),list=el("careList"),petId=el("carePet")?.value;
 if(!db||!user||!list)return;list.replaceChildren();
-if(!(await hasPlan("premium"))){list.textContent="Care reminders require Premium or Pro.";return;}
+const planMessage = await planAccessMessage("premium");
+if(planMessage){list.textContent=planMessage;return;}
 if(!petId){list.textContent="Choose a pet to view reminders.";return;}
 try{
  const r=await db.from("alfik_care_schedules").select("id,schedule_type,treatment_name,interval_days,next_due_date,enabled").eq("owner_id",user.id).eq("pet_id",petId).order("next_due_date");
