@@ -476,6 +476,16 @@ footer{background:#f8fbfe}
 @media(min-width:560px){.alfik-share-actions{grid-template-columns:repeat(3,minmax(0,1fr))}.alfik-share-actions .alfik-share-primary{grid-column:1/-1}}
 </style>
 
+<style id="alfik-my-reports-shortcut-styles">
+/* Simple, prominent shortcut for people returning to their own reports */
+.my-reports-shortcut{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:20px 0 26px;padding:18px 20px;border:2px solid #b9d8f0;border-radius:16px;background:linear-gradient(110deg,#edf7ff,#fff 78%);box-shadow:0 8px 22px #123b630c}
+.my-reports-shortcut-copy{display:flex;align-items:center;gap:13px;min-width:0}
+.my-reports-shortcut-icon{display:flex;align-items:center;justify-content:center;flex:0 0 48px;width:48px;height:48px;border-radius:13px;background:#dceeff;font-size:25px}
+.my-reports-shortcut h3{margin:0 0 5px;color:#123b5b;font-size:17px;line-height:1.25}
+.my-reports-shortcut p{margin:0;color:#526b7e;font-size:14px;line-height:1.45}
+.my-reports-shortcut button{flex:0 0 auto;min-height:48px;padding:12px 17px;white-space:nowrap}
+@media(max-width:560px){.my-reports-shortcut{align-items:stretch;flex-direction:column;gap:13px;margin:16px 0 22px;padding:15px}.my-reports-shortcut button{width:100%;white-space:normal}.my-reports-shortcut h3{font-size:16px}.my-reports-shortcut p{font-size:13px}}
+</style>
 </head>
 <body>
 <header>
@@ -569,6 +579,10 @@ footer{background:#f8fbfe}
 <section id="homeView">
 <h2>Every animal matters.</h2>
 <p>Helping lost animals find their way home, with a community that cares.</p>
+<div class="my-reports-shortcut" data-account-types="public">
+  <div class="my-reports-shortcut-copy"><span class="my-reports-shortcut-icon" aria-hidden="true">📋</span><div><h3>Already reported an animal?</h3><p>Find your own posts, check their details, and see or make updates.</p></div></div>
+  <button class="primary" type="button" data-view="myView">View my reports</button>
+</div>
 <div id="accountPlanBadge" class="account-plan-badge" aria-live="polite"><span class="account-plan-label">YOUR ALFIK PLAN</span><strong id="accountPlanBadgeValue">Checking your plan…</strong><span id="accountPlanBadgeDetail">Your account benefits will appear here.</span></div>
 <div class="feature-panel premium-promo hidden" id="premiumPromo" data-account-types="public,rescue,veterinary" aria-live="polite">
   <h3 id="premiumPromoHeading">Make more of your ALFIK account 🐾</h3>
@@ -604,7 +618,6 @@ footer{background:#f8fbfe}
   <button class="secondary wide" type="button" data-view="reportsView" data-set-report-filter="found">🐾 I've found an animal</button>
   <button class="lost wide" type="button" data-account-types="public" onclick="startNewReport('lost')">Report my lost animal</button>
   <button class="secondary wide" type="button" data-account-types="public" onclick="startNewReport('found_deceased')">Report an animal found deceased</button>
-  <button class="secondary wide" type="button" data-view="myView" data-account-types="public">My reports and updates</button>
 </div>
 <button class="secondary wide hidden" id="rescueHomeShortcut" data-view="rescueView" data-account-types="rescue">Open rescue workspace</button>
 <button class="secondary wide hidden" id="vetHomeShortcut" data-view="vetView" data-account-types="veterinary">Open veterinary workspace</button>
