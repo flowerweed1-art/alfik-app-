@@ -561,6 +561,38 @@ function resetPetForm() {
   if (el("cancelPetEditBtn")) el("cancelPetEditBtn").classList.add("hidden");
 }
 
+async function compressPetPhoto(file) {
+  // Resize large phone photos and convert them to a compact JPEG before upload.
+  if (!("createImageBitmap" in window)) {
+    throw new Error("This browser cannot resize the photo automatically. Please choose a smaller image.");
+  }
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch (error) {
+    throw new Error("This photo format cannot be resized here. Please choose a JPG or PNG photo.");
+  }
+  try {
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error("Could not prepare the photo. Please try another image.");
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(result => result ? resolve(result) : reject(new Error("Could not compress the photo.")), "image/jpeg", 0.82);
+    });
+    return new File([blob], (file.name.replace(/\.[^.]+$/, "") || "pet-photo") + ".jpg", {
+      type: "image/jpeg",
+      lastModified: Date.now()
+    });
+  } finally {
+    bitmap.close?.();
+  }
+}
+
 async function savePet(event) {
 event.preventDefault();
 
@@ -602,26 +634,25 @@ if (!pet.name || !pet.species) {
 }
 
 const photoInput = el("petPhotoFile");
-const photoFile = photoInput?.files?.[0] || null;
-if (photoFile) {
-  if (!photoFile.type.startsWith("image/")) {
-    say("petMessage", "Please choose an image file for the pet photo.");
-    return;
-  }
-  if (photoFile.size > 5 * 1024 * 1024) {
-    say("petMessage", "Please choose a photo smaller than 5 MB.");
-    return;
-  }
+const originalPhotoFile = photoInput?.files?.[0] || null;
+if (originalPhotoFile && !originalPhotoFile.type.startsWith("image/")) {
+  say("petMessage", "Please choose an image file for the pet photo.");
+  return;
 }
 
 const button = event.submitter;
 if (button) button.disabled = true;
 
 try {
-  if (photoFile) {
-    const safeName = photoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || "pet-photo";
+  if (originalPhotoFile) {
+    say("petMessage", "Optimising your photo for ALFIK…");
+    const photoFile = await compressPetPhoto(originalPhotoFile);
+    if (photoFile.size > 5 * 1024 * 1024) {
+      throw new Error("This photo is still over 5 MB after compression. Please choose a different photo.");
+    }
+    const safeName = photoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || "pet-photo.jpg";
     const photoPath = user.id + "/" + Date.now() + "-" + safeName;
-    const upload = await db.storage.from("alfik-pet-photos").upload(photoPath, photoFile, { upsert: false, contentType: photoFile.type });
+    const upload = await db.storage.from("alfik-pet-photos").upload(photoPath, photoFile, { upsert: false, contentType: "image/jpeg" });
     if (upload.error) throw upload.error;
     pet.photo_path = photoPath;
   }
