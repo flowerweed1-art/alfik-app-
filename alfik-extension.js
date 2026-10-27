@@ -159,6 +159,15 @@ if (badgeDetail) badgeDetail.textContent = plan === "pro"
     ? "Premium account • Your plan is active on this account."
     : "Free account • Lost-and-found reports and search remain free. Upgrade options are under Plans.";
 
+const planLabel = plan === "pro" ? "PRO ★" : plan === "premium" ? "PREMIUM ✓" : "FREE";
+const planDetail = plan === "pro"
+  ? "Pro membership • Health features and eligible veterinary tools."
+  : plan === "premium"
+    ? "Premium membership • Pet profiles and eligible rescue tools."
+    : "Free membership • Lost-and-found reports and search remain free.";
+["accountPlanBadgeValue","accountPlanAccountValue","accountPlanBillingValue"].forEach(id => { const node = el(id); if (node) node.textContent = planLabel; });
+["accountPlanBadgeDetail","accountPlanAccountDetail","accountPlanBillingDetail"].forEach(id => { const node = el(id); if (node) node.textContent = planDetail; });
+
 const status = el("planStatus");
 
 if (status) {
