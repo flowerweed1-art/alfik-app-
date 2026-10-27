@@ -31,6 +31,8 @@ return null;
 
 }
 
+let editingPetId = null;
+
 function el(id) {
 return document.getElementById(id);
 }
@@ -349,22 +351,47 @@ if (!db) return;
 try {
   const result = await db
     .from("alfik_pets")
-    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date")
+    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date,created_at")
     .eq("owner_id", user.id)
-    .order("name");
+    .order("created_at", { ascending: false });
 
   if (result.error) throw result.error;
 
   (result.data || []).forEach(pet => {
     if (list) {
       const item = card(list, pet.name || "Unnamed pet");
-      addText(item, "Species", pet.species);
-      addText(item, "Breed", pet.breed);
-      addText(item, "Date of birth", pet.date_of_birth);
-      addText(item, "Microchip", pet.microchip);
-      addText(item, "Neutering status", ({neutered:"Neutered / spayed",not_neutered:"Not neutered",unknown:"Unknown / not confirmed"})[pet.neutering_status] || "Unknown / not confirmed");
-      addText(item, "Date neutered", pet.neutered_date);
-      addText(item, "Notes", pet.notes);
+      item.classList.add("pet-profile-card");
+      const species = document.createElement("p");
+      species.className = "pet-card-subtitle";
+      species.textContent = [pet.species, pet.breed].filter(Boolean).join(" • ") || "Pet profile";
+      item.appendChild(species);
+      const details = document.createElement("div");
+      details.className = "pet-card-details hidden";
+      addText(details, "Date of birth", pet.date_of_birth);
+      addText(details, "Microchip", pet.microchip);
+      addText(details, "Neutering status", ({neutered:"Neutered / spayed",not_neutered:"Not neutered",unknown:"Unknown / not confirmed"})[pet.neutering_status] || "Unknown / not confirmed");
+      addText(details, "Date neutered", pet.neutered_date);
+      addText(details, "Notes", pet.notes);
+      item.appendChild(details);
+      const actions = document.createElement("div");
+      actions.className = "pet-card-actions";
+      const viewButton = document.createElement("button");
+      viewButton.type = "button";
+      viewButton.className = "secondary";
+      viewButton.textContent = "View details";
+      viewButton.addEventListener("click", () => {
+        const opening = details.classList.contains("hidden");
+        details.classList.toggle("hidden", !opening);
+        viewButton.textContent = opening ? "Hide details" : "View details";
+      });
+      actions.appendChild(viewButton);
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "primary";
+      editButton.textContent = "Edit profile";
+      editButton.addEventListener("click", () => beginEditPet(pet));
+      actions.appendChild(editButton);
+      item.appendChild(actions);
     }
 
     ["medicationPet", "carePet"].forEach(selectId => {
@@ -396,6 +423,31 @@ try {
   say("petMessage", "Pet profiles could not be loaded: " + readableError(error));
 }
 
+}
+
+function beginEditPet(pet) {
+  editingPetId = pet.id;
+  el("petName").value = pet.name || "";
+  el("petSpecies").value = pet.species || "";
+  el("petBreed").value = pet.breed || "";
+  el("petDob").value = pet.date_of_birth || "";
+  el("petMicrochip").value = pet.microchip || "";
+  el("petNeuteringStatus").value = pet.neutering_status || "unknown";
+  el("petNeuteredDate").value = pet.neutered_date || "";
+  el("petNotes").value = pet.notes || "";
+  el("petFormHeading").textContent = "Edit " + (pet.name || "pet profile");
+  el("savePetBtn").textContent = "Save changes";
+  el("cancelPetEditBtn").classList.remove("hidden");
+  el("petForm").classList.remove("hidden");
+  el("petForm").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function resetPetForm() {
+  editingPetId = null;
+  if (el("petForm")) el("petForm").reset();
+  if (el("petFormHeading")) el("petFormHeading").textContent = "Add a pet";
+  if (el("savePetBtn")) el("savePetBtn").textContent = "Save pet profile";
+  if (el("cancelPetEditBtn")) el("cancelPetEditBtn").classList.add("hidden");
 }
 
 async function savePet(event) {
@@ -436,11 +488,15 @@ const button = event.submitter;
 if (button) button.disabled = true;
 
 try {
-  const result = await db.from("alfik_pets").insert([pet]);
+  const result = editingPetId
+    ? await db.from("alfik_pets").update(pet).eq("id", editingPetId).eq("owner_id", user.id)
+    : await db.from("alfik_pets").insert([pet]);
   if (result.error) throw result.error;
 
-  el("petForm").reset();
-  say("petMessage", "Pet profile saved.");
+  const wasEditing = Boolean(editingPetId);
+  resetPetForm();
+  el("petForm").classList.add("hidden");
+  say("petMessage", wasEditing ? "Pet profile updated." : "Pet profile saved.");
   await loadPetWorkspace();
 } catch (error) {
   say("petMessage", "Could not save the pet profile: " + readableError(error));
@@ -1730,6 +1786,16 @@ if (el("premiumPromoDismissBtn")) {
   });
 }
 if (el("petForm")) el("petForm").addEventListener("submit", savePet);
+if (el("showAddPetBtn")) el("showAddPetBtn").addEventListener("click", () => {
+  resetPetForm();
+  el("petForm").classList.remove("hidden");
+  el("petForm").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+if (el("cancelPetEditBtn")) el("cancelPetEditBtn").addEventListener("click", () => {
+  resetPetForm();
+  el("petForm").classList.add("hidden");
+  say("petMessage", "");
+});
 if (el("saveHealthBtn")) el("saveHealthBtn").addEventListener("click", saveHealthRecord);
 if (el("healthPet")) el("healthPet").addEventListener("change", loadHealthRecords);
 if (el("medicationPet")) el("medicationPet").addEventListener("change", loadMedicationList);
