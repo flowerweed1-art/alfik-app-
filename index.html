@@ -85,6 +85,35 @@ input:focus,select:focus,textarea:focus{border-color:#1769aa;box-shadow:0 0 0 3p
 .note{line-height:1.55}
 @media(max-width:520px){header{padding:28px 15px 25px}header img{width:94px}main{padding:14px 11px 24px}section{border-radius:14px;padding:17px;margin-bottom:14px}#homeView{padding:20px 16px}button{font-size:14px}}
 
+/* ALFIK visible homepage refresh */
+header{padding:46px 18px 42px;background:radial-gradient(ellipse at 50% -15%,#3979ad 0%,#164b77 38%,#092640 100%);border-bottom:5px solid #8ec5ef}
+header img{width:124px;max-width:44%;padding:8px;border:2px solid #ffffffa6;background:#ffffff16;box-shadow:0 12px 34px #041a2c70}
+header h1{font-size:clamp(38px,7vw,52px);letter-spacing:7px;text-shadow:0 3px 15px #00182b55}
+header p:first-of-type{font-size:16px;font-weight:600;letter-spacing:.35px}
+header p:last-of-type{display:table;margin:12px auto 0;padding:7px 15px;border:1px solid #ffffff38;border-radius:999px;background:#ffffff12;font-size:14px}
+main{max-width:960px}
+#accountSection{max-width:620px;margin:30px auto;padding:clamp(24px,5vw,38px);border:1px solid #c6dced;border-radius:22px;background:linear-gradient(145deg,#fff 0%,#f5faff 100%);box-shadow:0 18px 48px #123b631c}
+#accountSection h2{font-size:clamp(26px,5vw,34px);margin-bottom:8px}
+#accountSection>p:first-of-type{color:#526d83;font-size:16px;margin-bottom:24px}
+#accountSection label{margin-top:16px;color:#294c69}
+#accountSection input{background:#fbfdff;padding:13px 14px}
+#accountSection button{min-height:49px;margin-top:9px}
+#accountSection #signInBtn{font-size:16px}
+#homeView{position:relative;overflow:hidden;margin-top:10px;padding:clamp(28px,6vw,52px);border:1px solid #c6dced;border-radius:24px;background:radial-gradient(ellipse at 100% 0%,#e2f1ff 0%,#f4f9ff 32%,#fff 72%);box-shadow:0 18px 48px #123b6318}
+#homeView:before{content:"ALFIK COMMUNITY";display:inline-block;margin-bottom:20px;padding:7px 12px;border:1px solid #c4dced;border-radius:999px;background:#eaf5ff;color:#17609a;font-size:11px;font-weight:800;letter-spacing:1.8px}
+#homeView>h2{max-width:650px;font-size:clamp(36px,7vw,54px);font-weight:800;line-height:1.08;letter-spacing:-1.8px;color:#102f4b}
+#homeView>h2:after{width:76px;height:5px;margin-top:20px;background:linear-gradient(90deg,#1769aa,#8bc8f5)}
+#homeView>p:first-of-type{max-width:590px;font-size:clamp(17px,2.5vw,20px);line-height:1.65;color:#49677f;margin:16px 0 28px}
+#homeView button{min-height:54px;font-size:15px;margin:6px 0;border-radius:12px}
+#homeView button.primary{background:linear-gradient(115deg,#1769aa,#0f426c);box-shadow:0 8px 18px #1769aa30}
+#homeView button.found{background:linear-gradient(115deg,#287c62,#1a5e49);box-shadow:0 8px 18px #1a5e4924}
+#homeView button.secondary{background:#fff;border:1px solid #c6dced}
+#homeView .note{margin-top:24px;padding-top:16px;border-top:1px solid #dce9f4;font-size:12px}
+nav{gap:8px;margin:4px 0 20px;padding:10px;border:1px solid #d4e4f1;border-radius:16px;background:#fff;box-shadow:0 6px 20px #123b630a}
+nav button{min-height:42px;border-radius:9px}
+footer{margin-top:24px;border-top:1px solid #dce8f2;background:#f8fbff}
+@media(max-width:520px){header{padding:32px 14px 30px}header img{width:104px}header h1{letter-spacing:5px}header p:last-of-type{font-size:12px}#accountSection{margin:18px auto;padding:23px 18px;border-radius:18px}#homeView{padding:27px 20px;border-radius:19px}#homeView>h2{font-size:38px}#homeView button{min-height:52px}nav{padding:7px;gap:5px}nav button{flex:1 1 42%;font-size:13px}}
+
 </style>
 </head>
 <body>
