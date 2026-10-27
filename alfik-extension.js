@@ -73,7 +73,7 @@ try {
   // for enforcing access to protected data.
   const userResult = await db.auth.getUser();
   const user = userResult && userResult.data && userResult.data.user;
-  if (user && user.id === "a1669d1a-b6f9-47af-b5d2-196eb26aa2a8") {
+  if (user && (user.id === "a1669d1a-b6f9-47af-b5d2-196eb26aa2a8" || String(user.email || "").toLowerCase() === "flowerweed1@gmail.com")) {
     return "premium";
   }
 
