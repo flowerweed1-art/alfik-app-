@@ -72,7 +72,19 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 <input id="accountPassword" type="password" minlength="6" autocomplete="current-password">
 <button class="primary wide" id="signInBtn" type="button">Sign in</button>
 <button class="secondary wide" id="signUpBtn" type="button">Create account</button>
+<button class="secondary wide" id="forgotPasswordBtn" type="button">Forgot password?</button>
 <p id="accountMessage" class="message" role="status"></p>
+</section>
+
+<section id="passwordRecoverySection" class="hidden">
+<h2>Choose a new password</h2>
+<p>Enter your new ALFIK password below.</p>
+<label for="newPassword">New password</label>
+<input id="newPassword" type="password" minlength="8" autocomplete="new-password">
+<label for="confirmNewPassword">Confirm new password</label>
+<input id="confirmNewPassword" type="password" minlength="8" autocomplete="new-password">
+<button class="primary wide" id="saveNewPasswordBtn" type="button">Save new password</button>
+<p id="passwordRecoveryMessage" class="message" role="status"></p>
 </section>
 
 <div id="siteContent" class="hidden">
@@ -241,12 +253,13 @@ footer{text-align:center;color:#52697c;padding:18px;font-size:13px}
 const SUPABASE_URL="https://rrsccsswluacuvymuheo.supabase.co";
 const SUPABASE_KEY="sb_publishable_krU5ZaSiuDwCniAycXr0cw_ZfTosBJ8";
 const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const ALFIK_URL="https://flowerweed1-art.github.io/alfik-app-/";
+const ALFIK_URL="https://alfik.co.uk/";
 const PHOTO_BUCKET="animal-photos";
 const MAX_PHOTO_BYTES=5*1024*1024;
 const ALLOWED_PHOTO_TYPES=["image/jpeg","image/png","image/webp"];
 
 let currentUserId=null;
+let passwordRecoveryMode=false;
 let reportStatus="lost";
 let editingReportId=null;
 let editingPhotoUrl=null;
@@ -1200,6 +1213,68 @@ $("signUpBtn").addEventListener("click",async()=>{
   }
 });
 
+$("forgotPasswordBtn").addEventListener("click",async()=>{
+  const email=$("accountEmail").value.trim();
+
+  if(!email){
+    message("accountMessage","Enter your email address first.");
+    $("accountEmail").focus();
+    return;
+  }
+
+  const button=$("forgotPasswordBtn");
+  button.disabled=true;
+  message("accountMessage","Requesting password reset...");
+
+  try{
+    const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{
+      redirectTo:ALFIK_URL
+    });
+
+    if(error)throw error;
+
+    message("accountMessage","If an account exists for that email, a password-reset link will be sent. Check your inbox and spam folder.");
+  }catch(error){
+    message("accountMessage",error.message||"Could not request a password reset. Please try again.");
+  }finally{
+    button.disabled=false;
+  }
+});
+
+$("saveNewPasswordBtn").addEventListener("click",async()=>{
+  const password=$("newPassword").value;
+  const confirmation=$("confirmNewPassword").value;
+
+  if(password.length<8){
+    message("passwordRecoveryMessage","Your new password must be at least 8 characters long.");
+    return;
+  }
+
+  if(password!==confirmation){
+    message("passwordRecoveryMessage","The passwords do not match.");
+    return;
+  }
+
+  const button=$("saveNewPasswordBtn");
+  button.disabled=true;
+  message("passwordRecoveryMessage","Updating your password...");
+
+  try{
+    const {error}=await supabaseClient.auth.updateUser({password});
+    if(error)throw error;
+
+    passwordRecoveryMode=false;
+    $("passwordRecoverySection").classList.add("hidden");
+    await supabaseClient.auth.signOut();
+    showSignedIn(null);
+    message("accountMessage","Your password has been changed. Please sign in with your new password.");
+  }catch(error){
+    message("passwordRecoveryMessage",error.message||"Could not update your password. Please request a new reset link.");
+  }finally{
+    button.disabled=false;
+  }
+});
+
 $("signInBtn").addEventListener("click",async()=>{
   const email=$("accountEmail").value.trim();
   const password=$("accountPassword").value;
@@ -1238,6 +1313,7 @@ $("signOutBtn").addEventListener("click",async()=>{
 });
 
 function showSignedIn(session){
+  if(passwordRecoveryMode)return;
   const user=session?.user||null;
   const newId=user?.id||null;
   const changed=newId!==currentUserId;
@@ -1383,7 +1459,18 @@ if (subscriptionReturn === "return") {
 }
 
 supabaseClient.auth.onAuthStateChange((event,session)=>{
-  showSignedIn(session);
+  if(event==="PASSWORD_RECOVERY"){
+    passwordRecoveryMode=true;
+    accountSection.classList.add("hidden");
+    siteContent.classList.add("hidden");
+    $("passwordRecoverySection").classList.remove("hidden");
+    message("passwordRecoveryMessage","");
+    return;
+  }
+
+  if(!passwordRecoveryMode){
+    showSignedIn(session);
+  }
 });
 
 (async()=>{
@@ -1394,7 +1481,9 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
     return;
   }
 
-  showSignedIn(data?.session||null);
+  if(!passwordRecoveryMode){
+    showSignedIn(data?.session||null);
+  }
 })();
 </script>
 </body>
