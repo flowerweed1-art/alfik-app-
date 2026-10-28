@@ -2147,7 +2147,7 @@ function renderMatches(){
       // side of a possible lost/found pair.
       if(queryWords.length&&!lostMatchesQuery&&!matchesQuery(b))return;
       const result=similarity(a,b);
-      if(result.score>=5)matches.push({a,b,score:result.score,reasons:result.reasons,locationReason:result.reasons.find(reason=>/miles apart|location wording|overlapping location|place details/i.test(reason))||""});
+      if(result.score>=7)matches.push({a,b,score:result.score,reasons:result.reasons,locationReason:result.reasons.find(reason=>/miles apart|location wording|overlapping location|place details/i.test(reason))||""});
     });
   });
 
@@ -2210,7 +2210,7 @@ function renderMatches(){
   });
   if(!box.children.length)box.appendChild(element("p",query
     ?"No possible matches found for all of those search terms. Try removing a word or broadening the location."
-    :"No possible text matches found yet. Try checking that the location, date and description are as detailed as possible."));
+    :"No strong possible matches found yet. ALFIK now filters out weaker suggestions; check that the location, date, description and photos are as detailed as possible."));
 }
 
 async function loadReports(){
@@ -2878,7 +2878,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261028-nearby-alerts-1"></script>
+<script src="alfik-extension.js?v=20261028-smarter-matching-1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
 /* Register ALFIK's service worker where supported. */
