@@ -84,6 +84,18 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 .premium-promo.compact h3{font-size:16px}
 
 
+/* Header notification bell */
+.header-notification-bell{display:inline-flex;align-items:center;justify-content:center;gap:9px;position:relative;z-index:2;margin:18px auto 0;padding:9px 13px;min-height:42px;border:1px solid #ffffff70;border-radius:999px;background:#ffffff16;color:#fff;font-size:14px;font-weight:750;box-shadow:0 4px 14px #03172925}
+.header-notification-bell:hover{background:#ffffff25}
+.notification-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#e0444e;color:#fff;font-size:12px;font-weight:800;line-height:1;box-shadow:0 0 0 2px #123b63}
+.notification-count.hidden{display:none!important}
+.notification-item{background:#fff;border:1px solid #d8e5ef;border-radius:12px;padding:13px;margin:10px 0}
+.notification-item.unread{border-left:4px solid #1769aa;background:#f5faff}
+.notification-item h4{margin:0 0 5px;color:#123b63;font-size:16px}
+.notification-item p{margin:5px 0}
+.notification-detail{margin-top:12px;padding:15px;border:1px solid #c8dced;border-radius:12px;background:#f2f8fd}
+@media(max-width:520px){.header-notification-bell{margin-top:14px;padding:8px 12px}}
+
 /* ALFIK visual polish: clean, calm, premium, mobile-first */
 :root{--alfik-navy:#0b2945;--alfik-blue:#1769aa;--alfik-blue-dark:#125487;--alfik-sky:#eaf4fc;--alfik-border:#d5e4f0;--alfik-ink:#183047;--alfik-muted:#5b7082;--alfik-radius:18px}
 html{scroll-behavior:smooth}
@@ -519,6 +531,9 @@ footer{background:#f8fbfe}
 <h1>ALFIK</h1>
 <p>Animals Lost and Found Information Keeper</p>
 <p>Helping animals find their way home 🐾</p>
+<button type="button" id="headerNotificationBell" class="header-notification-bell hidden" aria-label="Open notifications">
+  <span aria-hidden="true">🔔</span><span>Notifications</span><span id="headerNotificationCount" class="notification-count hidden" aria-label="Unread notifications">0</span>
+</button>
 </header>
 
 <main>
@@ -567,7 +582,7 @@ footer{background:#f8fbfe}
 <button class="secondary" data-view="homeView">Home</button>
 <button class="secondary" data-view="reportsView">🔎 Find an animal</button>
 <button class="secondary" data-view="myView" data-account-types="public">My ALFIK</button>
-<button class="secondary notification-nav" id="notificationBell" data-view="homeView" aria-label="Notifications" data-account-types="public,rescue,veterinary">🔔 Notifications</button>
+
 <button class="secondary" data-view="messagesView" data-account-types="public,rescue,veterinary">Private messages</button>
 <button class="secondary" data-view="reportView" data-account-types="public">Report an animal</button>
 <!-- Email alerts are temporarily hidden while ALFIK moves to in-app notifications. -->
@@ -624,10 +639,11 @@ footer{background:#f8fbfe}
 </div>
 <div class="feature-panel" id="careNotificationsPanel" tabindex="-1">
 <h3>Your notifications</h3>
-<p class="note">Private in-app alerts for possible animal matches and care reminders for your pets or rescue animals.</p>
+<p class="note">Your private inbox for possible animal matches, messages and pet or rescue care reminders. Select a notification to open its details.</p>
 <button class="secondary" id="refreshCareNotificationsBtn" type="button">Refresh notifications</button>
 <p id="careNotificationsMessage" class="message" role="status"></p>
-<div id="careNotificationsList">Sign in to view your care notifications.</div>
+<div id="careNotificationsList">Sign in to view your notifications.</div>
+<div id="careNotificationDetail" class="notification-detail hidden" aria-live="polite"></div>
 </div>
 <div class="feature-panel" id="nearbyAnimalsPanel">
   <h3>🐾 Animals near me</h3>
@@ -1195,15 +1211,14 @@ document.querySelectorAll("[data-view]").forEach(button=>{
   button.addEventListener("click",()=>showView(button.dataset.view));
 });
 
-const notificationBell=$( "notificationBell" );
+const notificationBell=$( "headerNotificationBell" );
 if(notificationBell){
   notificationBell.addEventListener("click",()=>{
     showView("homeView");
     window.setTimeout(()=>{
       const panel=$( "careNotificationsPanel" );
       if(panel){panel.scrollIntoView({behavior:"smooth",block:"start"});panel.focus({preventScroll:true});}
-      const refresh=$( "refreshCareNotificationsBtn" );
-      if(refresh)refresh.click();
+      if(window.loadCareNotifications)window.loadCareNotifications();
     },100);
   });
 }
@@ -2629,6 +2644,9 @@ function showSignedIn(session){
   currentUserId=newId;
   accountSection.classList.toggle("hidden",!!user);
   siteContent.classList.toggle("hidden",!user);
+  const headerBell=$("headerNotificationBell");
+  if(headerBell)headerBell.classList.toggle("hidden",!user);
+  if(user&&window.refreshAlfikNotificationBadge)window.refreshAlfikNotificationBadge();
   applyAccountType(user);
 
   if(user){
@@ -2691,7 +2709,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261028-admin-animal-reports-1"></script>
+<script src="alfik-extension.js?v=20261028-header-notification-inbox-1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
 /* Register ALFIK's service worker where supported. */
