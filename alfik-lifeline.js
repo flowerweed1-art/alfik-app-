@@ -233,11 +233,16 @@
     const box=byId("llServiceList"); if(!box)return;
     const area=(byId("llAreaPostcode")?.dataset.areaTerms||"").toLowerCase().split("|").filter(Boolean);
     const type=byId("llSupportFilter")?.value||"";
+    const normalise=value=>String(value||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+    const nationalTags=new Set(["england","scotland","wales","northern ireland","united kingdom","uk","nationwide","national","uk wide","all england","england wide","scotland wide","wales wide"]);
     const results=services.filter(s=>{
-      const coverage=[...(s.countries||[]),...(s.regions||[])].map(x=>String(x).toLowerCase());
-      const areaMatch=!area.length||area.some(term=>coverage.some(c=>c===term||c.includes(term)||term.includes(c))||
-        (term==="england"&&coverage.some(c=>c.includes("united kingdom")||c==="uk"))||
-        (term==="scotland"&&coverage.some(c=>c.includes("united kingdom")||c==="uk")));
+      const regions=(s.regions||[]).map(normalise).filter(Boolean);
+      const areaMatch=!area.length||area.some(rawTerm=>{
+        const term=normalise(rawTerm);
+        const localMatch=regions.some(region=>region===term||region.includes(term)||term.includes(region));
+        const nationalMatch=nationalTags.has(term)&&regions.some(region=>nationalTags.has(region));
+        return localMatch||nationalMatch;
+      });
       const supportMatch=!type||(s.support_types||[]).some(t=>t===type);
       return areaMatch&&supportMatch;
     });
