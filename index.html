@@ -584,6 +584,7 @@ footer{background:#f8fbfe}
 <nav id="alfikMainNav">
 <button class="secondary" data-view="homeView">Home</button>
 <button class="secondary" data-view="reportsView">🔎 Find an animal</button>
+<button class="secondary" data-view="possibleMatchesView" data-account-types="public,rescue,veterinary">🐾 Possible Matches</button>
 <button class="secondary" data-view="myView" data-account-types="public">My ALFIK</button>
 
 <button class="secondary" data-view="messagesView" data-account-types="public,rescue,veterinary">Private messages</button>
@@ -779,9 +780,16 @@ footer{background:#f8fbfe}
 </div>
 <h3 id="animalReportsHeading">Animal reports</h3>
 <div id="reportsList" aria-live="polite">Loading reports...</div>
-<h3>Possible matches</h3>
-<p class="note">Suggestions based on animal type, location, descriptions and dates. These are not confirmed matches.</p>
-<div id="matchResults" aria-live="polite"></div>
+<div id="matchResults" class="hidden" aria-live="polite"></div>
+</section>
+
+<section id="possibleMatchesView" class="hidden">
+  <h2>🐾 Possible Matches</h2>
+  <p>Review potential matches for your active lost and found reports, ranked by supporting evidence.</p>
+  <p class="note">Scores are clues, not probabilities or confirmed identifications. Always compare the full reports and photos.</p>
+  <button class="secondary wide" id="refreshPossibleMatchesBtn" type="button">Refresh possible matches</button>
+  <div id="possibleMatchesStatus" class="message" role="status" aria-live="polite">Loading possible matches...</div>
+  <div id="possibleMatchesList" aria-live="polite"></div>
 </section>
 
 <section id="myView" class="hidden">
@@ -1183,9 +1191,9 @@ const accountTypeLabels={
   veterinary:"Veterinary practice"
 };
 const roleViews={
-  public:["homeView","reportView","reportsView","myView","messagesView","emailView","accountView","petsView","billingView","adminView"],
-  rescue:["homeView","reportsView","messagesView","accountView","rescueView","billingView","adminView"],
-  veterinary:["homeView","reportsView","messagesView","accountView","vetView","billingView","adminView"]
+  public:["homeView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView","petsView","billingView","adminView"],
+  rescue:["homeView","reportsView","possibleMatchesView","messagesView","accountView","rescueView","billingView","adminView"],
+  veterinary:["homeView","reportsView","possibleMatchesView","messagesView","accountView","vetView","billingView","adminView"]
 };
 function applyAccountType(user){
   const metadata=user?.user_metadata||{};
@@ -1205,7 +1213,7 @@ function showView(id){
   const allowedViews=roleViews[activeAccountType]||roleViews.public;
   if(!allowedViews.includes(id))id="homeView";
   [
-    "homeView","reportView","reportsView","myView","messagesView","emailView","accountView",
+    "homeView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView",
     "petsView","rescueView","vetView","billingView","adminView"
   ].forEach(view=>{
     const section=$(view);
@@ -1213,6 +1221,7 @@ function showView(id){
   });
 
   if(id==="reportsView")loadReports();
+  if(id==="possibleMatchesView")loadPossibleMatches();
   if(id==="myView")loadMyReports();
   if(id==="messagesView"){loadPrivateConversations();loadBlockedMembers();}
   if(id==="emailView")loadEmailPreference();
@@ -2212,6 +2221,84 @@ function renderMatches(){
     ?"No possible matches found for all of those search terms. Try removing a word or broadening the location."
     :"No strong possible matches found yet. ALFIK now filters out weaker suggestions; check that the location, date, description and photos are as detailed as possible."));
 }
+
+async function loadPossibleMatches(){
+  const list=$("possibleMatchesList");
+  const status=$("possibleMatchesStatus");
+  if(!list||!status)return;
+  list.replaceChildren();
+  status.textContent="Loading ranked possible matches...";
+  try{
+    const {data,error}=await supabaseClient.rpc("alfik_get_possible_matches");
+    if(error)throw error;
+    const matches=Array.isArray(data)?data:[];
+    if(!matches.length){
+      status.textContent="No potential matches are available for your active reports yet. When a suitable lost-and-found report is available, it will appear here.";
+      return;
+    }
+    status.textContent=matches.length+" potential match"+(matches.length===1?"":"es")+" found, ranked by score.";
+    matches.forEach(match=>{
+      const card=document.createElement("article");
+      card.className="report-card";
+      const level=element("span",String(match.match_level||"Possible match")+" · "+String(match.match_score)+"/100");
+      level.className="badge";
+      if(Number(match.match_score)>=75)level.style.background="#e3f4e9",level.style.color="#17623b";
+      else if(Number(match.match_score)<55)level.style.background="#f1f3f5",level.style.color="#52697c";
+      card.appendChild(level);
+
+      const heading=element("h3",(String(match.matched_report_type||"").toUpperCase())+" report · "+String(match.matched_animal_type||"animal"));
+      card.appendChild(heading);
+      const name=element("p","Name: "+String(match.matched_animal_name||"Unknown"));
+      card.appendChild(name);
+      const location=element("p","Location: "+String(match.matched_location_text||"Not provided"));
+      card.appendChild(location);
+      const date=element("p","Date reported: "+String(match.matched_date_seen||"Not provided"));
+      card.appendChild(date);
+      const own=element("p","Compared with your "+String(match.your_report_type||"")+" report for "+String(match.your_animal_name||"Unknown")+".");
+      own.className="note";
+      card.appendChild(own);
+      const reasons=element("p",String(match.match_reasons||"Compare the report details carefully."));
+      reasons.className="note";
+      card.appendChild(reasons);
+      const caution=element("p","Automated suggestion only. Please compare the full details and photos before deciding whether this is the same animal.");
+      caution.className="note";
+      card.appendChild(caution);
+
+      const button=element("button","View this report");
+      button.className="primary wide";
+      button.addEventListener("click",async()=>{
+        button.disabled=true;
+        button.textContent="Opening report...";
+        try{
+          showView("reportsView");
+          await loadReports();
+          const target=document.querySelector('[data-report-id="'+String(match.matched_report_id)+'"]');
+          if(target){
+            target.scrollIntoView({behavior:"smooth",block:"start"});
+            target.style.outline="3px solid #1769aa";
+            target.style.outlineOffset="3px";
+            window.setTimeout(()=>{target.style.outline="";target.style.outlineOffset="";},2500);
+          }else{
+            const search=$("searchInput");
+            if(search)search.value=String(match.matched_animal_name||match.matched_location_text||"");
+            applyFilters();
+          }
+        }catch(error){
+          status.textContent="Could not open the report list: "+(error.message||"Please try again.");
+        }finally{
+          button.disabled=false;
+          button.textContent="View this report";
+        }
+      });
+      card.appendChild(button);
+      list.appendChild(card);
+    });
+  }catch(error){
+    status.textContent="Could not load possible matches: "+(error.message||"Please try again.");
+  }
+}
+
+$("refreshPossibleMatchesBtn")?.addEventListener("click",loadPossibleMatches);
 
 async function loadReports(){
   const box=$("reportsList");
