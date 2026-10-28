@@ -961,6 +961,20 @@ footer{background:#f8fbfe}
 <div id="healthRecords">Health records will appear here.</div>
 <p id="healthPlanMessage" class="note"></p>
 </div>
+<div class="feature-panel" id="vaccinationTrackerPanel">
+<h3>Vaccinations and booster tracker 💉</h3>
+<p class="note">Keep vaccine dates and booster due dates together. ALFIK can show reminders in your in-app inbox. Follow your veterinary practice's advice for vaccine timing.</p>
+<label for="vaccinationPet">Pet</label><select id="vaccinationPet"><option value="">Choose a pet</option></select>
+<label for="vaccinationName">Vaccine name</label><input id="vaccinationName" maxlength="160" required placeholder="e.g. cat flu and enteritis">
+<label for="vaccinationDate">Date given</label><input id="vaccinationDate" type="date" required>
+<label for="vaccinationDue">Next booster due date (optional)</label><input id="vaccinationDue" type="date">
+<label for="vaccinationVet">Vet or practice (optional)</label><input id="vaccinationVet" maxlength="200" placeholder="Practice name">
+<label for="vaccinationNotes">Notes (optional)</label><textarea id="vaccinationNotes" rows="2" maxlength="1500"></textarea>
+<label><input id="vaccinationReminderEnabled" type="checkbox" checked> In-app booster reminders on</label>
+<button class="primary wide" id="saveVaccinationBtn" type="button">Save vaccination</button>
+<p id="vaccinationMessage" class="message" role="status"></p>
+<div id="vaccinationList">Vaccination records will appear here.</div>
+</div>
 <div class="feature-panel hidden">
 <h3>Medication list</h3>
 <p class="note">Private to your account. Follow your veterinary professional's instructions.</p>
