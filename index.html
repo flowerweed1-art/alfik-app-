@@ -2252,13 +2252,30 @@ async function loadPossibleMatches(){
     if(reportIds.length){
       const {data:reportData,error:reportError}=await supabaseClient
         .from("animal_reports")
-        .select("id,report_type,animal_type,animal_name,description,location_text,date_seen,photo_url,status")
+        .select("id,report_type,animal_type,animal_name,description,location_text,location_lat,location_lon,date_seen,photo_url,status")
         .in("id",reportIds);
       if(reportError)console.warn("Could not load full report comparison details:",reportError.message);
       (reportData||[]).forEach(report=>reportMap.set(String(report.id),report));
     }
 
-    status.textContent=matches.length+" potential match"+(matches.length===1?"":"es")+" found, ranked by supporting evidence.";
+    // Keep the database match score authoritative; use approximate distance as a tie-breaker only.
+    const reportDistance=(a,b)=>{
+      if(!a||!b||a.location_lat==null||a.location_lon==null||b.location_lat==null||b.location_lon==null)return null;
+      const values=[a.location_lat,a.location_lon,b.location_lat,b.location_lon].map(Number);
+      if(!values.every(Number.isFinite))return null;
+      return distanceMiles(values[0],values[1],values[2],values[3]);
+    };
+    matches.sort((a,b)=>{
+      const scoreDiff=(Number(b.match_score)||0)-(Number(a.match_score)||0);
+      if(scoreDiff)return scoreDiff;
+      const ra=reportMap.get(String(a.your_report_id)),rb=reportMap.get(String(a.matched_report_id));
+      const sa=reportMap.get(String(b.your_report_id)),sb=reportMap.get(String(b.matched_report_id));
+      const da=reportDistance(ra,rb),db=reportDistance(sa,sb);
+      if(da==null)return db==null?0:1;
+      if(db==null)return -1;
+      return da-db;
+    });
+    status.textContent=matches.length+" potential match"+(matches.length===1?"":"es")+" found, ranked by supporting evidence, with closer locations breaking score ties.";
     matches.forEach(match=>{
       const yours=reportMap.get(String(match.your_report_id))||{
         report_type:match.your_report_type,
@@ -2314,6 +2331,13 @@ async function loadPossibleMatches(){
       evidence.className="possible-match-evidence";
       evidence.appendChild(element("h4","Why ALFIK suggested this"));
       evidence.appendChild(element("p",String(match.match_reasons||"Compare the report details carefully.")));
+      const distance=reportDistance(yours,other);
+      if(distance!=null){
+        const rounded=Math.max(0,Math.round(distance));
+        evidence.appendChild(element("p","📍 The saved approximate locations are about "+rounded+" mile"+(rounded===1?"":"s")+" apart. This helps compare reports but does not prove the animals are the same."));
+      }else{
+        evidence.appendChild(element("p","📍 Exact approximate coordinates are not available for both reports, so compare the written locations manually."));
+      }
       const caution=element("p","Automated suggestion only, not a confirmed identification. Scores are clues, not probabilities. Compare markings, photos, dates and locations carefully before contacting the other reporter.");
       caution.className="note";
       evidence.appendChild(caution);
