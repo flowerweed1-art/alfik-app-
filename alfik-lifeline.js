@@ -240,7 +240,7 @@
       const areaMatch=!area.length||area.some(rawTerm=>{
         const term=normalise(rawTerm);
         const localMatch=regions.some(region=>region===term||region.includes(term)||term.includes(region));
-        const nationalMatch=nationalTags.has(term)&&regions.some(region=>nationalTags.has(region));
+        const nationalMatch=nationalTags.has(term)&&regions.some(region=>["nationwide","national","uk wide","united kingdom","uk"].includes(region)||region===term);
         return localMatch||nationalMatch;
       });
       const supportMatch=!type||(s.support_types||[]).some(t=>t===type);
