@@ -2451,7 +2451,98 @@ window.loadPetWorkspace = loadPetWorkspace;
 window.loadRescueWorkspace = loadRescueWorkspace;
 window.loadVerifiedRescueDirectory = loadVerifiedRescueDirectory;
 window.loadVetWorkspace = loadVetWorkspace;
+
+async function loadAlfikAdminReportQueue() {
+  const db = client();
+  const panel = el("animalReportsAdminPanel");
+  const list = el("animalReportsAdminQueue");
+  const status = el("animalReportsAdminMessage");
+  if (!panel || !list) return;
+  const refreshButton = el("refreshAnimalReportsAdminBtn");
+  if (refreshButton && !refreshButton.dataset.wired) {
+    refreshButton.dataset.wired = "true";
+    refreshButton.addEventListener("click", loadAlfikAdminReportQueue);
+  }
+  panel.classList.remove("hidden");
+  list.textContent = "Loading lost-and-found reports...";
+  if (status) status.textContent = "";
+  if (!db) { list.textContent = "Supabase is unavailable. Refresh ALFIK and sign in again."; return; }
+  try {
+    const result = await db.rpc("alfik_admin_list_animal_reports");
+    if (result.error) throw result.error;
+    const rows = Array.isArray(result.data) ? result.data : [];
+    const search = el("animalReportsAdminSearch");
+    const render = () => {
+      list.replaceChildren();
+      const query = String(search?.value || "").trim().toLowerCase();
+      const filtered = rows.filter(report => [
+        report.report_type, report.animal_type, report.animal_name,
+        report.description, report.location_text, report.status, report.owner_id
+      ].some(value => String(value || "").toLowerCase().includes(query)));
+      if (!filtered.length) {
+        list.textContent = rows.length ? "No reports match that search." : "There are no animal reports to display.";
+        return;
+      }
+      filtered.forEach(report => {
+        const card = document.createElement("article");
+        card.className = "report-card";
+        const heading = document.createElement("h3");
+        heading.textContent = (report.report_type === "found_deceased" ? "Found deceased" : report.report_type === "found" ? "Found animal" : "Lost animal") + " · " + (report.animal_name || report.animal_type || "Animal");
+        card.appendChild(heading);
+        const details = document.createElement("p");
+        details.textContent = "Type: " + (report.animal_type || "Not specified") + " · Status: " + (report.status || "unknown") + " · Date: " + (report.date_seen || "Not specified");
+        card.appendChild(details);
+        const location = document.createElement("p");
+        location.textContent = "Location: " + (report.location_text || "Not specified");
+        card.appendChild(location);
+        const description = document.createElement("p");
+        description.textContent = report.description || "No description";
+        card.appendChild(description);
+        const owner = document.createElement("p");
+        owner.className = "note";
+        owner.textContent = "Report ID: " + report.id + " · Owner ID: " + (report.owner_id || "unknown") + " · Submitted: " + (report.created_at ? new Date(report.created_at).toLocaleString() : "Unknown");
+        card.appendChild(owner);
+        const actions = document.createElement("div");
+        actions.className = "report-actions";
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "danger";
+        remove.textContent = "Delete this report";
+        remove.addEventListener("click", async () => {
+          if (!window.confirm("Permanently delete " + (report.animal_name || report.animal_type || "this animal report") + "? This cannot be undone.")) return;
+          remove.disabled = true;
+          remove.textContent = "Deleting...";
+          try {
+            const deleted = await db.rpc("alfik_admin_delete_animal_report", { p_report_id: String(report.id) });
+            if (deleted.error) throw deleted.error;
+            if (deleted.data !== true) throw new Error("The database did not confirm deletion. The report may already be gone.");
+            const index = rows.findIndex(item => String(item.id) === String(report.id));
+            if (index >= 0) rows.splice(index, 1);
+            if (status) status.textContent = "Report deleted successfully.";
+            render();
+          } catch (error) {
+            if (status) status.textContent = "Could not delete report: " + readableError(error);
+            remove.disabled = false;
+            remove.textContent = "Delete this report";
+          }
+        });
+        actions.appendChild(remove);
+        card.appendChild(actions);
+        list.appendChild(card);
+      });
+    };
+    if (search) search.oninput = render;
+    render();
+    if (status) status.textContent = rows.length + " reports loaded. Search by animal, location, status or owner ID.";
+  } catch (error) {
+    list.textContent = "Could not load reports: " + readableError(error) + ". Run the admin-animal-reports.sql migration in Supabase first.";
+    if (status) status.textContent = "Admin report management is not connected yet.";
+    console.warn("ALFIK admin animal reports:", error);
+  }
+}
+
 window.loadAlfikAdminTools = async function () {
+  await loadAlfikAdminReportQueue();
   await loadVerificationAdminQueue();
   await loadMemberReportsAdminQueue();
   await loadVerificationAdminHistory();
