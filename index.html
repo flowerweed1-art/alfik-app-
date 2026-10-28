@@ -1892,7 +1892,7 @@ function similarity(a,b){
   let score=4;
   const reasons=["same animal type"];
 
-  const place=locationMatch(a.location_text,b.location_text);
+  const place=locationProximityMatch(a.location_text,b.location_text) || locationMatch(a.location_text,b.location_text);
   score+=place.score;
   if(place.reason)reasons.push(place.reason);
 
@@ -1931,6 +1931,21 @@ function distanceMiles(lat1,lon1,lat2,lon2){
   const dLat=rad(lat2-lat1),dLon=rad(lon2-lon1);
   const a=Math.sin(dLat/2)**2+Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;
   return 3958.8*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// Use only approximate coordinates already cached by the public map lookup.
+// If no coordinates are available, the matcher safely falls back to text.
+function locationProximityMatch(a,b){
+  const ca=mapGeocodeCache[normalise(a||"")], cb=mapGeocodeCache[normalise(b||"")];
+  if(!ca||!cb||!Number.isFinite(Number(ca.lat))||!Number.isFinite(Number(ca.lon))||!Number.isFinite(Number(cb.lat))||!Number.isFinite(Number(cb.lon)))return null;
+  const miles=distanceMiles(Number(ca.lat),Number(ca.lon),Number(cb.lat),Number(cb.lon));
+  const rounded=Math.max(0,Math.round(miles));
+  if(miles<=3)return {score:5,reason:"approximately "+rounded+" miles apart (nearby areas)"};
+  if(miles<=10)return {score:4,reason:"approximately "+rounded+" miles apart"};
+  if(miles<=20)return {score:3,reason:"approximately "+rounded+" miles apart"};
+  if(miles<=30)return {score:1,reason:"approximately "+rounded+" miles apart"};
+  if(miles<=60)return {score:-1,reason:"locations are approximately "+rounded+" miles apart; animals can travel"};
+  return {score:-2,reason:"locations are approximately "+rounded+" miles apart; check whether the timeline makes sense"};
 }
 
 function getMapReports(){
@@ -2104,7 +2119,7 @@ function renderMatches(){
       // side of a possible lost/found pair.
       if(queryWords.length&&!lostMatchesQuery&&!matchesQuery(b))return;
       const result=similarity(a,b);
-      if(result.score>=5)matches.push({a,b,score:result.score,reasons:result.reasons});
+      if(result.score>=5)matches.push({a,b,score:result.score,reasons:result.reasons,locationReason:result.reasons.find(reason=>/miles apart|location wording|overlapping location|place details/i.test(reason))||""});
     });
   });
 
@@ -2123,7 +2138,7 @@ function renderMatches(){
     const reasonsList=document.createElement("ul");
     reasonsList.className="match-reasons";
     const reasonItems=[["Animal type", "Both reports are for "+String(match.a.animal_type||"the same animal type")+"."]];
-    const placeCheck=locationMatch(match.a.location_text,match.b.location_text);
+    const placeCheck=locationProximityMatch(match.a.location_text,match.b.location_text) || locationMatch(match.a.location_text,match.b.location_text);
     if(placeCheck.reason)reasonItems.push(["Location",placeCheck.reason+"."]);
     else reasonItems.push(["Location","No clear location overlap detected. Compare the places manually."]);
     const dateCheck=dateMatch(match.a.date_seen,match.b.date_seen);
