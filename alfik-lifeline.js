@@ -35,7 +35,15 @@
       #lifelineView .ll-directory-actions button{flex:1 1 150px}
       #lifelineView #llAreaPostcode,#lifelineView #llSupportFilter,#lifelineView #llSituationFilter{width:100%;min-width:0}
       #lifelineView .ll-relevance{display:inline-block;margin:0 0 8px;padding:4px 8px;border-radius:999px;background:#e4f1fb;color:#174e78;font-size:12px;font-weight:700}
-      @media(max-width:520px){#lifelineView .ll-card{padding:12px}}
+      #lifelineView details.ll-card{padding:0;overflow:hidden}
+      #lifelineView details.ll-card>summary{display:flex;flex-direction:column;gap:5px;cursor:pointer;list-style:none;padding:16px;min-height:58px;justify-content:center;background:#eef6fc;color:#123b63;font-weight:700}
+      #lifelineView details.ll-card>summary::-webkit-details-marker{display:none}
+      #lifelineView details.ll-card>summary:after{content:"＋ Open section";font-size:13px;font-weight:700;color:#1769aa}
+      #lifelineView details.ll-card[open]>summary:after{content:"− Close section"}
+      #lifelineView details.ll-card>summary:focus-visible{outline:3px solid #1769aa;outline-offset:-3px}
+      #lifelineView .ll-accordion-content{padding:0 15px 15px}
+      #lifelineView #llOrganisationTools{margin:12px 0}
+      @media(max-width:520px){#lifelineView .ll-card{padding:12px}#lifelineView details.ll-card{padding:0}#lifelineView details.ll-card>summary{padding:14px}#lifelineView .ll-accordion-content{padding:0 12px 12px}}
     `;
     document.head.appendChild(s);
   }
@@ -144,6 +152,47 @@
       </div>
       <p id="llGlobalMessage" class="message" role="status"></p>
     `;
+    // Keep urgent help immediately available while folding the longer tools into compact, accessible sections.
+    function makeCollapsible(card, openByDefault) {
+      if (!card || card.tagName === "DETAILS") return card;
+      const heading = card.querySelector(":scope > h3");
+      if (!heading) return card;
+      const details = document.createElement("details");
+      details.className = card.className;
+      if (card.id) details.id = card.id;
+      if (openByDefault) details.open = true;
+      const summary = document.createElement("summary");
+      summary.appendChild(heading);
+      const subtitle = heading.nextElementSibling;
+      if (subtitle && subtitle.matches("p.ll-small")) summary.appendChild(subtitle);
+      const content = document.createElement("div");
+      content.className = "ll-accordion-content";
+      while (card.firstChild) content.appendChild(card.firstChild);
+      details.appendChild(summary);
+      details.appendChild(content);
+      card.replaceWith(details);
+      return details;
+    }
+    // Fold the organisation request form inside the directory before folding the directory itself.
+    makeCollapsible(byId("llOrganisationTools"), false);
+    const sectionCards = Array.from(section.querySelectorAll(":scope > .ll-card"));
+    const order = [
+      ["I need help caring for my animal", true],
+      ["My open need loop", false],
+      ["Find help in your area", false],
+      ["My animal safety plan", false]
+    ];
+    const foldedCards = new Map();
+    sectionCards.forEach(card => {
+      const heading = card.querySelector(":scope > h3");
+      if (!heading) return;
+      const setting = order.find(item => item[0] === heading.textContent.trim());
+      foldedCards.set(heading.textContent.trim(), makeCollapsible(card, setting ? setting[1] : false));
+    });
+    order.forEach(([heading]) => {
+      const card = foldedCards.get(heading);
+      if (card) section.insertBefore(card, byId("llGlobalMessage"));
+    });
     const admin=byId("adminView");
     if(admin) admin.insertAdjacentElement("beforebegin",section);
     else site.appendChild(section);
