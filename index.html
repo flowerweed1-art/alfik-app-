@@ -84,10 +84,12 @@ header{background:linear-gradient(135deg,#123b63,#1769aa)}
 .premium-promo.compact h3{font-size:16px}
 
 
-/* Header notification bell */
-.header-notification-bell{display:inline-flex;align-items:center;justify-content:center;gap:9px;position:relative;z-index:2;margin:18px auto 0;padding:9px 13px;min-height:42px;border:1px solid #ffffff70;border-radius:999px;background:#ffffff16;color:#fff;font-size:14px;font-weight:750;box-shadow:0 4px 14px #03172925}
-.header-notification-bell:hover{background:#ffffff25}
-.notification-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#e0444e;color:#fff;font-size:12px;font-weight:800;line-height:1;box-shadow:0 0 0 2px #123b63}
+/* Discreet header notification bell */
+header{position:relative}
+.header-notification-bell{position:absolute;top:13px;right:14px;z-index:5;display:flex;align-items:center;justify-content:center;width:36px;height:36px;min-height:36px;margin:0;padding:7px;border:1px solid #ffffff24;border-radius:50%;background:transparent;color:#eaf3fb;box-shadow:none;opacity:.9}
+.header-notification-bell:hover,.header-notification-bell:focus-visible{background:#ffffff12;border-color:#ffffff55;opacity:1}
+.header-notification-bell svg{display:block;width:19px;height:19px;stroke:currentColor}
+.notification-count{position:absolute;top:-3px;right:-4px;display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border:1px solid #0d2f50;border-radius:999px;background:#d83b48;color:#fff;font-size:10px;font-weight:800;line-height:1}
 .notification-count.hidden{display:none!important}
 .notification-item{background:#fff;border:1px solid #d8e5ef;border-radius:12px;padding:13px;margin:10px 0}
 .notification-item.unread{border-left:4px solid #1769aa;background:#f5faff}
@@ -531,8 +533,9 @@ footer{background:#f8fbfe}
 <h1>ALFIK</h1>
 <p>Animals Lost and Found Information Keeper</p>
 <p>Helping animals find their way home 🐾</p>
-<button type="button" id="headerNotificationBell" class="header-notification-bell hidden" aria-label="Open notifications">
-  <span aria-hidden="true">🔔</span><span>Notifications</span><span id="headerNotificationCount" class="notification-count hidden" aria-label="Unread notifications">0</span>
+<button type="button" id="headerNotificationBell" class="header-notification-bell hidden" aria-label="Open notifications" title="Notifications">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+  <span id="headerNotificationCount" class="notification-count hidden" aria-label="Unread notifications">0</span>
 </button>
 </header>
 
@@ -2709,7 +2712,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261028-header-notification-inbox-1"></script>
+<script src="alfik-extension.js?v=20261028-header-notification-inbox-2"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
 /* Register ALFIK's service worker where supported. */
