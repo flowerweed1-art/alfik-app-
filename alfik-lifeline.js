@@ -183,7 +183,8 @@
       const details = document.createElement("details");
       details.className = card.className;
       if (card.id) details.id = card.id;
-      if (openByDefault) details.open = true;
+      // Explicitly close every long section unless it is the urgent help form.
+      details.open = openByDefault === true;
       const summary = document.createElement("summary");
       summary.appendChild(heading);
       const subtitle = heading.nextElementSibling;
@@ -254,6 +255,9 @@
     });
     const card=byId("llCaseForm");
     if(card) {
+      // Quick-help buttons must open the urgent section before jumping to it.
+      const accordion=card.closest("details");
+      if(accordion) accordion.open=true;
       card.scrollIntoView({behavior:"smooth",block:"start"});
       window.setTimeout(()=>byId("llCaseAnimal")?.focus({preventScroll:true}),350);
     }
