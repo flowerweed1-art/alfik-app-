@@ -1215,7 +1215,7 @@ const accountTypeLabels={
   veterinary:"Veterinary practice"
 };
 const roleViews={
-  public:["homeView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView","petsView","billingView","adminView"],
+  public:["homeView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView","petsView","lifelineView","billingView","adminView"],
   rescue:["homeView","reportsView","possibleMatchesView","messagesView","accountView","rescueView","billingView","adminView"],
   veterinary:["homeView","reportsView","possibleMatchesView","messagesView","accountView","vetView","billingView","adminView"]
 };
@@ -1238,7 +1238,7 @@ function showView(id){
   if(!allowedViews.includes(id))id="homeView";
   [
     "homeView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView",
-    "petsView","rescueView","vetView","billingView","adminView"
+    "petsView","rescueView","vetView","billingView","adminView","lifelineView"
   ].forEach(view=>{
     const section=$(view);
     if(section)section.classList.toggle("hidden",view!==id);
@@ -1254,10 +1254,12 @@ function showView(id){
   if(id==="adminView"&&window.loadAlfikAdminTools)window.loadAlfikAdminTools();
   if(id==="vetView"&&window.loadVetWorkspace)window.loadVetWorkspace();
   if(id==="billingView"&&window.renderPayPalButtons)window.renderPayPalButtons();
+  if(id==="lifelineView"&&window.loadAlfikLifeline)window.loadAlfikLifeline();
   if(window.refreshAlfikProfile)window.refreshAlfikProfile();
 
   window.scrollTo({top:0,behavior:"smooth"});
 }
+window.alfikShowView=showView;
 
 document.querySelectorAll("[data-view]").forEach(button=>{
   button.addEventListener("click",()=>showView(button.dataset.view));
@@ -3059,6 +3061,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 
 <script src="alfik-config.js"></script>
 <script src="alfik-extension.js?v=20261028-pet-record-edit-delete-1"></script>
+<script src="alfik-lifeline.js?v=20261028-lifeline-mvp-1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
 /* Register ALFIK's service worker where supported. */
