@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1769aa"/><stop offset="1" stop-color="#0d2f50"/></linearGradient></defs>
+<rect width="512" height="512" rx="88" fill="url(#bg)"/>
+<g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+<path d="M310 70a150 150 0 1 0 118 238A173 173 0 0 1 310 70Z" fill="#fff" stroke="none"/>
+</g>
+<g fill="#0d2f50">
+<path d="M210 228c-2-25 12-51 32-65l-3 34 25-15 20 22 27 7 9 23-18 15-18 1-10 22-28 18-12-23-24-13Z"/>
+</g>
+<g fill="#fff">
+<path d="M244 160c13-24 40-37 66-33 18 3 31 17 35 34 4 17 20 22 37 27 7 2 8 11 3 17l-15 17c-8 9-22 13-35 13h-25l-10 20-24-3-6-19-17-15-22-8 7-20Z"/>
+<path d="M218 232 233 201 252 187 260 209 278 218 288 239 273 258 250 263 239 283 220 267 211 249Z" fill="#0d2f50"/>
+<path d="M226 230l12-24 3 22" fill="none" stroke="#fff" stroke-width="5"/>
+<path d="M284 276c30-12 60-7 80 13" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+<g transform="translate(365 267)">
+<ellipse cx="0" cy="-17" rx="8" ry="12"/><ellipse cx="19" cy="-7" rx="8" ry="11"/><ellipse cx="16" cy="13" rx="8" ry="11"/><ellipse cx="-9" cy="15" rx="8" ry="11"/><path d="M-2 0c-14 0-20 17-9 24 8 5 18 5 25-1C24 14 12 0-2 0Z"/>
+</g>
+</g>
+<text x="256" y="390" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="64" font-weight="700" letter-spacing="8" text-anchor="middle">ALFIK</text>
+<path d="M95 414h55M362 414h55" stroke="#78c6ff" stroke-width="4" stroke-linecap="round"/>
+<text x="256" y="420" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="600" letter-spacing="3" text-anchor="middle">ANIMAL REUNIFICATION</text>
+</svg>
