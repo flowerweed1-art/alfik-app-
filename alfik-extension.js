@@ -317,6 +317,35 @@ async function renderPayPalButtons() {
   }
 }
 
+async function markPetMissingReportFound(pet, report) {
+  const petName = pet && pet.name ? pet.name : "your pet";
+  if (!report || !report.id) {
+    say("petMessage", "Could not identify the active missing report. Refresh your pet profiles and try again.");
+    return;
+  }
+  if (!window.confirm("Mark " + petName + " as found and close the active missing-animal report? The saved pet profile will stay in your account.")) return;
+  const db = client();
+  const user = await currentUser();
+  if (!db || !user) {
+    say("petMessage", "Please sign in again.");
+    return;
+  }
+  try {
+    const result = await db.from("animal_reports")
+      .update({ status: "resolved" })
+      .eq("id", report.id)
+      .eq("owner_id", user.id)
+      .select("id")
+      .maybeSingle();
+    if (result.error) throw result.error;
+    if (!result.data) throw new Error("The report was not updated. Please refresh and try again.");
+    say("petMessage", petName + " is marked as found. The missing report has been marked resolved, and the pet profile is still saved. 💙");
+    await loadPetWorkspace();
+  } catch (error) {
+    say("petMessage", "Could not mark " + petName + " as found: " + readableError(error));
+  }
+}
+
 function startMissingReportFromPet(pet) {
   if (!pet || pet.life_status === "deceased") {
     say("petMessage", "A missing report can only be started for a pet marked as living.");
@@ -592,6 +621,17 @@ try {
   if (result.error) throw result.error;
 
   dashboardPets = result.data || [];
+  let petMissingReports = [];
+  try {
+    const reportsResult = await db.from("animal_reports")
+      .select("id,report_type,animal_type,animal_name,status,created_at")
+      .eq("owner_id", user.id)
+      .eq("report_type", "lost")
+      .order("created_at", { ascending: false });
+    if (!reportsResult.error) petMissingReports = reportsResult.data || [];
+  } catch (reportLookupError) {
+    console.warn("Could not check pet missing-report status:", reportLookupError);
+  }
   const dashboardSelect = el("dashboardPetSelect");
   if (dashboardSelect) {
     const previousValue = String(dashboardSelect.value || "");
@@ -617,6 +657,15 @@ try {
       const item = card(list, pet.name || "Unnamed pet");
       item.classList.add("pet-profile-card");
       const isDeceased = pet.life_status === "deceased";
+      const petSpecies = String(pet.species || "").toLowerCase();
+      const petAnimalType = /cat|kitten|feline/.test(petSpecies) ? "cat"
+        : /dog|puppy|canine/.test(petSpecies) ? "dog" : "other";
+      const petReports = petMissingReports.filter(report =>
+        String(report.animal_name || "").trim().toLowerCase() === String(pet.name || "").trim().toLowerCase()
+        && String(report.animal_type || "").trim().toLowerCase() === petAnimalType
+      );
+      const activeMissingReport = petReports.find(report => report.status === "active");
+      const previousMissingReport = petReports[0];
       if (isDeceased) item.classList.add("pet-deceased");
       const species = document.createElement("p");
       species.className = "pet-card-subtitle";
@@ -658,6 +707,19 @@ try {
       addText(details, "Vet address", pet.vet_address);
       addText(details, "Notes", pet.notes);
       item.appendChild(details);
+      if (activeMissingReport) {
+        const missingStatus = document.createElement("p");
+        missingStatus.className = "pet-missing-status";
+        missingStatus.textContent = "🚨 Reported missing · Active community report";
+        missingStatus.style.cssText = "padding:10px 12px;border-radius:10px;background:#fff1f0;border:1px solid #efb2ad;color:#8e2424;font-weight:700";
+        item.appendChild(missingStatus);
+      } else if (previousMissingReport && previousMissingReport.status === "resolved") {
+        const safeStatus = document.createElement("p");
+        safeStatus.className = "pet-missing-status";
+        safeStatus.textContent = "🟢 Previously reported missing · Report marked resolved / reunited";
+        safeStatus.style.cssText = "padding:10px 12px;border-radius:10px;background:#effaf2;border:1px solid #b9dfc2;color:#216b36;font-weight:700";
+        item.appendChild(safeStatus);
+      }
       const actions = document.createElement("div");
       actions.className = "pet-card-actions";
       const viewButton = document.createElement("button");
@@ -676,7 +738,14 @@ try {
       editButton.textContent = "Edit profile";
       editButton.addEventListener("click", () => beginEditPet(pet));
       actions.appendChild(editButton);
-      if (!isDeceased) {
+      if (activeMissingReport) {
+        const foundButton = document.createElement("button");
+        foundButton.type = "button";
+        foundButton.className = "primary";
+        foundButton.textContent = "🟢 Mark as found / reunited";
+        foundButton.addEventListener("click", () => markPetMissingReportFound(pet, activeMissingReport));
+        actions.appendChild(foundButton);
+      } else if (!isDeceased) {
         const missingButton = document.createElement("button");
         missingButton.type = "button";
         missingButton.className = "lost";
