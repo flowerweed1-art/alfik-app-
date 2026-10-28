@@ -292,7 +292,7 @@
     const {data:requests,error}=await d.from("alfik_lifeline_org_requests").select("*").order("created_at",{ascending:false});
     const requestBox=byId("llOrgRequestList");
     if(requestBox)requestBox.innerHTML=error?'<p class="ll-small">Request history is unavailable until the organisation-claims SQL setup has been run.</p>':(requests||[]).length?'<h4>Your approval requests</h4>'+(requests||[]).map(r=>'<div class="ll-card"><strong>'+esc(r.organisation_name)+'</strong><p>Status: <strong>'+esc(r.status)+'</strong></p><p class="ll-small">'+(r.request_type==="claim_existing"?"Request to manage an existing listing":"New listing request")+' · Submitted '+esc(new Date(r.created_at).toLocaleDateString())+'</p>'+(r.review_notes?'<p><strong>Review notes:</strong> '+esc(r.review_notes)+'</p>':"")+'</div>').join(""):'<p class="ll-small">You have not submitted an organisation request yet.</p>';
-    const {data:listings,listError}=await d.from("alfik_lifeline_services").select("*").eq("claimed_by",user.id).order("organisation_name");
+    const {data:listings,error:listError}=await d.from("alfik_lifeline_services").select("*").eq("claimed_by",user.id).order("organisation_name");
     const owned=byId("llOrgOwnedListings");
     if(!owned)return;
     if(listError){owned.innerHTML='<p class="ll-small">Your managed listings are unavailable until the organisation-claims SQL setup has been run.</p>';return;}
@@ -463,6 +463,7 @@
     services=data||[];
     populateSupportFilter();
     renderServices();
+    await loadOrganisationTools();
   }
   async function referService(id) {
     const service=services.find(s=>s.id===id); if(!service)return;
