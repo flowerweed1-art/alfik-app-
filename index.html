@@ -1912,7 +1912,7 @@ function similarity(a,b){
   let score=4;
   const reasons=["same animal type"];
 
-  const place=locationProximityMatch(a.location_text,b.location_text) || locationMatch(a.location_text,b.location_text);
+  const place=locationProximityMatch(a,b) || locationMatch(a.location_text,b.location_text);
   score+=place.score;
   if(place.reason)reasons.push(place.reason);
 
@@ -1956,7 +1956,13 @@ function distanceMiles(lat1,lon1,lat2,lon2){
 // Use only approximate coordinates already cached by the public map lookup.
 // If no coordinates are available, the matcher safely falls back to text.
 function locationProximityMatch(a,b){
-  const ca=mapGeocodeCache[normalise(a||"")], cb=mapGeocodeCache[normalise(b||"")];
+  const labelA=typeof a==="object"&&a?a.location_text:a;
+  const labelB=typeof b==="object"&&b?b.location_text:b;
+  const cachedA=mapGeocodeCache[normalise(labelA||"")],cachedB=mapGeocodeCache[normalise(labelB||"")];
+  const ca=typeof a==="object"&&a&&a.location_lat!=null&&a.location_lon!=null
+    ?{lat:a.location_lat,lon:a.location_lon}:cachedA;
+  const cb=typeof b==="object"&&b&&b.location_lat!=null&&b.location_lon!=null
+    ?{lat:b.location_lat,lon:b.location_lon}:cachedB;
   if(!ca||!cb||!Number.isFinite(Number(ca.lat))||!Number.isFinite(Number(ca.lon))||!Number.isFinite(Number(cb.lat))||!Number.isFinite(Number(cb.lon)))return null;
   const miles=distanceMiles(Number(ca.lat),Number(ca.lon),Number(cb.lat),Number(cb.lon));
   const rounded=Math.max(0,Math.round(miles));
@@ -2160,7 +2166,7 @@ function renderMatches(){
     const reasonsList=document.createElement("ul");
     reasonsList.className="match-reasons";
     const reasonItems=[["Animal type", "Both reports are for "+String(match.a.animal_type||"the same animal type")+"."]];
-    const placeCheck=locationProximityMatch(match.a.location_text,match.b.location_text) || locationMatch(match.a.location_text,match.b.location_text);
+    const placeCheck=locationProximityMatch(match.a,match.b) || locationMatch(match.a.location_text,match.b.location_text);
     if(placeCheck.reason)reasonItems.push(["Location",placeCheck.reason+"."]);
     else reasonItems.push(["Location","No clear location overlap detected. Compare the places manually."]);
     const dateCheck=dateMatch(match.a.date_seen,match.b.date_seen);
@@ -2216,7 +2222,7 @@ async function loadReports(){
   try{
     while(true){
       const {data,error}=await supabaseClient.from("animal_reports")
-        .select("id,report_type,animal_type,animal_name,description,location_text,date_seen,photo_url,status,owner_id,created_at")
+        .select("id,report_type,animal_type,animal_name,description,location_text,location_lat,location_lon,date_seen,photo_url,status,owner_id,created_at")
         .eq("status","active")
         .order("created_at",{ascending:false})
         .order("id",{ascending:false})
