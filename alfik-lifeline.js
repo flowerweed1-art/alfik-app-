@@ -31,7 +31,8 @@
       #lifelineView .ll-directory-tools{margin:12px 0}
       #lifelineView .ll-directory-actions{margin:10px 0}
       #lifelineView .ll-directory-actions button{flex:1 1 150px}
-      #lifelineView #llAreaPostcode,#lifelineView #llSupportFilter{width:100%;min-width:0}
+      #lifelineView #llAreaPostcode,#lifelineView #llSupportFilter,#lifelineView #llSituationFilter{width:100%;min-width:0}
+      #lifelineView .ll-relevance{display:inline-block;margin:0 0 8px;padding:4px 8px;border-radius:999px;background:#e4f1fb;color:#174e78;font-size:12px;font-weight:700}
       @media(max-width:520px){#lifelineView .ll-card{padding:12px}}
     `;
     document.head.appendChild(s);
@@ -105,6 +106,7 @@
         <div class="ll-grid ll-directory-tools">
           <div><label for="llAreaPostcode">UK postcode or area</label><input id="llAreaPostcode" maxlength="20" autocomplete="postal-code" placeholder="e.g. ME7 1AA or Maidstone"></div>
           <div><label for="llSupportFilter">Type of support</label><select id="llSupportFilter"><option value="">All types of support</option></select></div>
+          <div><label for="llSituationFilter">Prioritise help for</label><select id="llSituationFilter"><option value="">Any situation</option><option value="temporary-care">Emergency or temporary animal care</option><option value="food">Pet food or supplies</option><option value="vet">Veterinary costs or advice</option><option value="housing">Housing or homelessness</option><option value="domestic-abuse">Domestic abuse or personal safety</option><option value="illness">Illness or hospitalisation</option><option value="bereavement">Bereavement or owner incapacity</option><option value="avoid-surrender">Help to avoid surrender</option></select></div>
         </div>
         <div class="ll-actions ll-directory-actions">
           <button type="button" class="primary" id="llFindArea">Search directory</button>
@@ -127,6 +129,7 @@
     byId("llUseLocation").addEventListener("click",useDeviceLocation);
     byId("llClearArea").addEventListener("click",clearDirectorySearch);
     byId("llSupportFilter").addEventListener("change",renderServices);
+    byId("llSituationFilter").addEventListener("change",renderServices);
     section.addEventListener("click",handleAction);
     addStyles();
   }
@@ -233,8 +236,30 @@
     const box=byId("llServiceList"); if(!box)return;
     const area=(byId("llAreaPostcode")?.dataset.areaTerms||"").toLowerCase().split("|").filter(Boolean);
     const type=byId("llSupportFilter")?.value||"";
+    const situation=byId("llSituationFilter")?.value||"";
     const normalise=value=>String(value||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
     const nationalTags=new Set(["england","scotland","wales","northern ireland","united kingdom","uk","nationwide","national","uk wide","all england","england wide","scotland wide","wales wide"]);
+    const needs={
+      "temporary-care":{support:["temporary animal care","temporary fostering","fostering","emergency boarding","crisis care","pet fostering"],words:["temporary care","temporary foster","foster project","emergency care","crisis care","hospital","domestic abuse"]},
+      food:{support:["pet food or supplies","pet food","food bank","pet supplies"],words:["pet food","food bank","food support","pet supplies","foodbank"]},
+      vet:{support:["veterinary costs or advice","veterinary costs","veterinary advice","vet care","vet bills"],words:["veterinary","vet costs","vet bills","veterinary care","animal health"]},
+      housing:{support:["housing that accepts pets","housing advice","homelessness support","temporary animal care"],words:["housing","homeless","accommodation","tenancy","keeping pets"]},
+      "domestic-abuse":{support:["domestic abuse specialist support","domestic abuse fostering","temporary fostering","pet fostering"],words:["domestic abuse","domestic violence","refuge","women s aid","safe accommodation","foster project"]},
+      illness:{support:["temporary animal care","temporary fostering","pet fostering","crisis support"],words:["hospital","illness","medical","temporary care","foster","crisis support"]},
+      bereavement:{support:["bereavement or contingency planning","temporary animal care","rehoming advice"],words:["bereavement","owner incapacity","contingency","legacy","long term care","rehoming advice"]},
+      "avoid-surrender":{support:["advice to avoid surrender","rehoming advice","pet food or supplies","veterinary costs or advice","crisis support"],words:["avoid surrender","keep your pet","pet retention","crisis support","financial hardship","rehoming advice"]}
+    };
+    const scoreService=s=>{
+      if(!situation||!needs[situation])return 0;
+      const need=needs[situation];
+      const support=(s.support_types||[]).map(normalise);
+      const details=normalise([s.organisation_name,s.summary,s.eligibility,s.capacity_note,...(s.regions||[])].join(" "));
+      let score=0;
+      if(support.some(t=>need.support.some(k=>t.includes(normalise(k))||normalise(k).includes(t))))score+=8;
+      const hits=need.words.filter(k=>details.includes(normalise(k))).length;
+      score+=Math.min(hits,3)*2;
+      return score;
+    };
     const results=services.filter(s=>{
       const regions=(s.regions||[]).map(normalise).filter(Boolean);
       const areaMatch=!area.length||area.some(rawTerm=>{
@@ -245,8 +270,17 @@
       });
       const supportMatch=!type||(s.support_types||[]).some(t=>t===type);
       return areaMatch&&supportMatch;
-    });
-    box.innerHTML=results.length?results.map(s=>`<article class="ll-card"><h3>${esc(s.organisation_name)}</h3><p>${esc(s.summary)}</p><p><strong>Support:</strong> ${esc((s.support_types||[]).join(", ")||"Ask service")}</p><p><strong>Species:</strong> ${esc((s.species||[]).join(", ")||"Check directly")}</p><p><strong>Coverage:</strong> ${esc([...(s.countries||[]),...(s.regions||[])].join(", ")||"Check directly")}</p><p><strong>Eligibility:</strong> ${esc(s.eligibility)}</p><p class="ll-small">${esc(s.capacity_note)} ${s.verified_at?"Last verified: "+esc(new Date(s.verified_at).toLocaleDateString()):""}</p>${safeUrl(s.website)?'<p><a href="'+esc(safeUrl(s.website))+'" target="_blank" rel="noopener noreferrer">Visit official website</a></p>':""}<button type="button" class="secondary" data-ll-action="refer-service" data-id="${esc(s.id)}">Add to a help request</button></article>`).join(""):'<p class="ll-empty">No listings match those filters yet. Try a broader area or choose “All types of support”. You can also contact a service directly to ask whether it covers your area.</p>';
+    }).map(s=>({...s,_relevance:scoreService(s)})).sort((a,b)=>b._relevance-a._relevance||String(a.organisation_name||"").localeCompare(String(b.organisation_name||"")));
+    const suggested=results.filter(s=>s._relevance>0).length;
+    const note=byId("llAreaMessage");
+    if(note&&situation){
+      const label=byId("llSituationFilter")?.selectedOptions?.[0]?.textContent||"your situation";
+      const areaLabel=area.length?" in the selected area":"";
+      note.textContent=suggested
+        ? "Showing "+suggested+" suggested listing"+(suggested===1?"":"s")+" first for "+label.toLowerCase()+areaLabel+". Other matching listings remain below. Confirm eligibility and capacity directly."
+        : "No clear support-type match was found for that situation"+areaLabel+". All other listings matching your filters are still shown. Try another situation or support type.";
+    }
+    box.innerHTML=results.length?results.map(s=>'<article class="ll-card">'+(s._relevance>0?'<span class="ll-relevance">Suggested for your situation</span>':'')+'<h3>'+esc(s.organisation_name)+'</h3><p>'+esc(s.summary)+'</p><p><strong>Support:</strong> '+esc((s.support_types||[]).join(", ")||"Ask service")+'</p><p><strong>Species:</strong> '+esc((s.species||[]).join(", ")||"Check directly")+'</p><p><strong>Coverage:</strong> '+esc([...(s.countries||[]),...(s.regions||[])].join(", ")||"Check directly")+'</p><p><strong>Eligibility:</strong> '+esc(s.eligibility)+'</p><p class="ll-small">'+esc(s.capacity_note)+' '+(s.verified_at?"Listing marked verified: "+esc(new Date(s.verified_at).toLocaleDateString()):"")+'</p>'+(safeUrl(s.website)?'<p><a href="'+esc(safeUrl(s.website))+'" target="_blank" rel="noopener noreferrer">Visit official website</a></p>':"")+'<button type="button" class="secondary" data-ll-action="refer-service" data-id="'+esc(s.id)+'">Add to a help request</button></article>').join(""):'<p class="ll-empty">No listings match those filters yet. Try a broader area or choose “All types of support”. You can also contact a service directly to ask whether it covers your area.</p>';
   }
   async function searchDirectory() {
     const input=byId("llAreaPostcode"), raw=input.value.trim();
