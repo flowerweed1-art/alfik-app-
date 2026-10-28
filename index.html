@@ -735,17 +735,18 @@ footer{background:#f8fbfe}
   <select id="typeFilter"><option value="">Lost and found animals</option><option value="lost">Lost animals only</option><option value="found">Found animals only</option><option value="found_deceased">Animals found deceased</option></select>
 </details>
 <p id="searchStatus" class="note" role="status" aria-live="polite"></p>
-<h3>Animal reports</h3>
-<div id="reportsList" aria-live="polite">Loading reports...</div>
-<h3>Possible matches</h3>
-<p class="note">Suggestions based on animal type, location, descriptions and dates. These are not confirmed matches.</p>
-<div id="matchResults" aria-live="polite"></div>
 <div class="feature-panel" id="nearbyMapPanel">
   <h3>🗺️ Explore the map</h3>
   <p class="note" id="nearbyMapStatus" role="status" aria-live="polite">The map shows approximate report areas. You can use it without sharing your location.</p>
   <div id="animalReportsMap" role="application" aria-label="Map of approximate lost and found animal report locations" style="height:340px;min-height:260px;border-radius:12px;overflow:hidden;background:#eaf2f8"></div>
+  <button class="primary wide" id="loadReportsListBtn" type="button">📋 View reports as a list</button>
   <button class="secondary wide" id="showAllMapReportsBtn" type="button">Show all report locations</button>
 </div>
+<h3 id="animalReportsHeading">Animal reports</h3>
+<div id="reportsList" aria-live="polite">Loading reports...</div>
+<h3>Possible matches</h3>
+<p class="note">Suggestions based on animal type, location, descriptions and dates. These are not confirmed matches.</p>
+<div id="matchResults" aria-live="polite"></div>
 </section>
 
 <section id="myView" class="hidden">
@@ -2009,6 +2010,10 @@ function startNearbySearch(mode){
 
 document.querySelectorAll("[data-nearby-mode]").forEach(button=>{
   button.addEventListener("click",()=>startNearbySearch(button.dataset.nearbyMode));
+});
+$("loadReportsListBtn")?.addEventListener("click",()=>{
+  const heading=$("animalReportsHeading");
+  if(heading)heading.scrollIntoView({behavior:"smooth",block:"start"});
 });
 $("showAllMapReportsBtn")?.addEventListener("click",()=>{
   mapViewMode="all";mapUserLocation=null;
