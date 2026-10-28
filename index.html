@@ -2133,7 +2133,7 @@ function renderMatches(){
     const nameB=normalise(match.b.animal_name||"");
     if(nameA&&nameB&&nameA===nameB)reasonItems.push(["Name","Both reports use the name "+(match.a.animal_name||"")+"."]);
     const wordsA=new Set(matchWords(match.a.description||""));
-    const wordsB=new Set(match.b.description||"");
+    const wordsB=new Set(matchWords(match.b.description||""));
     const sharedDetails=[...wordsA].filter(word=>wordsB.has(word));
     if(sharedDetails.length)reasonItems.push(["Description details","Shared words: "+sharedDetails.slice(0,8).join(", ")+"."]);
     else reasonItems.push(["Description details","No shared descriptive words detected. Compare colour, markings, size and other details yourself."]);
