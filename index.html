@@ -486,6 +486,28 @@ footer{background:#f8fbfe}
 .my-reports-shortcut button{flex:0 0 auto;min-height:48px;padding:12px 17px;white-space:nowrap}
 @media(max-width:560px){.my-reports-shortcut{align-items:stretch;flex-direction:column;gap:13px;margin:16px 0 22px;padding:15px}.my-reports-shortcut button{width:100%;white-space:normal}.my-reports-shortcut h3{font-size:16px}.my-reports-shortcut p{font-size:13px}}
 </style>
+<style id="alfik-simple-lost-found-styles">
+.report-intro{margin-bottom:18px;color:#506a80}
+.report-choice-card{display:flex;align-items:center;gap:13px;margin:12px 0;padding:16px;border:1px solid #d3e3f0;border-radius:15px;background:#fff}
+.report-choice-symbol{display:flex;align-items:center;justify-content:center;flex:0 0 44px;height:44px;border-radius:12px;background:#edf6ff;font-size:23px}
+.report-choice-card>div{flex:1;min-width:0}
+.report-choice-card h3{margin:0 0 4px;font-size:17px;color:#163c5c}
+.report-choice-card p{margin:0;font-size:13px;line-height:1.4;color:#526b7e}
+.report-choice-card button{flex:0 0 auto;min-height:46px}
+.report-choice-lost{border-left:4px solid #c43d46}
+.report-choice-found{border-left:4px solid #328263}
+.report-other-choice,.advanced-search-options{margin:16px 0;padding:13px 15px;border:1px solid #d3e3f0;border-radius:13px;background:#f8fbfe}
+.report-other-choice summary,.advanced-search-options summary{cursor:pointer;font-weight:700;color:#174a73;padding:3px;min-height:30px}
+.report-other-choice button{margin-top:10px}
+.search-quick-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
+.search-quick-choices button{min-height:52px;border-radius:12px;font-weight:700}
+.quick-filter-lost{background:#fff1f1;color:#a82e39;border:1px solid #efc1c5}
+.quick-filter-found{background:#eaf7f0;color:#236c50;border:1px solid #b8dfc9}
+.advanced-search-options label{display:block;margin-top:12px}
+#reportsView>#reportsList{margin-bottom:24px}
+#reportsView>#nearbyMapPanel{margin-top:28px}
+@media(max-width:520px){.report-choice-card{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:13px}.report-choice-card button{grid-column:1/-1;width:100%}.search-quick-choices{gap:8px}.search-quick-choices button{font-size:13px;padding:10px 7px}}
+</style>
 </head>
 <body>
 <header>
@@ -639,10 +661,21 @@ footer{background:#f8fbfe}
 
 <section id="reportView" class="hidden">
 <h2 id="reportHeading">Report an animal</h2>
-<p>Choose the report type.</p>
-<button class="lost wide" type="button" onclick="startNewReport('lost')">🔴 Report a Lost Animal</button>
-<button class="found wide" type="button" onclick="startNewReport('found')">🟢 Report a Found Animal</button>
-<button class="deceased wide" type="button" onclick="startNewReport('found_deceased')">⚪ Report an Animal Found Deceased</button>
+<p class="report-intro">Choose the option that best describes what happened. We'll guide you through the details.</p>
+<div class="report-choice-card report-choice-lost">
+  <span class="report-choice-symbol" aria-hidden="true">🔴</span>
+  <div><h3>My animal is missing</h3><p>Tell the community who you're looking for.</p></div>
+  <button class="lost" type="button" onclick="startNewReport('lost')">Report missing</button>
+</div>
+<div class="report-choice-card report-choice-found">
+  <span class="report-choice-symbol" aria-hidden="true">🟢</span>
+  <div><h3>I've found an animal</h3><p>Help reunite an animal with their person.</p></div>
+  <button class="found" type="button" onclick="startNewReport('found')">Report found</button>
+</div>
+<details class="report-other-choice">
+  <summary>Another situation?</summary>
+  <button class="deceased wide" type="button" onclick="startNewReport('found_deceased')">⚪ Report an animal found deceased</button>
+</details>
 <form id="reportForm" class="hidden">
 <label for="animal">Animal type</label>
 <select id="animal" required>
@@ -673,28 +706,35 @@ footer{background:#f8fbfe}
 </section>
 
 <section id="reportsView" class="hidden">
-<h2>Find an animal</h2>
-<p>Search reports of lost and found animals. If you are worried or upset, start with the option above that best matches your situation.</p>
-<label for="searchInput">Name, town, area or details</label>
-<input id="searchInput" type="search" placeholder="Try a town, street, colour or animal name" autocomplete="off">
-<label for="animalFilter">Animal type</label>
-<select id="animalFilter"><option value="">All animals</option><option value="cat">Cats</option><option value="dog">Dogs</option><option value="other">Other animals</option></select>
-<label for="typeFilter">Show me</label>
-<select id="typeFilter"><option value="">Lost and found animals</option><option value="lost">Lost animals only</option><option value="found">Found animals only</option><option value="found_deceased">Animals found deceased</option></select>
-<button class="primary wide" id="searchBtn" type="button">Search animals</button>
-<button class="secondary wide" id="clearBtn" type="button">Clear search</button>
-<div class="feature-panel" id="nearbyMapPanel">
-  <h3>🗺️ Nearby animal reports</h3>
-  <p class="note" id="nearbyMapStatus" role="status" aria-live="polite">Choose a homepage shortcut or explore the map to view approximate report locations.</p>
-  <div id="animalReportsMap" role="application" aria-label="Map of approximate lost and found animal report locations" style="height:340px;min-height:260px;border-radius:12px;overflow:hidden;background:#eaf2f8"></div>
-  <button class="secondary wide" id="showAllMapReportsBtn" type="button">Show all report locations</button>
+<h2>Find a missing or found animal</h2>
+<p>Start with a town, area, colour or animal type. You don't need to know every detail.</p>
+<div class="search-quick-choices" aria-label="Choose which reports to see">
+  <button class="quick-filter quick-filter-lost" type="button" data-set-report-filter="lost">🔴 Missing animals</button>
+  <button class="quick-filter quick-filter-found" type="button" data-set-report-filter="found">🟢 Found animals</button>
 </div>
+<label for="searchInput">Search by name, place or description</label>
+<input id="searchInput" type="search" placeholder="e.g. Kirkcaldy, black cat, Luna" autocomplete="off">
+<button class="primary wide" id="searchBtn" type="button">Search animals</button>
+<button class="secondary wide" id="clearBtn" type="button">Show all animals / clear search</button>
+<details class="advanced-search-options">
+  <summary>More search options</summary>
+  <label for="animalFilter">Animal type</label>
+  <select id="animalFilter"><option value="">All animals</option><option value="cat">Cats</option><option value="dog">Dogs</option><option value="other">Other animals</option></select>
+  <label for="typeFilter">Show me</label>
+  <select id="typeFilter"><option value="">Lost and found animals</option><option value="lost">Lost animals only</option><option value="found">Found animals only</option><option value="found_deceased">Animals found deceased</option></select>
+</details>
 <p id="searchStatus" class="note" role="status" aria-live="polite"></p>
+<h3>Animal reports</h3>
+<div id="reportsList" aria-live="polite">Loading reports...</div>
 <h3>Possible matches</h3>
 <p class="note">Suggestions based on animal type, location, descriptions and dates. These are not confirmed matches.</p>
 <div id="matchResults" aria-live="polite"></div>
-<h3>Animal reports</h3>
-<div id="reportsList" aria-live="polite">Loading reports...</div>
+<div class="feature-panel" id="nearbyMapPanel">
+  <h3>🗺️ Explore the map</h3>
+  <p class="note" id="nearbyMapStatus" role="status" aria-live="polite">The map shows approximate report areas. You can use it without sharing your location.</p>
+  <div id="animalReportsMap" role="application" aria-label="Map of approximate lost and found animal report locations" style="height:340px;min-height:260px;border-radius:12px;overflow:hidden;background:#eaf2f8"></div>
+  <button class="secondary wide" id="showAllMapReportsBtn" type="button">Show all report locations</button>
+</div>
 </section>
 
 <section id="myView" class="hidden">
