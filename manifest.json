@@ -15,6 +15,12 @@
   "theme_color": "#0d2f50",
   "icons": [
     {
+      "src": "/icons/alfik-brand.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
       "src": "/icons/alfik-192.png",
       "sizes": "192x192",
       "type": "image/png",
