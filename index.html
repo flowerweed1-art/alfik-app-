@@ -632,8 +632,8 @@ footer{background:#f8fbfe}
 <div class="feature-panel" id="nearbyAnimalsPanel">
   <h3>🐾 Animals near me</h3>
   <p>Quickly explore lost cats and found animals in your area. Your location is only used if you choose to share it.</p>
-  <button class="primary wide" type="button" data-nearby-mode="lost-cat">🐈 Lost cats near me</button>
-  <button class="secondary wide" type="button" data-nearby-mode="found">🔎 Found animals near me</button>
+  <button class="primary wide" type="button" data-nearby-mode="lost">🔴 Lost animals near me</button>
+  <button class="secondary wide" type="button" data-nearby-mode="found">🟢 Found animals near me</button>
   <button class="secondary wide" type="button" data-nearby-mode="all">🗺️ Explore all reports on the map</button>
   <p class="note">Map pins show approximate report areas, not exact addresses. You can use the map without sharing your location.</p>
 </div>
@@ -1885,7 +1885,7 @@ function distanceMiles(lat1,lon1,lat2,lon2){
 
 function getMapReports(){
   let reports=activeReports.filter(r=>r.status==="active"&&(r.report_type==="lost"||r.report_type==="found"));
-  if(mapViewMode==="lost-cat")reports=reports.filter(r=>r.report_type==="lost"&&r.animal_type==="cat");
+  if(mapViewMode==="lost")reports=reports.filter(r=>r.report_type==="lost");
   if(mapViewMode==="found")reports=reports.filter(r=>r.report_type==="found");
   // Geocode first, then apply the nearby radius. Filtering here would hide
   // every report on a first visit before its location has been looked up.
@@ -1976,7 +1976,7 @@ async function renderAnimalReportsMap(){
     animalReportsMap.setView([55.95,-3.2],5);
   }
   const shown=visibleCandidates.length;
-  const modeText=mapViewMode==="lost-cat"?"lost cats":mapViewMode==="found"?"found animals":"active lost/found reports";
+  const modeText=mapViewMode==="lost"?"lost animals":mapViewMode==="found"?"found animals":"active lost/found reports";
   status.textContent=shown+" "+modeText+" mapped approximately"+(mapUserLocation?" within 30 miles of your shared location":"")+". "+(candidates.length-shown>0?(candidates.length-shown)+" report(s) could not be mapped, were outside your radius, or were beyond the 12-location map limit.":"");
   if(mapUserLocation)applyFilters();
 }
@@ -1989,8 +1989,8 @@ function startNearbySearch(mode){
   mapViewMode=mode;
   mapUserLocation=null;
   $("searchInput").value="";
-  $("animalFilter").value=mode==="lost-cat"?"cat":"";
-  $("typeFilter").value=mode==="lost-cat"?"lost":mode==="found"?"found":"";
+  $("animalFilter").value="";
+  $("typeFilter").value=mode==="lost"?"lost":mode==="found"?"found":"";
   showView("reportsView");
   if(navigator.geolocation&&mode!=="all"){
     $("nearbyMapStatus").textContent="You can allow location access to filter reports within 30 miles, or continue with all matching reports.";
