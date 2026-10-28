@@ -487,8 +487,6 @@ footer{background:#f8fbfe}
 
 /* ALFIK compact pet profiles page: keep management tools out of the main view */
 #petsView #petMessage ~ .feature-panel{display:none!important}
-/* The vaccination tracker is an intentional visible pet-care tool. Use higher specificity than the compact-view hiding rule above. */
-#petsView #petMessage ~ div#vaccinationTrackerPanel{display:block!important}
 </style>
 
 <style id="alfik-share-studio-styles">
@@ -3060,7 +3058,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261028-smarter-matching-1"></script>
+<script src="alfik-extension.js?v=20261028-pet-care-details-1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
 /* Register ALFIK's service worker where supported. */
