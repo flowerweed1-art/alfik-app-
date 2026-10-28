@@ -2286,7 +2286,6 @@ if (el("rescueCareType")) el("rescueCareType").addEventListener("change", () => 
 });
 if (el("saveMedicationBtn")) el("saveMedicationBtn").addEventListener("click", saveMedication);
 if (el("refreshCareNotificationsBtn")) el("refreshCareNotificationsBtn").addEventListener("click", loadCareNotifications);
-if (el("headerNotificationBell")) el("headerNotificationBell").addEventListener("click", () => { loadCareNotifications(); });
 if (el("saveCareBtn")) el("saveCareBtn").addEventListener("click", saveCareSchedule);
 if (el("saveRescueCareBtn")) el("saveRescueCareBtn").addEventListener("click", saveRescueCareSchedule);
 
@@ -2370,7 +2369,12 @@ function ensureAlfikPushPanel() {
       setTimeout(() => {
         if (session && session.user) {
           syncAlfikPushForSignedInUser(false);
+          if (window.refreshAlfikNotificationBadge) window.refreshAlfikNotificationBadge();
         } else {
+          const bell = el("headerNotificationBell");
+          const badge = el("headerNotificationCount");
+          if (bell) bell.classList.add("hidden");
+          if (badge) badge.classList.add("hidden");
           const status = el("alfikPushMessage");
           if (status) status.textContent = "Sign in to set up phone notifications.";
         }
@@ -2379,6 +2383,7 @@ function ensureAlfikPushPanel() {
   }
 
   syncAlfikPushForSignedInUser(false);
+  if (window.refreshAlfikNotificationBadge) window.refreshAlfikNotificationBadge();
 }
 
 async function syncAlfikPushForSignedInUser(requestPermission) {
