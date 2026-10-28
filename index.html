@@ -112,6 +112,7 @@ p{margin-top:8px}
 input,select,textarea{min-height:46px;border:1px solid #c6d6e3;border-radius:10px;padding:12px 13px}
 textarea{min-height:110px}
 label{font-size:14px;color:#29465e}
+.field-help{font-size:13px;color:#526b80;margin:2px 0 7px;line-height:1.5}.report-intro{max-width:650px}.report-choice-card{margin-bottom:12px}
 .badge{padding:5px 10px;letter-spacing:.2px}
 .premium-promo{border:1px solid #9bc7e8;border-top:4px solid var(--alfik-blue);border-radius:16px;background:linear-gradient(135deg,#eaf5ff 0%,#fff 78%);box-shadow:0 8px 24px #1769aa12;padding:18px}
 .premium-promo h3{font-size:20px;color:var(--alfik-navy)}
@@ -676,25 +677,32 @@ footer{background:#f8fbfe}
   <summary>Another situation?</summary>
   <button class="deceased wide" type="button" onclick="startNewReport('found_deceased')">⚪ Report an animal found deceased</button>
 </details>
+<div id="reportFormIntro" class="feature-panel hidden" aria-live="polite">
+  <h3 id="reportFormIntroHeading">Let's get the important details down</h3>
+  <p id="reportFormIntroText">You only need a few key details to get started. Add anything else that could help someone recognise the animal.</p>
+  <p class="note">Fields marked as required must be completed. A photo is helpful, but optional.</p>
+</div>
 <form id="reportForm" class="hidden">
-<label for="animal">Animal type</label>
+<label for="animal">What kind of animal?</label>
 <select id="animal" required>
-<option value="">Choose an animal</option><option value="cat">Cat</option><option value="dog">Dog</option><option value="other">Other</option>
+<option value="">Choose an animal</option><option value="cat">Cat</option><option value="dog">Dog</option><option value="other">Other animal</option>
 </select>
-<label for="animalName">Animal's name, if known</label>
+<label for="animalName">Name, if known (optional)</label>
 <input id="animalName" maxlength="100" placeholder="e.g. Luna">
-<label for="description">Description</label>
-<textarea id="description" rows="4" maxlength="4000" required placeholder="Colour, breed, collar and identifying details"></textarea>
-<label for="location">Town or general location</label>
-<input id="location" maxlength="250" required placeholder="Town or general location">
-<label for="dateSeen">Date last seen or found</label>
+<label for="description">What does the animal look like? *</label>
+<p class="field-help" id="descriptionHelp">Include colour, size, breed, collar, markings or anything distinctive. Short notes are fine.</p>
+<textarea id="description" aria-describedby="descriptionHelp" rows="4" maxlength="4000" required placeholder="e.g. Small black cat, white chest, green collar"></textarea>
+<label for="location" id="locationLabel">Where was the animal last seen? *</label>
+<p class="field-help" id="locationHelp">A town, neighbourhood or nearby landmark is enough. Please don't add your home address.</p>
+<input id="location" maxlength="250" required placeholder="e.g. Kirkcaldy, near the high street" aria-describedby="locationHelp">
+<label for="dateSeen" id="dateSeenLabel">When was the animal last seen? *</label>
 <input id="dateSeen" type="date" required>
-<label for="photo">Animal photo (optional)</label>
+<label for="photo">Add a photo (optional)</label>
 <input id="photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
-<p class="note">JPG, PNG or WebP, maximum 5 MB. Photos are publicly viewable with the report.</p>
+<p class="note">A clear photo can help with recognition. JPG, PNG or WebP, maximum 5 MB. Photos are publicly viewable with the report.</p>
 <img id="photoPreview" class="animal-photo hidden" alt="Selected photo preview">
 <button id="removePhotoBtn" class="secondary wide hidden" type="button">Remove selected photo</button>
-<button id="submitReportBtn" class="primary wide" type="submit">Publish report</button>
+<button id="submitReportBtn" class="primary wide" type="submit">Publish missing-animal report</button>
 <button id="cancelReportBtn" class="secondary wide" type="button">Cancel</button>
 </form>
 <p id="reportMessage" class="message" role="status"></p>
@@ -1258,6 +1266,54 @@ function showReportAdvicePanel(report){
   panel.classList.remove("hidden");
 }
 
+function setReportFormCopy(type){
+  const intro=$("reportFormIntro");
+  const heading=$("reportFormIntroHeading");
+  const introText=$("reportFormIntroText");
+  const locationLabel=$("locationLabel");
+  const locationHelp=$("locationHelp");
+  const locationInput=$("location");
+  const dateLabel=$("dateSeenLabel");
+  const description=$("description");
+  const descriptionHelp=$("descriptionHelp");
+  const button=$("submitReportBtn");
+  const nameLabel=document.querySelector('label[for="animalName"]');
+  if(type==="found"){
+    heading.textContent="Help this animal get home";
+    introText.textContent="Share what you know so their person can recognise them. If you're unsure of a detail, just say what you observed.";
+    locationLabel.textContent="Where did you find the animal? *";
+    locationHelp.textContent="A town, neighbourhood or nearby landmark is enough. Don't put your own home address.";
+    locationInput.placeholder="e.g. Leven, near the shops";
+    dateLabel.textContent="When did you find the animal? *";
+    description.placeholder="e.g. Brown dog, red collar, friendly, found near the park";
+    descriptionHelp.textContent="Describe colour, size, markings, collar and where the animal was. Only include details you're comfortable sharing publicly.";
+    button.textContent="Publish found-animal report";
+    if(nameLabel)nameLabel.textContent="Name, if known (optional)";
+  }else if(type==="found_deceased"){
+    heading.textContent="Share the details sensitively";
+    introText.textContent="A clear location and description can help an owner identify their animal. Please keep the description respectful and factual.";
+    locationLabel.textContent="Where was the animal found? *";
+    locationHelp.textContent="A town, road or nearby landmark is helpful. Avoid adding private contact details.";
+    locationInput.placeholder="e.g. A road or nearby landmark";
+    dateLabel.textContent="When was the animal found? *";
+    description.placeholder="Describe the animal, markings, collar and exact general location";
+    descriptionHelp.textContent="Include colour, size, markings or collar. Keep the description factual and avoid graphic detail.";
+    button.textContent="Publish found-animal report";
+    if(nameLabel)nameLabel.textContent="Name, if known (optional)";
+  }else{
+    heading.textContent="Let's help bring your animal home";
+    introText.textContent="Start with the details people can recognise. You don't need to write a perfect description, and you can add a photo if you have one.";
+    locationLabel.textContent="Where was your animal last seen? *";
+    locationHelp.textContent="A town, neighbourhood or nearby landmark is enough. Please don't add your home address.";
+    locationInput.placeholder="e.g. Kirkcaldy, near the high street";
+    dateLabel.textContent="When was your animal last seen? *";
+    description.placeholder="e.g. Small black cat, white chest, green collar";
+    descriptionHelp.textContent="Include colour, size, breed, collar, markings or anything distinctive. Short notes are fine.";
+    button.textContent="Publish missing-animal report";
+    if(nameLabel)nameLabel.textContent="Your animal's name (optional)";
+  }
+  intro.classList.remove("hidden");
+}
 function startNewReport(type){
   $("reportAdvicePanel")?.classList.add("hidden");
   editingReportId=null;
@@ -1266,9 +1322,10 @@ function startNewReport(type){
   reportStatus=type;
   reportForm.reset();
   resetPhoto();
+  setReportFormCopy(type);
   reportForm.classList.remove("hidden");
-  $("reportHeading").textContent="Create a new report";
-  $("submitReportBtn").textContent="Publish report";
+  $("reportHeading").textContent=type==="found"?"Report a found animal":type==="found_deceased"?"Report an animal found deceased":"Report a missing animal";
+  $("submitReportBtn").textContent=type==="found"?"Publish found-animal report":type==="found_deceased"?"Publish found-animal report":"Publish missing-animal report";
   message("reportMessage","");
   showView("reportView");
   reportForm.scrollIntoView({behavior:"smooth",block:"start"});
@@ -1279,6 +1336,7 @@ function editReport(report){
   editingPhotoUrl=report.photo_url||null;
   editingOriginalStatus=report.status||"active";
   reportStatus=report.report_type;
+  setReportFormCopy(report.report_type);
   $("animal").value=report.animal_type||"";
   $("animalName").value=report.animal_name||"";
   $("description").value=report.description||"";
