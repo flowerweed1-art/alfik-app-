@@ -487,8 +487,8 @@ footer{background:#f8fbfe}
 
 /* ALFIK compact pet profiles page: keep management tools out of the main view */
 #petsView #petMessage ~ .feature-panel{display:none!important}
-/* The vaccination tracker is an intentional visible pet-care tool. */
-#petsView #vaccinationTrackerPanel{display:block!important}
+/* The vaccination tracker is an intentional visible pet-care tool. Use higher specificity than the compact-view hiding rule above. */
+#petsView #petMessage ~ div#vaccinationTrackerPanel{display:block!important}
 </style>
 
 <style id="alfik-share-studio-styles">
