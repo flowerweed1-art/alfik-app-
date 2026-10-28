@@ -254,7 +254,7 @@
         const json=await response.json();
         if(!response.ok||!json.result)throw new Error("That postcode could not be found. Check it and try again, or enter a town or area.");
         const p=json.result;
-        const terms=[p.admin_district,p.admin_county,p.region,p.country,p.parliamentary_constituency].filter(Boolean);
+        const terms=[p.admin_district,p.admin_county,p.region,p.parliamentary_constituency].filter(Boolean);
         input.dataset.areaTerms=[...new Set(terms.map(t=>String(t).toLowerCase()))].join("|");
         msg("llAreaMessage","Searching around "+p.postcode+" ("+[p.admin_district,p.region,p.country].filter(Boolean).join(", ")+"). Results depend on each service’s listed coverage.");
       } else {
