@@ -331,14 +331,11 @@ async function markPetMissingReportFound(pet, report) {
     return;
   }
   try {
-    const result = await db.from("animal_reports")
-      .update({ status: "resolved" })
-      .eq("id", report.id)
-      .eq("owner_id", user.id)
-      .select("id")
-      .maybeSingle();
+    const result = await db.rpc("alfik_mark_own_report_resolved", {
+      p_report_id: String(report.id)
+    });
     if (result.error) throw result.error;
-    if (!result.data) throw new Error("The report was not updated. Please refresh and try again.");
+    if (result.data !== true) throw new Error("The report was not updated. It may already be resolved, or it may not belong to this account.");
     say("petMessage", petName + " is marked as found. The missing report has been marked resolved, and the pet profile is still saved. 💙");
     await loadPetWorkspace();
   } catch (error) {
