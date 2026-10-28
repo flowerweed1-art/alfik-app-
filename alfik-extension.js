@@ -336,7 +336,7 @@ async function markPetMissingReportFound(pet, report) {
     });
     if (result.error) throw result.error;
     if (result.data !== true) throw new Error("The report was not updated. It may already be resolved, or it may not belong to this account.");
-    say("petMessage", petName + " is marked as found. The missing report has been marked resolved, and the pet profile is still saved. 💙");
+    say("petMessage", petName + " is marked as found. The missing report has been marked reunited, and the pet profile is still saved. 💙");
     await loadPetWorkspace();
   } catch (error) {
     say("petMessage", "Could not mark " + petName + " as found: " + readableError(error));
@@ -710,10 +710,10 @@ try {
         missingStatus.textContent = "🚨 Reported missing · Active community report";
         missingStatus.style.cssText = "padding:10px 12px;border-radius:10px;background:#fff1f0;border:1px solid #efb2ad;color:#8e2424;font-weight:700";
         item.appendChild(missingStatus);
-      } else if (previousMissingReport && previousMissingReport.status === "resolved") {
+      } else if (previousMissingReport && ["resolved", "reunited", "closed"].includes(previousMissingReport.status)) {
         const safeStatus = document.createElement("p");
         safeStatus.className = "pet-missing-status";
-        safeStatus.textContent = "🟢 Previously reported missing · Report marked resolved / reunited";
+        safeStatus.textContent = "🟢 Previously reported missing · Marked found / reunited";
         safeStatus.style.cssText = "padding:10px 12px;border-radius:10px;background:#effaf2;border:1px solid #b9dfc2;color:#216b36;font-weight:700";
         item.appendChild(safeStatus);
       }
