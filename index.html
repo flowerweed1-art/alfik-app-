@@ -804,6 +804,15 @@ footer{background:#f8fbfe}
 <section id="adminView" class="hidden">
 <h2>ALFIK Admin Tools</h2>
 <p class="note">Administrator controls appear only when Supabase confirms that your signed-in account is authorised.</p>
+<div class="feature-panel hidden" id="animalReportsAdminPanel">
+<h3>Lost &amp; Found Report Management</h3>
+<p>Review all lost, found and found-deceased animal reports. Only authorised administrators can access this list or delete reports.</p>
+<label for="animalReportsAdminSearch">Search reports</label>
+<input id="animalReportsAdminSearch" type="search" placeholder="Animal, location, status or owner ID">
+<button class="secondary" id="refreshAnimalReportsAdminBtn" type="button">Refresh animal reports</button>
+<p id="animalReportsAdminMessage" class="message" role="status"></p>
+<div id="animalReportsAdminQueue">Checking administrator access...</div>
+</div>
 <div class="feature-panel hidden" id="verificationAdminPanel">
 <h3>ALFIK administrator: verification reviews</h3>
 <p>Only authorised ALFIK administrators can approve or reject rescue organisations.</p>
@@ -2667,7 +2676,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261027-report-missing-from-pet-profile-1"></script>
+<script src="alfik-extension.js?v=20261028-admin-animal-reports-1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
 /* Register ALFIK's service worker where supported. */
