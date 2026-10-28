@@ -281,7 +281,8 @@
   }
   async function loadOrganisationTools() {
     const d=db(); if(!d)return;
-    const {data:userData}=await d.auth.getUser(); const user=userData&&userData.user;
+    const {data:userData}=await d.auth.getUser();
+    const user=userData&&userData.user;
     if(!user)return;
     const existing=byId("llOrgExisting");
     if(existing){
@@ -289,15 +290,30 @@
       existing.innerHTML='<option value="">Choose a listing to request</option>'+services.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.organisation_name)+'</option>').join("");
       if(services.some(s=>s.id===selected))existing.value=selected;
     }
-    const {data:requests,error}=await d.from("alfik_lifeline_org_requests").select("*").order("created_at",{ascending:false});
+    const {data:requests,error:requestError}=await d.from("alfik_lifeline_org_requests").select("*").order("created_at",{ascending:false});
     const requestBox=byId("llOrgRequestList");
-    if(requestBox)requestBox.innerHTML=error?'<p class="ll-small">Request history is unavailable until the organisation-claims SQL setup has been run.</p>':(requests||[]).length?'<h4>Your approval requests</h4>'+(requests||[]).map(r=>'<div class="ll-card"><strong>'+esc(r.organisation_name)+'</strong><p>Status: <strong>'+esc(r.status)+'</strong></p><p class="ll-small">'+(r.request_type==="claim_existing"?"Request to manage an existing listing":"New listing request")+' · Submitted '+esc(new Date(r.created_at).toLocaleDateString())+'</p>'+(r.review_notes?'<p><strong>Review notes:</strong> '+esc(r.review_notes)+'</p>':"")+'</div>').join(""):'<p class="ll-small">You have not submitted an organisation request yet.</p>';
+    if(requestBox){
+      if(requestError) requestBox.innerHTML='<p class="ll-small">Request history is unavailable until the organisation-claims SQL setup has been run.</p>';
+      else if(!(requests||[]).length) requestBox.innerHTML='<p class="ll-small">You have not submitted an organisation request yet.</p>';
+      else {
+        const cards=(requests||[]).map(r=>{
+          const kind=r.request_type==="claim_existing"?"Request to manage an existing listing":"New listing request";
+          const notes=r.review_notes?'<p><strong>Review notes:</strong> '+esc(r.review_notes)+'</p>':"";
+          return '<div class="ll-card"><strong>'+esc(r.organisation_name)+'</strong><p>Status: <strong>'+esc(r.status)+'</strong></p><p class="ll-small">'+kind+' · Submitted '+esc(new Date(r.created_at).toLocaleDateString())+'</p>'+notes+'</div>';
+        });
+        requestBox.innerHTML='<h4>Your approval requests</h4>'+cards.join("");
+      }
+    }
     const {data:listings,error:listError}=await d.from("alfik_lifeline_services").select("*").eq("claimed_by",user.id).order("organisation_name");
     const owned=byId("llOrgOwnedListings");
     if(!owned)return;
     if(listError){owned.innerHTML='<p class="ll-small">Your managed listings are unavailable until the organisation-claims SQL setup has been run.</p>';return;}
     const rows=listings||[];
-    owned.innerHTML='<h4>Your managed directory listings</h4>'+(rows.length?rows.map(s=>'<form class="ll-card" data-ll-org-edit="'+esc(s.id)+'"><strong>'+esc(s.organisation_name)+'</strong><p>Status: <strong>'+esc(s.verification_status)+'</strong>. '+(s.verification_status==="verified"?"Visible in the directory.":"Not visible to the public until ALFIK verifies it.")+'</p><label>Organisation name</label><input name="organisation_name" maxlength="180" required value="'+esc(s.organisation_name)+'"><label>Official website</label><input name="website" maxlength="500" value="'+esc(s.website||"")+'"><label>Public contact</label><input name="public_contact" maxlength="250" value="'+esc(s.public_contact||"")+'"><label>Summary</label><textarea name="summary" maxlength="2000" rows="3">'+esc(s.summary||"")+'</textarea><label>Countries (comma-separated)</label><input name="countries" value="'+esc((s.countries||[]).join(", "))+'"><label>Regions (comma-separated)</label><input name="regions" value="'+esc((s.regions||[]).join(", "))+'"><label>Species (comma-separated)</label><input name="species" value="'+esc((s.species||[]).join(", "))+'"><label>Support types (comma-separated)</label><input name="support_types" value="'+esc((s.support_types||[]).join(", "))+'"><label>Eligibility</label><textarea name="eligibility" rows="2" maxlength="1200">'+esc(s.eligibility||"")+'</textarea><label>Referral method</label><input name="referral_method" maxlength="500" value="'+esc(s.referral_method||"")+'"><label>Capacity / availability note</label><input name="capacity_note" maxlength="1000" value="'+esc(s.capacity_note||"")+'"><button class="primary" type="submit">Save listing changes</button><p class="message" role="status"></p></form>').join(""):'<p class="ll-small">No listings have been linked to your account yet. Submit a claim or new listing request above.</p>';
+    if(!rows.length){owned.innerHTML='<h4>Your managed directory listings</h4><p class="ll-small">No listings have been linked to your account yet. Submit a claim or new listing request above.</p>';return;}
+    owned.innerHTML='<h4>Your managed directory listings</h4>'+rows.map(s=>{
+      const visibility=s.verification_status==="verified"?"Visible in the directory.":"Not visible in the directory until ALFIK verifies it.";
+      return '<form class="ll-card" data-ll-org-edit="'+esc(s.id)+'"><strong>'+esc(s.organisation_name)+'</strong><p>Status: <strong>'+esc(s.verification_status)+'</strong>. '+visibility+'</p><label>Organisation name</label><input name="organisation_name" maxlength="180" required value="'+esc(s.organisation_name)+'"><label>Official website</label><input name="website" maxlength="500" value="'+esc(s.website||"")+'"><label>Public contact</label><input name="public_contact" maxlength="250" value="'+esc(s.public_contact||"")+'"><label>Summary</label><textarea name="summary" maxlength="2000" rows="3">'+esc(s.summary||"")+'</textarea><label>Countries (comma-separated)</label><input name="countries" value="'+esc((s.countries||[]).join(", "))+'"><label>Regions (comma-separated)</label><input name="regions" value="'+esc((s.regions||[]).join(", "))+'"><label>Species (comma-separated)</label><input name="species" value="'+esc((s.species||[]).join(", "))+'"><label>Support types (comma-separated)</label><input name="support_types" value="'+esc((s.support_types||[]).join(", "))+'"><label>Eligibility</label><textarea name="eligibility" rows="2" maxlength="1200">'+esc(s.eligibility||"")+'</textarea><label>Referral method</label><input name="referral_method" maxlength="500" value="'+esc(s.referral_method||"")+'"><label>Capacity / availability note</label><input name="capacity_note" maxlength="1000" value="'+esc(s.capacity_note||"")+'"><button class="primary" type="submit">Save listing changes</button><p class="message" role="status"></p></form>';
+    }).join("");
     owned.querySelectorAll("form[data-ll-org-edit]").forEach(form=>form.addEventListener("submit",saveOwnedListing));
   }
   async function saveOwnedListing(event) {
