@@ -88,8 +88,8 @@ begin
       || ': ' || v.vaccine_name || ' is due on ' || v.next_due_date::text
       || '. Please check with your veterinary practice. Vaccination record: ' || v.id::text || '.';
 
-    insert into public.alfik_in_app_notifications (user_id, title, body, due_date)
-    select v.owner_id, alert_title, alert_body, v.next_due_date
+    insert into public.alfik_in_app_notifications (user_id, title, body)
+    select v.owner_id, alert_title, alert_body
     where not exists (
       select 1
       from public.alfik_in_app_notifications n
