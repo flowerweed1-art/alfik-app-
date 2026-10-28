@@ -251,6 +251,7 @@
     window.alfikShowView=function(id){oldShow(id);if(id==="lifelineView")loadAll();};
     loadAll();
   }
+  window.loadAlfikLifeline=loadAll;
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
   window.addEventListener("alfik:lifeline-refresh",loadAll);
 })();
