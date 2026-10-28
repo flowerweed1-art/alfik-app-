@@ -4,6 +4,7 @@
   const db = () => window.supabaseClient || null;
   const byId = id => document.getElementById(id);
   const esc = value => String(value == null ? "" : value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+  const safeUrl = value => { try { const u = new URL(String(value || "").trim()); return (u.protocol === "https:" || u.protocol === "http:") ? u.href : ""; } catch (_) { return ""; } };
   const msg = (id, value, bad) => { const n=byId(id); if(n){n.textContent=value||"";n.style.color=bad?"#a32222":"";} };
   const nowIso = () => new Date().toISOString();
   let activeCaseId = null;
@@ -177,7 +178,8 @@
   async function addReferral(id) {
     const service=prompt("Service or organisation name:");
     if(!service||!service.trim())return;
-    const website=prompt("Official website (optional):","https://");
+    const website=prompt("Official website (optional, http/https only):","https://");
+    if(website && website.trim() && !safeUrl(website)){msg("llGlobalMessage","Please enter a valid http or https website address.",true);return;}
     const method=prompt("Contact/referral method (optional):","");
     const {error}=await db().from("alfik_lifeline_referrals").insert({case_id:id,service_name:service.trim(),service_website:(website||"").trim(),contact_method:(method||"").trim(),referral_status:"Not contacted",updated_at:nowIso()});
     if(error){msg("llGlobalMessage","Could not add referral: "+error.message,true);return;} await loadReferrals(id); msg("llGlobalMessage","Referral added. Remember to confirm eligibility and capacity directly.");
@@ -187,14 +189,15 @@
     const {data,error}=await db().from("alfik_lifeline_referrals").select("*").eq("case_id",id).order("created_at",{ascending:false});
     if(error){box.innerHTML='<p class="ll-small">Referral tracking is not available until the SQL setup is installed.</p>';return;}
     const refs=data||[];
-    box.innerHTML='<h4>Referral tracking</h4>'+ (refs.length?refs.map(r=>`<div class="ll-card"><strong>${esc(r.service_name)}</strong>${r.service_website?'<p><a href="'+esc(r.service_website)+'" target="_blank" rel="noopener noreferrer">Open service website</a></p>':""}<label for="llRefStatus-${esc(r.id)}">Referral status</label><select id="llRefStatus-${esc(r.id)}" data-refstatus-id="${esc(r.id)}"><option>Not contacted</option><option>Contacted</option><option>Waiting for reply</option><option>Help confirmed</option><option>Not eligible</option><option>No capacity</option><option>Alternative needed</option><option>Closed</option></select><label for="llRefNotes-${esc(r.id)}">Outcome / notes</label><input id="llRefNotes-${esc(r.id)}" maxlength="1000" data-refnotes-id="${esc(r.id)}" value="${esc(r.outcome_notes||"")}" placeholder="Keep notes brief and safe"><div class="ll-actions"><button type="button" class="secondary" data-ll-action="update-referral" data-id="${esc(r.id)}">Save referral update</button><button type="button" class="danger" data-ll-action="delete-referral" data-id="${esc(r.id)}">Delete referral</button></div></div>`).join(""):'<p class="ll-small">No referrals recorded for this request yet.</p>');
+    box.innerHTML='<h4>Referral tracking</h4>'+ (refs.length?refs.map(r=>`<div class="ll-card"><strong>${esc(r.service_name)}</strong>${safeUrl(r.service_website)?'<p><a href="'+esc(safeUrl(r.service_website))+'" target="_blank" rel="noopener noreferrer">Open service website</a></p>':""}<label for="llRefStatus-${esc(r.id)}">Referral status</label><select id="llRefStatus-${esc(r.id)}" data-refstatus-id="${esc(r.id)}"><option>Not contacted</option><option>Contacted</option><option>Waiting for reply</option><option>Help confirmed</option><option>Not eligible</option><option>No capacity</option><option>Alternative needed</option><option>Closed</option></select><label for="llRefNotes-${esc(r.id)}">Outcome / notes</label><input id="llRefNotes-${esc(r.id)}" maxlength="1000" data-refnotes-id="${esc(r.id)}" value="${esc(r.outcome_notes||"")}" placeholder="Keep notes brief and safe"><div class="ll-actions"><button type="button" class="secondary" data-ll-action="update-referral" data-id="${esc(r.id)}">Save referral update</button><button type="button" class="danger" data-ll-action="delete-referral" data-id="${esc(r.id)}">Delete referral</button></div></div>`).join(""):'<p class="ll-small">No referrals recorded for this request yet.</p>');
     refs.forEach(r=>{const s=byId("llRefStatus-"+r.id);if(s)s.value=r.referral_status;});
   }
   async function updateReferral(id) {
     const status=byId("llRefStatus-"+id).value, notes=byId("llRefNotes-"+id).value.trim();
-    const {error}=await db().from("alfik_lifeline_referrals").update({referral_status:status,outcome_notes:notes,updated_at:nowIso(),last_checked_at:nowIso()}).eq("id",id);
+    const {data:ref,error}=await db().from("alfik_lifeline_referrals").update({referral_status:status,outcome_notes:notes,updated_at:nowIso(),last_checked_at:nowIso()}).eq("id",id).select("case_id").single();
     if(error){msg("llGlobalMessage","Could not update referral: "+error.message,true);return;}
-    msg("llGlobalMessage","Referral updated."); await loadCases();
+    if(ref && ref.case_id){const linkedStatus=status==="Help confirmed"?"Help confirmed":(["Not eligible","No capacity","Alternative needed"].includes(status)?"Alternative needed":(["Contacted","Waiting for reply"].includes(status)?"Referred":null));if(linkedStatus){await db().from("alfik_lifeline_cases").update({status:linkedStatus,next_step:linkedStatus==="Help confirmed"?"Confirm the animal's safe care plan and any agreed handover.":linkedStatus==="Alternative needed"?"Try another verified service or contact ALFIK through its published channels.":"Follow up with the service and confirm eligibility/capacity.",updated_at:nowIso()}).eq("id",ref.case_id);}}
+    msg("llGlobalMessage","Referral updated and the linked request status reviewed."); await loadCases();
   }
   async function deleteReferral(id) {
     if(!confirm("Delete this referral record?"))return;
@@ -206,7 +209,7 @@
     const {data,error}=await d.from("alfik_lifeline_services").select("*").eq("verification_status","verified").order("organisation_name");
     if(error){byId("llServiceList").innerHTML='<p class="ll-empty">The verified directory will appear after the Lifeline SQL setup is installed and ALFIK adds checked listings.</p>';return;}
     services=data||[];
-    byId("llServiceList").innerHTML=services.length?services.map(s=>`<article class="ll-card"><h3>${esc(s.organisation_name)}</h3><p>${esc(s.summary)}</p><p><strong>Support:</strong> ${esc((s.support_types||[]).join(", ")||"Ask service")}</p><p><strong>Species:</strong> ${esc((s.species||[]).join(", ")||"Check directly")}</p><p><strong>Coverage:</strong> ${esc([...(s.countries||[]),...(s.regions||[])].join(", ")||"Check directly")}</p><p><strong>Eligibility:</strong> ${esc(s.eligibility)}</p><p class="ll-small">${esc(s.capacity_note)} ${s.verified_at?"Last verified: "+esc(new Date(s.verified_at).toLocaleDateString()):""}</p>${s.website?'<p><a href="'+esc(s.website)+'" target="_blank" rel="noopener noreferrer">Visit official website</a></p>':""}<button type="button" class="secondary" data-ll-action="refer-service" data-id="${esc(s.id)}">Add to a help request</button></article>`).join(""):'<p class="ll-empty">No directory entries have been verified yet. ALFIK will show only listings checked by the team, not an unverified list that might send people to the wrong place.</p>';
+    byId("llServiceList").innerHTML=services.length?services.map(s=>`<article class="ll-card"><h3>${esc(s.organisation_name)}</h3><p>${esc(s.summary)}</p><p><strong>Support:</strong> ${esc((s.support_types||[]).join(", ")||"Ask service")}</p><p><strong>Species:</strong> ${esc((s.species||[]).join(", ")||"Check directly")}</p><p><strong>Coverage:</strong> ${esc([...(s.countries||[]),...(s.regions||[])].join(", ")||"Check directly")}</p><p><strong>Eligibility:</strong> ${esc(s.eligibility)}</p><p class="ll-small">${esc(s.capacity_note)} ${s.verified_at?"Last verified: "+esc(new Date(s.verified_at).toLocaleDateString()):""}</p>${safeUrl(s.website)?'<p><a href="'+esc(safeUrl(s.website))+'" target="_blank" rel="noopener noreferrer">Visit official website</a></p>':""}<button type="button" class="secondary" data-ll-action="refer-service" data-id="${esc(s.id)}">Add to a help request</button></article>`).join(""):'<p class="ll-empty">No directory entries have been verified yet. ALFIK will show only listings checked by the team, not an unverified list that might send people to the wrong place.</p>';
   }
   async function referService(id) {
     const service=services.find(s=>s.id===id); if(!service)return;
