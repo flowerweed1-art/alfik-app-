@@ -17,6 +17,7 @@ create table if not exists public.alfik_nearby_alert_preferences (
 );
 
 alter table public.alfik_nearby_alert_preferences enable row level security;
+grant select, insert, update, delete on public.alfik_nearby_alert_preferences to authenticated;
 
 drop policy if exists "Members read own nearby alert preference" on public.alfik_nearby_alert_preferences;
 create policy "Members read own nearby alert preference"
