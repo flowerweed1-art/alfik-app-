@@ -50,6 +50,16 @@ input[type=checkbox]{width:auto}
 .message{overflow-wrap:anywhere}
 .report-card{background:white;border:1px solid #d6e5f2;border-left:5px solid #1769aa;border-radius:8px;padding:13px;margin:12px 0;overflow-wrap:anywhere}
 .report-card p{margin:6px 0}
+.possible-match-card{border-left-color:#1769aa}
+.possible-match-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.possible-match-side{min-width:0;border:1px solid #d6e5f2;border-radius:10px;padding:12px;background:#f8fbfe}
+.possible-match-side h4,.possible-match-evidence h4{margin:0 0 9px;color:#123b63;font-size:1rem}
+.possible-match-side .animal-photo{width:100%;max-width:none;height:180px;object-fit:contain;margin:8px 0}
+.possible-match-no-photo{display:flex;align-items:center;justify-content:center;min-height:90px;padding:12px;border:1px dashed #bdcedd;border-radius:8px;color:#52697c;text-align:center;background:#fff}
+.possible-match-description{overflow-wrap:anywhere;white-space:pre-wrap}
+.possible-match-evidence{border-top:1px solid #d6e5f2;margin-top:12px;padding-top:12px}
+@media(max-width:560px){.possible-match-comparison{grid-template-columns:1fr}.possible-match-side .animal-photo{height:220px}}
+
 .status-lost{border-left-color:#c93434}
 .status-found{border-left-color:#238451}
 .status-found_deceased{border-left-color:#9aabba}
@@ -2236,35 +2246,80 @@ async function loadPossibleMatches(){
       status.textContent="No potential matches are available for your active reports yet. When a suitable lost-and-found report is available, it will appear here.";
       return;
     }
-    status.textContent=matches.length+" potential match"+(matches.length===1?"":"es")+" found, ranked by score.";
+
+    const reportIds=[...new Set(matches.flatMap(match=>[match.your_report_id,match.matched_report_id]).filter(Boolean))];
+    const reportMap=new Map();
+    if(reportIds.length){
+      const {data:reportData,error:reportError}=await supabaseClient
+        .from("animal_reports")
+        .select("id,report_type,animal_type,animal_name,description,location_text,date_seen,photo_url,status")
+        .in("id",reportIds);
+      if(reportError)console.warn("Could not load full report comparison details:",reportError.message);
+      (reportData||[]).forEach(report=>reportMap.set(String(report.id),report));
+    }
+
+    status.textContent=matches.length+" potential match"+(matches.length===1?"":"es")+" found, ranked by supporting evidence.";
     matches.forEach(match=>{
+      const yours=reportMap.get(String(match.your_report_id))||{
+        report_type:match.your_report_type,
+        animal_name:match.your_animal_name
+      };
+      const other=reportMap.get(String(match.matched_report_id))||{
+        report_type:match.matched_report_type,
+        animal_type:match.matched_animal_type,
+        animal_name:match.matched_animal_name,
+        location_text:match.matched_location_text,
+        date_seen:match.matched_date_seen
+      };
       const card=document.createElement("article");
-      card.className="report-card";
-      const level=element("span",String(match.match_level||"Possible match")+" · "+String(match.match_score)+"/100");
+      card.className="report-card possible-match-card";
+      const score=Number(match.match_score)||0;
+      const level=element("span",String(match.match_level||"Possible match")+" · "+score+"/100");
       level.className="badge";
-      if(Number(match.match_score)>=75)level.style.background="#e3f4e9",level.style.color="#17623b";
-      else if(Number(match.match_score)<55)level.style.background="#f1f3f5",level.style.color="#52697c";
+      level.style.background=score>=75?"#e3f4e9":score>=55?"#e7f1fa":"#f1f3f5";
+      level.style.color=score>=75?"#17623b":score>=55?"#14558b":"#52697c";
       card.appendChild(level);
 
-      const heading=element("h3",(String(match.matched_report_type||"").toUpperCase())+" report · "+String(match.matched_animal_type||"animal"));
+      const heading=element("h3","Compare these reports");
       card.appendChild(heading);
-      const name=element("p","Name: "+String(match.matched_animal_name||"Unknown"));
-      card.appendChild(name);
-      const location=element("p","Location: "+String(match.matched_location_text||"Not provided"));
-      card.appendChild(location);
-      const date=element("p","Date reported: "+String(match.matched_date_seen||"Not provided"));
-      card.appendChild(date);
-      const own=element("p","Compared with your "+String(match.your_report_type||"")+" report for "+String(match.your_animal_name||"Unknown")+".");
-      own.className="note";
-      card.appendChild(own);
-      const reasons=element("p",String(match.match_reasons||"Compare the report details carefully."));
-      reasons.className="note";
-      card.appendChild(reasons);
-      const caution=element("p","Automated suggestion only. Please compare the full details and photos before deciding whether this is the same animal.");
-      caution.className="note";
-      card.appendChild(caution);
+      const comparison=document.createElement("div");
+      comparison.className="possible-match-comparison";
+      [
+        {title:"Your report",report:yours,kind:match.your_report_type||"your report"},
+        {title:"Potential match",report:other,kind:match.matched_report_type||"matching report"}
+      ].forEach(item=>{
+        const panel=document.createElement("section");
+        panel.className="possible-match-side";
+        panel.appendChild(element("h4",item.title+" · "+String(item.report.report_type||item.kind||"animal").replaceAll("_"," ").toUpperCase()));
+        addPhoto(panel,item.report.photo_url,(item.report.animal_name||item.report.animal_type||"Animal")+" photo");
+        if(!item.report.photo_url){
+          const noPhoto=element("p","No photo supplied");
+          noPhoto.className="possible-match-no-photo";
+          panel.appendChild(noPhoto);
+        }
+        addField(panel,"Animal",item.report.animal_name||item.report.animal_type||"Unknown");
+        addField(panel,"Type",item.report.animal_type||match.matched_animal_type||"Not provided");
+        addField(panel,"Location",item.report.location_text||"Not provided");
+        addField(panel,"Date seen",item.report.date_seen||"Not provided");
+        const description=element("p",item.report.description||"No description supplied.");
+        description.className="possible-match-description";
+        const label=element("strong","Description: ");
+        description.prepend(label);
+        panel.appendChild(description);
+        comparison.appendChild(panel);
+      });
+      card.appendChild(comparison);
 
-      const button=element("button","View this report");
+      const evidence=element("div","");
+      evidence.className="possible-match-evidence";
+      evidence.appendChild(element("h4","Why ALFIK suggested this"));
+      evidence.appendChild(element("p",String(match.match_reasons||"Compare the report details carefully.")));
+      const caution=element("p","Automated suggestion only, not a confirmed identification. Scores are clues, not probabilities. Compare markings, photos, dates and locations carefully before contacting the other reporter.");
+      caution.className="note";
+      evidence.appendChild(caution);
+      card.appendChild(evidence);
+
+      const button=element("button","View potential match in reports");
       button.className="primary wide";
       button.addEventListener("click",async()=>{
         button.disabled=true;
@@ -2287,7 +2342,7 @@ async function loadPossibleMatches(){
           status.textContent="Could not open the report list: "+(error.message||"Please try again.");
         }finally{
           button.disabled=false;
-          button.textContent="View this report";
+          button.textContent="View potential match in reports";
         }
       });
       card.appendChild(button);
