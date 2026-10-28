@@ -460,6 +460,9 @@ footer{background:#f8fbfe}
 #petForm h3{margin-top:0}
 .pet-form-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 @media(max-width:520px){.pet-list-heading{align-items:center}.pet-profile-grid{grid-template-columns:1fr 1fr;gap:9px}.pet-profile-card{padding:12px}.pet-profile-card h3{font-size:16px}.pet-card-actions{gap:6px}.pet-card-actions button{flex-basis:100%;width:100%}.pet-form-actions{grid-template-columns:1fr}}
+
+/* ALFIK compact pet profiles page: keep management tools out of the main view */
+#petsView #petMessage ~ .feature-panel{display:none!important}
 </style>
 
 <style id="alfik-share-studio-styles">
@@ -2635,6 +2638,3 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 </body>
 </html>
 
-
-/* ALFIK compact pet profiles page: keep management tools out of the main view */
-#petsView #petMessage ~ .feature-panel{display:none!important}
