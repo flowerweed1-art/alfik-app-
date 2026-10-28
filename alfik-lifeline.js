@@ -67,7 +67,7 @@
         <h3>I need help caring for my animal</h3>
         <p class="ll-small">Share only what is needed to find support. Avoid passwords, exact safe-house locations or details that could put you or someone else at risk. Your request is private to your account in this first version.</p>
         <form id="llCaseForm">
-          <label for="llCaseAnimal">Animal's name (or description)</label><input id="llCaseAnimal" required maxlength="120" placeholder="Name or short description">
+          <input type="hidden" id="llCasePetId"><label for="llCaseAnimal">Animal's name (or description)</label><input id="llCaseAnimal" required maxlength="120" placeholder="Name or short description">
           <label for="llCaseSpecies">Species</label><select id="llCaseSpecies"><option>Cat</option><option>Dog</option><option>Rabbit</option><option>Small animal</option><option>Bird</option><option>Reptile</option><option>Horse or pony</option><option>Multiple animals</option><option>Other</option></select>
           <label for="llCaseType">What's making care difficult?</label><select id="llCaseType" required><option value="">Choose the situation</option><option>Owner illness or hospitalisation</option><option>Homelessness or housing crisis</option><option>Domestic abuse or personal safety</option><option>Financial hardship or food costs</option><option>Bereavement or owner incapacity</option><option>Relationship breakdown</option><option>Temporary inability to provide care</option><option>Risk of surrender</option><option>Other</option></select>
           <label for="llUrgency">How soon is help needed?</label><select id="llUrgency"><option>Emergency</option><option>Today</option><option selected>Soon</option><option>Planning ahead</option></select>
@@ -146,12 +146,12 @@
     if(!byId("llConsent").checked){msg("llCaseMessage","Please confirm you understand how this private request works.",true);return;}
     const help=Array.from(document.querySelectorAll('input[name="llHelp"]:checked')).map(n=>n.value);
     if(!help.length){msg("llCaseMessage","Please choose at least one type of support.",true);return;}
-    const row={animal_name:byId("llCaseAnimal").value.trim(),species:byId("llCaseSpecies").value,crisis_type:byId("llCaseType").value,urgency:byId("llUrgency").value,help_needed:help,safe_contact_method:byId("llContactMethod").value,safe_contact_time:byId("llContactTime").value.trim(),safe_to_leave_message:byId("llLeaveMessage").checked,details:byId("llCaseDetails").value.trim(),status:"Seeking support",next_step:"Review the verified directory and contact a suitable service. Confirm availability directly.",consent_to_referrals:false,updated_at:nowIso()};
+    const row={pet_id:byId("llCasePetId").value||null,animal_name:byId("llCaseAnimal").value.trim(),species:byId("llCaseSpecies").value,crisis_type:byId("llCaseType").value,urgency:byId("llUrgency").value,help_needed:help,safe_contact_method:byId("llContactMethod").value,safe_contact_time:byId("llContactTime").value.trim(),safe_to_leave_message:byId("llLeaveMessage").checked,details:byId("llCaseDetails").value.trim(),status:"Seeking support",next_step:"Review the verified directory and contact a suitable service. Confirm availability directly.",consent_to_referrals:false,updated_at:nowIso()};
     if(!row.crisis_type){msg("llCaseMessage","Please choose the situation making care difficult.",true);return;}
     const {error}=await d.from("alfik_lifeline_cases").insert(row);
     if(error){msg("llCaseMessage","Could not save the request: "+error.message,true);return;}
     msg("llCaseMessage","Your private request has been saved. No organisation has been contacted automatically.");
-    byId("llCaseForm").reset(); await loadCases();
+    byId("llCaseForm").reset(); byId("llCasePetId").value=""; await loadCases(); window.dispatchEvent(new CustomEvent("alfik:lifeline-refresh"));
   }
   async function loadCases() {
     const d=db(); if(!d)return;
@@ -251,6 +251,21 @@
     window.alfikShowView=function(id){oldShow(id);if(id==="lifelineView")loadAll();};
     loadAll();
   }
+  window.alfikOpenLifelineForPet=function(pet){
+    if(!pet||!pet.id)return;
+    if(window.alfikShowView)window.alfikShowView("lifelineView");
+    const hidden=byId("llCasePetId");
+    const animal=byId("llCaseAnimal");
+    const species=byId("llCaseSpecies");
+    if(hidden)hidden.value=String(pet.id);
+    if(animal)animal.value=pet.name||"";
+    if(species){
+      const s=String(pet.species||"").toLowerCase();
+      species.value=/cat|feline/.test(s)?"Cat":/dog|canine/.test(s)?"Dog":/rabbit/.test(s)?"Rabbit":/bird/.test(s)?"Bird":/reptile/.test(s)?"Reptile":/horse|pony|equine/.test(s)?"Horse or pony":/hamster|guinea pig|mouse|rat|ferret|small/.test(s)?"Small animal":"Other";
+    }
+    const form=byId("llCaseForm");
+    if(form){form.scrollIntoView({behavior:"smooth",block:"start"});if(animal)animal.focus({preventScroll:true});}
+  };
   window.loadAlfikLifeline=loadAll;
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
   window.addEventListener("alfik:lifeline-refresh",loadAll);
