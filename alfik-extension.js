@@ -1317,29 +1317,69 @@ try{
 }catch(e){list.textContent="Could not load rescue medications: "+readableError(e);}
 }
 
+async function refreshAlfikNotificationBadge() {
+const badge=el("headerNotificationCount"),bell=el("headerNotificationBell");
+if(!badge||!bell)return;
+const db=client(),user=await currentUser();
+if(!db||!user){badge.textContent="0";badge.classList.add("hidden");bell.classList.add("hidden");return;}
+bell.classList.remove("hidden");
+try{
+ const result=await db.from("alfik_in_app_notifications").select("id",{count:"exact",head:true}).eq("user_id",user.id).is("read_at",null);
+ if(result.error)throw result.error;
+ const count=Number(result.count||0);
+ badge.textContent=count>99?"99+":String(count);
+ badge.classList.toggle("hidden",count===0);
+ badge.setAttribute("aria-label",count+" unread notifications");
+ bell.setAttribute("aria-label",count?("Open notifications, "+count+" unread"): "Open notifications");
+}catch(error){badge.classList.add("hidden");console.warn("ALFIK notification count:",error);}
+}
+
 async function loadCareNotifications() {
-const db=client(),user=await currentUser(),list=el("careNotificationsList");
+const db=client(),user=await currentUser(),list=el("careNotificationsList"),detail=el("careNotificationDetail");
 if(!list)return;
 list.replaceChildren();
-if(!db||!user){list.textContent="Sign in to view your care notifications.";return;}
+if(detail){detail.replaceChildren();detail.classList.add("hidden");}
+if(!db||!user){list.textContent="Sign in to view your notifications.";if(window.refreshAlfikNotificationBadge)await window.refreshAlfikNotificationBadge();return;}
 try{
  const r=await db.from("alfik_in_app_notifications").select("id,title,body,due_date,created_at,read_at").eq("user_id",user.id).order("created_at",{ascending:false}).limit(50);
  if(r.error)throw r.error;
- (r.data||[]).forEach(n=>{
-   const item=card(list,n.title||"Care reminder");
-   addText(item,"Due date",n.due_date);
-   addText(item,"Details",n.body);
-   addText(item,"Status",n.read_at?"Read":"Unread");
-   if(!n.read_at){
-     const b=document.createElement("button");b.className="secondary";b.textContent="Mark as read";
-     b.addEventListener("click",async()=>{
-       const u=await db.from("alfik_in_app_notifications").update({read_at:new Date().toISOString()}).eq("id",n.id).eq("user_id",user.id);
-       if(u.error)say("careNotificationsMessage","Could not mark notification as read: "+readableError(u.error));
-       else {say("careNotificationsMessage","Notification marked as read.");await loadCareNotifications();}
-     });item.appendChild(b);
-   }
+ const notifications=r.data||[];
+ notifications.forEach(n=>{
+   const item=document.createElement("article");
+   item.className="notification-item"+(n.read_at?"":" unread");
+   const heading=document.createElement("h4");heading.textContent=n.title||"Notification";item.appendChild(heading);
+   const summary=document.createElement("p");
+   const preview=String(n.body||"").trim();
+   summary.textContent=preview.length>120?preview.slice(0,117)+"…":preview||"Open to view this notification.";
+   item.appendChild(summary);
+   const meta=document.createElement("p");meta.className="note";
+   meta.textContent=(n.created_at?new Date(n.created_at).toLocaleString():"Date unavailable")+" · "+(n.read_at?"Read":"Unread");
+   item.appendChild(meta);
+   const open=document.createElement("button");open.type="button";open.className="secondary";open.textContent="Open notification";
+   open.addEventListener("click",async()=>{
+     if(!detail)return;
+     detail.replaceChildren();detail.classList.remove("hidden");
+     const title=document.createElement("h3");title.textContent=n.title||"Notification";detail.appendChild(title);
+     const body=document.createElement("p");body.textContent=n.body||"There are no extra details for this notification.";detail.appendChild(body);
+     if(n.due_date){const due=document.createElement("p");due.textContent="Due date: "+n.due_date;detail.appendChild(due);}
+     if(n.created_at){const created=document.createElement("p");created.className="note";created.textContent="Received: "+new Date(n.created_at).toLocaleString();detail.appendChild(created);}
+     if(!n.read_at){
+       const mark=document.createElement("button");mark.type="button";mark.className="primary";mark.textContent="Mark as read";
+       mark.addEventListener("click",async()=>{
+         mark.disabled=true;
+         const update=await db.from("alfik_in_app_notifications").update({read_at:new Date().toISOString()}).eq("id",n.id).eq("user_id",user.id);
+         if(update.error){mark.disabled=false;say("careNotificationsMessage","Could not mark notification as read: "+readableError(update.error));return;}
+         say("careNotificationsMessage","Notification marked as read.");
+         await loadCareNotifications();
+       });
+       detail.appendChild(mark);
+     }else{const read=document.createElement("p");read.className="note";read.textContent="You have read this notification.";detail.appendChild(read);}
+     detail.scrollIntoView({behavior:"smooth",block:"nearest"});
+   });
+   item.appendChild(open);list.appendChild(item);
  });
- if(!(r.data||[]).length)list.textContent="No care notifications yet.";
+ if(!notifications.length)list.textContent="You're all caught up. No notifications yet.";
+ if(window.refreshAlfikNotificationBadge)await window.refreshAlfikNotificationBadge();
 }catch(e){list.textContent="Could not load notifications: "+readableError(e);}
 }
 
@@ -2246,6 +2286,7 @@ if (el("rescueCareType")) el("rescueCareType").addEventListener("change", () => 
 });
 if (el("saveMedicationBtn")) el("saveMedicationBtn").addEventListener("click", saveMedication);
 if (el("refreshCareNotificationsBtn")) el("refreshCareNotificationsBtn").addEventListener("click", loadCareNotifications);
+if (el("headerNotificationBell")) el("headerNotificationBell").addEventListener("click", () => { loadCareNotifications(); });
 if (el("saveCareBtn")) el("saveCareBtn").addEventListener("click", saveCareSchedule);
 if (el("saveRescueCareBtn")) el("saveRescueCareBtn").addEventListener("click", saveRescueCareSchedule);
 
@@ -2445,6 +2486,8 @@ async function sendAlfikTestPush() {
   }
 }
 
+window.loadCareNotifications = loadCareNotifications;
+window.refreshAlfikNotificationBadge = refreshAlfikNotificationBadge;
 window.refreshAlfikProfile = refreshAlfikProfile;
 window.renderPayPalButtons = renderPayPalButtons;
 window.loadPetWorkspace = loadPetWorkspace;
