@@ -20,6 +20,8 @@
       #lifelineView .ll-card{border:1px solid #d3e3ef;border-radius:14px;padding:15px;background:#f8fbfe;margin:12px 0;min-width:0}
       #lifelineView .ll-card h3{margin-top:0}
       #lifelineView .ll-status{display:inline-block;padding:4px 9px;border-radius:999px;background:#e6f2fb;color:#164f7a;font-size:12px;font-weight:700}
+      #lifelineView .ll-priority{display:inline-block;margin:0 6px 6px 0;padding:4px 9px;border-radius:999px;background:#fff0e8;color:#8a3414;font-size:12px;font-weight:700}
+      #lifelineView .ll-next-action{padding:10px 12px;border-left:4px solid #1769aa;background:#eef6fc;border-radius:8px;margin:10px 0}
       #lifelineView .ll-small{font-size:13px;color:#52697c}
       #lifelineView .ll-actions{display:flex;flex-wrap:wrap;gap:8px}
       #lifelineView .ll-actions button{flex:1 1 140px}
@@ -174,15 +176,34 @@
     msg("llCaseMessage","Your private request has been saved. No organisation has been contacted automatically.");
     byId("llCaseForm").reset(); byId("llCasePetId").value=""; await loadCases(); window.dispatchEvent(new CustomEvent("alfik:lifeline-refresh"));
   }
+  function suggestedNextAction(c) {
+    const urgency=String(c.urgency||"").toLowerCase();
+    const status=String(c.status||"").toLowerCase();
+    if(urgency==="emergency")return "Act now: contact the appropriate emergency service or an established animal-welfare organisation directly. ALFIK does not provide emergency response or guarantee a placement.";
+    if(urgency==="today"&&status!=="help confirmed"&&status!=="closed")return "Priority today: contact a suitable service directly, explain the time limit, and confirm whether it can actually help.";
+    if(status==="help confirmed")return "Confirm the care arrangements, timing, costs (if any), medication instructions and who is responsible for the animal.";
+    if(status==="alternative needed")return "Try another suitable service and record the result. If the need is urgent, contact services directly rather than waiting for the directory.";
+    if(status==="referred")return "Follow up with the service and ask about eligibility, capacity and when you can expect an answer.";
+    if(status==="closed")return "This request is marked closed. Reopen it by changing the status if the need returns.";
+    if(status==="seeking support"||status==="draft")return "Choose a relevant service, contact it directly, then add a referral and record the response.";
+    return "Review the request and record the next practical step.";
+  }
   async function loadCases() {
     const d=db(); if(!d)return;
     const {data,error}=await d.from("alfik_lifeline_cases").select("*").order("updated_at",{ascending:false});
     if(error){byId("llCaseList").innerHTML='<p class="ll-empty">Help-request storage is not connected yet. Run the Lifeline SQL setup in Supabase.</p>';return;}
     cases=data||[];
     if(!cases.length){byId("llCaseList").innerHTML='<p class="ll-empty">No help requests yet. Saved requests will appear here.</p>';return;}
-    byId("llCaseList").innerHTML=cases.map(c=>`<article class="ll-card"><div class="ll-status">${esc(c.status)}</div><h3>${esc(c.animal_name)} · ${esc(c.species)}</h3><p><strong>Need:</strong> ${esc(c.crisis_type)}</p><p><strong>Urgency:</strong> ${esc(c.urgency)}</p><p><strong>Support:</strong> ${esc((c.help_needed||[]).join(", "))}</p><p class="ll-small">Created ${esc(new Date(c.created_at).toLocaleDateString())}</p>${c.next_step?'<p><strong>Next step:</strong> '+esc(c.next_step)+'</p>':""}<label for="llStatus-${esc(c.id)}">Update request status</label><select id="llStatus-${esc(c.id)}" data-status-id="${esc(c.id)}"><option>Draft</option><option>Seeking support</option><option>Referred</option><option>Help confirmed</option><option>Alternative needed</option><option>Closed</option></select><label for="llNext-${esc(c.id)}">Next step</label><input id="llNext-${esc(c.id)}" data-next-id="${esc(c.id)}" maxlength="500" value="${esc(c.next_step||"")}" placeholder="What will happen next?"><label for="llOutcome-${esc(c.id)}">Outcome notes (optional)</label><input id="llOutcome-${esc(c.id)}" data-outcome-id="${esc(c.id)}" maxlength="1000" value="${esc(c.closed_outcome||"")}" placeholder="e.g. temporary care confirmed"><div class="ll-actions"><button class="primary" type="button" data-ll-action="update-case" data-id="${esc(c.id)}">Save update</button><button class="secondary" type="button" data-ll-action="add-referral" data-id="${esc(c.id)}">Add referral</button><button class="danger" type="button" data-ll-action="delete-case" data-id="${esc(c.id)}">Delete request</button></div><div id="llReferrals-${esc(c.id)}"></div></article>`).join("");
-    cases.forEach(c=>{const s=byId("llStatus-"+c.id);if(s)s.value=c.status;});
-    for(const c of cases) await loadReferrals(c.id);
+    const urgencyRank={Emergency:0,Today:1,Soon:2,"Planning ahead":3};
+    const statusRank={"Seeking support":0,"Alternative needed":1,Referred:2,Draft:3,"Help confirmed":4,Closed:5};
+    const ordered=[...cases].sort((a,b)=>(urgencyRank[a.urgency]??4)-(urgencyRank[b.urgency]??4)||(statusRank[a.status]??6)-(statusRank[b.status]??6)||new Date(b.updated_at||b.created_at)-new Date(a.updated_at||a.created_at));
+    byId("llCaseList").innerHTML=ordered.map(c=>{
+      const urgent=["Emergency","Today"].includes(c.urgency);
+      const action=suggestedNextAction(c);
+      return '<article class="ll-card">'+(urgent?'<span class="ll-priority">'+(c.urgency==="Emergency"?"URGENT: emergency":"PRIORITY: help needed today")+'</span> ':"")+'<div class="ll-status">'+esc(c.status)+'</div><h3>'+esc(c.animal_name)+' · '+esc(c.species)+'</h3><p><strong>Need:</strong> '+esc(c.crisis_type)+'</p><p><strong>Urgency:</strong> '+esc(c.urgency)+'</p><p><strong>Support:</strong> '+esc((c.help_needed||[]).join(", "))+'</p><p class="ll-small">Created '+esc(new Date(c.created_at).toLocaleDateString())+'</p><div class="ll-next-action"><strong>Suggested next step</strong><p>'+esc(action)+'</p></div>'+(c.next_step?'<p><strong>Your recorded next step:</strong> '+esc(c.next_step)+'</p>':"")+'<label for="llStatus-'+esc(c.id)+'">Update request status</label><select id="llStatus-'+esc(c.id)+'" data-status-id="'+esc(c.id)+'"><option>Draft</option><option>Seeking support</option><option>Referred</option><option>Help confirmed</option><option>Alternative needed</option><option>Closed</option></select><label for="llNext-'+esc(c.id)+'">Your next step</label><input id="llNext-'+esc(c.id)+'" data-next-id="'+esc(c.id)+'" maxlength="500" value="'+esc(c.next_step||"")+'" placeholder="What will happen next?"><label for="llOutcome-'+esc(c.id)+'">Outcome notes (optional)</label><input id="llOutcome-'+esc(c.id)+'" data-outcome-id="'+esc(c.id)+'" maxlength="1000" value="'+esc(c.closed_outcome||"")+'" placeholder="e.g. temporary care confirmed"><div class="ll-actions"><button class="primary" type="button" data-ll-action="update-case" data-id="'+esc(c.id)+'">Save update</button><button class="secondary" type="button" data-ll-action="add-referral" data-id="'+esc(c.id)+'">Add referral</button><button class="danger" type="button" data-ll-action="delete-case" data-id="'+esc(c.id)+'">Delete request</button></div><div id="llReferrals-'+esc(c.id)+'"></div></article>';
+    }).join("");
+    ordered.forEach(c=>{const select=byId("llStatus-"+c.id);if(select)select.value=c.status;});
+    for(const c of ordered) await loadReferrals(c.id);
   }
   async function updateCase(id) {
     const status=byId("llStatus-"+id).value;
