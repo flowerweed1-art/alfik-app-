@@ -1722,11 +1722,20 @@ async function deleteReport(report){
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
   if(!user){alert("Please sign in again.");return;}
-  const {data,error}=await supabaseClient.from("animal_reports").delete()
-    .eq("id",report.id).eq("owner_id",user.id).select("id").maybeSingle();
-  if(error||!data){alert("Could not delete the report. Check your Supabase permissions."+(error?" "+error.message:""));return;}
-  await loadReports();
-  await loadMyReports();
+  try{
+    const {error,count}=await supabaseClient.from("animal_reports").delete({count:"exact"})
+      .eq("id",report.id).eq("owner_id",user.id);
+    if(error)throw error;
+    if(count===0){
+      alert("ALFIK couldn't delete this report because the database did not allow it. Your report is still there. The animal_reports DELETE permission for your own account needs checking in Supabase.");
+      return;
+    }
+    await loadReports();
+    await loadMyReports();
+  }catch(error){
+    console.error("Delete report error:",error);
+    alert("Could not delete the report: "+(error.message||"Please try again."));
+  }
 }
 
 /* Free browser-side photo comparison. Similar colours do not identify an animal. */
