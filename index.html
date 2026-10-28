@@ -656,6 +656,22 @@ footer{background:#f8fbfe}
   <button class="secondary wide" type="button" data-nearby-mode="all">🗺️ Explore all reports on the map</button>
   <p class="note">Map pins show approximate report areas, not exact addresses. You can use the map without sharing your location.</p>
 </div>
+<div class="feature-panel" id="nearbyAlertSettingsPanel">
+  <h3>🔔 Nearby animal alerts</h3>
+  <p>Choose a town or neighbourhood and radius. If you enable alerts, ALFIK stores an approximate area to notify you in the app when a new lost or found report is nearby.</p>
+  <label for="nearbyAlertArea">Your area</label>
+  <input id="nearbyAlertArea" maxlength="160" placeholder="e.g. Kirkcaldy, Fife">
+  <label for="nearbyAlertRadius">Alert radius</label>
+  <select id="nearbyAlertRadius">
+    <option value="5">Within 5 miles</option>
+    <option value="10" selected>Within 10 miles</option>
+    <option value="20">Within 20 miles</option>
+    <option value="30">Within 30 miles</option>
+  </select>
+  <button class="primary wide" id="saveNearbyAlertsBtn" type="button">Enable nearby alerts</button>
+  <button class="secondary wide" id="disableNearbyAlertsBtn" type="button">Turn off nearby alerts</button>
+  <p id="nearbyAlertsMessage" class="message" role="status" aria-live="polite">Sign in to manage nearby alerts.</p>
+</div>
 <div class="feature-panel" id="urgentAnimalHelp">
   <h3>What do you need help with?</h3>
   <p>Choose the option that best fits. You can take your time and change your search whenever you need.</p>
@@ -1420,9 +1436,13 @@ $("reportForm").addEventListener("submit",async event=>{
     let photoUrl=editingPhotoUrl;
     if(file)photoUrl=await uploadAnimalPhoto(file,user.id);
 
+    let locationCoords=null;
+    try{locationCoords=await geocodeReportLocation(location);}catch(_){}
     const report={
       report_type:reportStatus,animal_type:animal,animal_name:animalName||null,
       description,location_text:location,date_seen:dateSeen,photo_url:photoUrl,
+      location_lat:locationCoords?locationCoords.lat:null,
+      location_lon:locationCoords?locationCoords.lon:null,
       status:wasEditing?editingOriginalStatus:"active",owner_id:user.id
     };
 
@@ -2720,6 +2740,65 @@ $("signOutBtn").addEventListener("click",async()=>{
   message("accountMessage","You have signed out.");
 });
 
+async function loadNearbyAlertPreference(user){
+  const messageBox=$("nearbyAlertsMessage");
+  if(!user){if(messageBox)messageBox.textContent="Sign in to manage nearby alerts.";return;}
+  try{
+    const result=await supabaseClient.from("alfik_nearby_alert_preferences")
+      .select("area_label,radius_miles,enabled").eq("user_id",user.id).maybeSingle();
+    if(result.error)throw result.error;
+    if(result.data){
+      $("nearbyAlertArea").value=result.data.area_label||"";
+      $("nearbyAlertRadius").value=String(result.data.radius_miles||10);
+      if(messageBox)messageBox.textContent=result.data.enabled
+        ?"Nearby alerts are enabled for "+result.data.area_label+"."
+        :"Nearby alerts are currently turned off.";
+    }else if(messageBox)messageBox.textContent="Choose an area to enable nearby alerts. Your device location is not collected automatically.";
+  }catch(error){
+    if(messageBox)messageBox.textContent="Nearby alerts need the database setup first. "+(error.message||"");
+  }
+}
+
+async function saveNearbyAlertPreference(){
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  const user=sessionData.session?.user;
+  const messageBox=$("nearbyAlertsMessage");
+  const area=$("nearbyAlertArea").value.trim();
+  const radius=Number($("nearbyAlertRadius").value);
+  if(!user){if(messageBox)messageBox.textContent="Please sign in to enable nearby alerts.";return;}
+  if(!area){if(messageBox)messageBox.textContent="Enter a town or neighbourhood first.";return;}
+  const button=$("saveNearbyAlertsBtn");
+  button.disabled=true;button.textContent="Saving alert area…";
+  if(messageBox)messageBox.textContent="Finding the approximate area…";
+  try{
+    const coords=await geocodeReportLocation(area);
+    if(!coords)throw new Error("We couldn't find that area. Try adding the town and county.");
+    const result=await supabaseClient.from("alfik_nearby_alert_preferences").upsert({
+      user_id:user.id,area_label:area,
+      latitude:coords.lat,longitude:coords.lon,
+      radius_miles:radius,enabled:true,updated_at:new Date().toISOString()
+    },{onConflict:"user_id"});
+    if(result.error)throw result.error;
+    if(messageBox)messageBox.textContent="Nearby alerts enabled within "+radius+" miles of "+area+". You can turn them off here at any time.";
+  }catch(error){
+    if(messageBox)messageBox.textContent="Could not save nearby alerts: "+(error.message||"Please try again.");
+  }finally{button.disabled=false;button.textContent="Enable nearby alerts";}
+}
+
+async function disableNearbyAlertPreference(){
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  const user=sessionData.session?.user;
+  const messageBox=$("nearbyAlertsMessage");
+  if(!user){if(messageBox)messageBox.textContent="Please sign in first.";return;}
+  const result=await supabaseClient.from("alfik_nearby_alert_preferences")
+    .update({enabled:false,updated_at:new Date().toISOString()}).eq("user_id",user.id);
+  if(result.error){if(messageBox)messageBox.textContent="Could not turn off alerts: "+result.error.message;return;}
+  if(messageBox)messageBox.textContent="Nearby alerts are turned off. Your saved area remains available if you want to enable them again.";
+}
+
+$("saveNearbyAlertsBtn").addEventListener("click",saveNearbyAlertPreference);
+$("disableNearbyAlertsBtn").addEventListener("click",disableNearbyAlertPreference);
+
 function showSignedIn(session){
   const user=session?.user||null;
   const newId=user?.id||null;
@@ -2741,6 +2820,7 @@ function showSignedIn(session){
       loadReports();
       loadMyReports();
       loadEmailPreference();
+      loadNearbyAlertPreference(user);
       if(window.refreshAlfikProfile)window.refreshAlfikProfile();
     }
   }else{
@@ -2792,7 +2872,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261028-smarter-matching-1"></script>
+<script src="alfik-extension.js?v=20261028-nearby-alerts-1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
 /* Register ALFIK's service worker where supported. */
