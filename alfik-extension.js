@@ -1362,6 +1362,23 @@ try{
      const title=document.createElement("h3");title.textContent=n.title||"Notification";detail.appendChild(title);
      const body=document.createElement("p");body.textContent=n.body||"There are no extra details for this notification.";detail.appendChild(body);
      if(n.due_date){const due=document.createElement("p");due.textContent="Due date: "+n.due_date;detail.appendChild(due);}
+     if(String(n.title||"").toLowerCase().includes("possible animal match")){
+       const reportMatch=String(n.body||"").match(/Report #([A-Za-z0-9_-]+)/i);
+       if(reportMatch){
+         const viewReport=document.createElement("button");
+         viewReport.type="button";viewReport.className="primary";viewReport.textContent="View matching report & message privately";
+         viewReport.addEventListener("click",async()=>{
+           viewReport.disabled=true;viewReport.textContent="Opening report...";
+           if(typeof window.openAlfikReportFromNotification==="function"){
+             await window.openAlfikReportFromNotification(reportMatch[1]);
+           }else{
+             viewReport.disabled=false;viewReport.textContent="View matching report & message privately";
+             say("careNotificationsMessage","Please refresh ALFIK and try again.");
+           }
+         });
+         detail.appendChild(viewReport);
+       }
+     }
      if(n.created_at){const created=document.createElement("p");created.className="note";created.textContent="Received: "+new Date(n.created_at).toLocaleString();detail.appendChild(created);}
      if(!n.read_at){
        const mark=document.createElement("button");mark.type="button";mark.className="primary";mark.textContent="Mark as read";
