@@ -217,9 +217,9 @@
   async function loadCases() {
     const d=db(); if(!d)return;
     const {data,error}=await d.from("alfik_lifeline_cases").select("*").order("updated_at",{ascending:false});
-    if(error){byId("llCaseList").innerHTML='<p class="ll-empty">Help-request storage is not connected yet. Run the Lifeline SQL setup in Supabase.</p>';return;}
+    if(error){byId("llCaseList").innerHTML='<p class="ll-empty">Help-request storage is not connected yet. Run the Lifeline SQL setup in Supabase.</p>';byId("llNeedsAttention").innerHTML="";return;}
     cases=data||[];
-    if(!cases.length){byId("llCaseList").innerHTML='<p class="ll-empty">No help requests yet. Saved requests will appear here.</p>';return;}
+    if(!cases.length){byId("llCaseList").innerHTML='<p class="ll-empty">No help requests yet. Saved requests will appear here.</p>';byId("llNeedsAttention").innerHTML='<div class="ll-card"><h3>No requests to track yet</h3><p class="ll-small">When you save a help request, ALFIK will flag urgent cases and follow-ups that may need attention.</p></div>';return;}
     const urgencyRank={Emergency:0,Today:1,Soon:2,"Planning ahead":3};
     const statusRank={"Seeking support":0,"Alternative needed":1,Referred:2,Draft:3,"Help confirmed":4,Closed:5};
     const ordered=[...cases].sort((a,b)=>(urgencyRank[a.urgency]??4)-(urgencyRank[b.urgency]??4)||(statusRank[a.status]??6)-(statusRank[b.status]??6)||new Date(b.updated_at||b.created_at)-new Date(a.updated_at||a.created_at));
