@@ -19,6 +19,13 @@
       #lifelineView .ll-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px}
       #lifelineView .ll-card{border:1px solid #d3e3ef;border-radius:14px;padding:15px;background:#f8fbfe;margin:12px 0;min-width:0}
       #lifelineView .ll-card h3{margin-top:0}
+      #lifelineView .ll-quick-panel{border:2px solid #1769aa;border-radius:14px;padding:14px;background:#f0f7fd;margin:14px 0}
+      #lifelineView .ll-quick-panel h3{margin:0 0 6px;color:#123b63}
+      #lifelineView .ll-quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+      #lifelineView .ll-quick-grid button{min-height:58px;white-space:normal;line-height:1.3;text-align:left;justify-content:flex-start;padding:12px}
+      #lifelineView .ll-quick-grid button:first-child{grid-column:1/-1;background:#1769aa;color:#fff}
+      #lifelineView .ll-quick-grid button:first-child:hover{filter:brightness(.95)}
+      @media(max-width:420px){#lifelineView .ll-quick-grid{grid-template-columns:1fr}#lifelineView .ll-quick-grid button:first-child{grid-column:auto}}
       #lifelineView .ll-status{display:inline-block;padding:4px 9px;border-radius:999px;background:#e6f2fb;color:#164f7a;font-size:12px;font-weight:700}
       #lifelineView .ll-priority{display:inline-block;margin:0 6px 6px 0;padding:4px 9px;border-radius:999px;background:#fff0e8;color:#8a3414;font-size:12px;font-weight:700}
       #lifelineView .ll-next-action{padding:10px 12px;border-left:4px solid #1769aa;background:#eef6fc;border-radius:8px;margin:10px 0}
@@ -61,6 +68,18 @@
       <h2>🛟 ALFIK Lifeline</h2>
       <p>Plan ahead, ask for help and keep track of the next safe step for your animal when life becomes difficult.</p>
       <div class="ll-warning"><strong>Important:</strong> ALFIK Lifeline is a coordination tool, not an emergency response service. It cannot guarantee a placement, funding or a service response. If an animal or person is in immediate danger, contact the appropriate emergency service. In the UK, call 999 for an immediate threat to life or safety.</div>
+      <div class="ll-quick-panel" aria-labelledby="llQuickTitle">
+        <h3 id="llQuickTitle">Need help quickly?</h3>
+        <p class="ll-small">Choose the closest option to jump to the help form. You can change your answers before saving.</p>
+        <div class="ll-quick-grid">
+          <button type="button" class="primary" data-ll-quick="today">🆘 I need help today</button>
+          <button type="button" class="secondary" data-ll-quick="care">🐾 Temporary care for my animal</button>
+          <button type="button" class="secondary" data-ll-quick="food">🥫 Pet food or supplies</button>
+          <button type="button" class="secondary" data-ll-quick="housing">🏠 Homelessness or housing crisis</button>
+          <button type="button" class="secondary" data-ll-quick="safety">❤️ I'm unsafe at home</button>
+          <button type="button" class="secondary" data-ll-quick="vet">🩺 Veterinary costs or advice</button>
+        </div>
+      </div>
       <div class="ll-card">
         <h3>My animal safety plan</h3>
         <p class="ll-small">Save the essential care information you may need if illness, hospitalisation or another crisis makes normal care difficult. Only enter contact details you are comfortable storing in your private account.</p>
@@ -202,6 +221,7 @@
     byId("llCaseForm").addEventListener("submit",saveCase);
     byId("llOrgRequestForm").addEventListener("submit",submitOrgRequest);
     byId("llOrgRequestType").addEventListener("change",toggleOrgRequestType);
+    section.querySelectorAll("[data-ll-quick]").forEach(button=>button.addEventListener("click",()=>openQuickHelp(button.dataset.llQuick)));
     byId("llFindArea").addEventListener("click",searchDirectory);
     byId("llUseLocation").addEventListener("click",useDeviceLocation);
     byId("llClearArea").addEventListener("click",clearDirectorySearch);
@@ -211,6 +231,29 @@
     addStyles();
   }
 
+  function openQuickHelp(kind) {
+    const situation=byId("llCaseType"), urgency=byId("llUrgency");
+    const helpValues={
+      care:["Temporary inability to provide care",["Temporary animal care"]],
+      food:["Financial hardship or food costs",["Pet food or supplies"]],
+      housing:["Homelessness or housing crisis",["Housing that accepts pets"]],
+      safety:["Domestic abuse or personal safety",["Domestic abuse specialist support"]],
+      vet:["Financial hardship or food costs",["Veterinary costs or advice"]],
+      today:["",[]]
+    };
+    const choice=helpValues[kind]||helpValues.today;
+    if(situation && choice[0]) situation.value=choice[0];
+    if(urgency && kind==="today") urgency.value="Today";
+    if(urgency && kind!=="today") urgency.value="Today";
+    document.querySelectorAll('input[name="llHelp"]').forEach(input=>{
+      if(choice[1].length) input.checked=choice[1].includes(input.value);
+    });
+    const card=byId("llCaseForm");
+    if(card) {
+      card.scrollIntoView({behavior:"smooth",block:"start"});
+      window.setTimeout(()=>byId("llCaseAnimal")?.focus({preventScroll:true}),350);
+    }
+  }
   function resetPlan() {
     byId("llPlanForm").reset(); byId("llPlanId").value=""; msg("llPlanMessage","");
   }
