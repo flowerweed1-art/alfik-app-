@@ -73,12 +73,12 @@ begin
     )));
 
     if miles <= preference.radius_miles then
-      alert_title := 'New animal report near ' || preference.area_label;
+      alert_title := 'Possible animal match nearby';
       alert_body := 'A new ' || new.report_type || ' ' || coalesce(new.animal_type, 'animal')
-        || ' report is approximately ' || round(miles)::text || ' miles from your saved area. '
-        || 'Location: ' || coalesce(new.location_text, 'not specified')
+        || ' report is approximately ' || round(miles)::text || ' miles from your saved area ('
+        || preference.area_label || '). Location: ' || coalesce(new.location_text, 'not specified')
         || '. Date: ' || coalesce(new.date_seen::text, 'not specified')
-        || '. Open ALFIK and compare the report details. Report ID: ' || new.id::text || '.';
+        || '. Compare the report details carefully. Report #' || new.id::text || '.';
 
       insert into public.alfik_in_app_notifications (user_id, title, body)
       select preference.user_id, alert_title, alert_body
@@ -94,12 +94,5 @@ begin
   return new;
 end;
 $$;
-
-drop trigger if exists alfik_nearby_animal_report_notifications on public.animal_reports;
-create trigger alfik_nearby_animal_report_notifications
-after insert or update of report_type, animal_type, location_text, date_seen, status, location_lat, location_lon
-on public.animal_reports
-for each row
-execute function public.alfik_notify_nearby_animal_reports();
 
 revoke all on function public.alfik_notify_nearby_animal_reports() from public, anon, authenticated;
