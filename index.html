@@ -2025,25 +2025,39 @@ function renderMatches(){
   const box=$("matchResults");
   box.replaceChildren();
   const query=normalise($("searchInput").value);
-  const lost=activeReports.filter(r=>r.report_type==="lost");
-  const found=activeReports.filter(r=>r.report_type==="found");
-  const matches=[];
-  lost.forEach(a=>found.forEach(b=>{
-    if(a.animal_type!==b.animal_type)return;
-    // Search terms may be spread across fields, e.g. "Gillingham black cat".
-    // Let either report match the full search; the other can still be a nearby
-    // candidate ranked by its location, date and description similarity.
-    if(query){
-      const queryWords=query.split(" ").filter(Boolean);
-      const matchesQuery=report=>{
-        const searchable=normalise([report.animal_name,report.animal_type,report.description,report.location_text].join(" "));
-        return queryWords.every(word=>searchable.includes(word));
-      };
-      if(!matchesQuery(a)&&!matchesQuery(b))return;
+  const queryWords=query.split(" ").filter(Boolean);
+  const searchableText=report=>normalise([report.animal_name,report.animal_type,report.description,report.location_text].join(" "));
+  const queryMatchCache=new Map();
+  const matchesQuery=report=>{
+    if(!queryWords.length)return true;
+    if(!queryMatchCache.has(report.id)){
+      const searchable=searchableText(report);
+      queryMatchCache.set(report.id,queryWords.every(word=>searchable.includes(word)));
     }
-    const result=similarity(a,b);
-    if(result.score>=5)matches.push({a,b,score:result.score,reasons:result.reasons});
-  }));
+    return queryMatchCache.get(report.id);
+  };
+
+  const lost=activeReports.filter(r=>r.report_type==="lost");
+  const foundByAnimal=new Map();
+  activeReports.filter(r=>r.report_type==="found").forEach(report=>{
+    const type=String(report.animal_type||"").toLowerCase();
+    if(!foundByAnimal.has(type))foundByAnimal.set(type,[]);
+    foundByAnimal.get(type).push(report);
+  });
+
+  const matches=[];
+  lost.forEach(a=>{
+    const candidates=foundByAnimal.get(String(a.animal_type||"").toLowerCase())||[];
+    const lostMatchesQuery=matchesQuery(a);
+    candidates.forEach(b=>{
+      // Preserve the existing search behaviour: the query may match either
+      // side of a possible lost/found pair.
+      if(queryWords.length&&!lostMatchesQuery&&!matchesQuery(b))return;
+      const result=similarity(a,b);
+      if(result.score>=5)matches.push({a,b,score:result.score,reasons:result.reasons});
+    });
+  });
+
   matches.sort((a,b)=>b.score-a.score);
   matches.slice(0,10).forEach(match=>{
     const card=document.createElement("article");
