@@ -723,10 +723,57 @@ try {
       viewButton.type = "button";
       viewButton.className = "secondary";
       viewButton.textContent = "View details";
-      viewButton.addEventListener("click", () => {
+      viewButton.addEventListener("click", async () => {
         const opening = details.classList.contains("hidden");
-        details.classList.toggle("hidden", !opening);
-        viewButton.textContent = opening ? "Hide details" : "View details";
+        if (opening) {
+          // Keep one pet's full care record open at a time.
+          list.querySelectorAll(".pet-card-details").forEach(otherDetails => {
+            if (otherDetails !== details) {
+              otherDetails.classList.add("hidden");
+              const otherCard = otherDetails.closest(".pet-profile-card");
+              const otherButton = otherCard && otherCard.querySelector(".pet-card-actions button");
+              if (otherButton) otherButton.textContent = "View details";
+            }
+          });
+
+          // Put each pet-care tool inside the selected pet's details, not at the bottom of the profiles page.
+          for (const id of ["vaccinationTrackerPanel", "medicationPet", "carePet"]) {
+            const control = el(id);
+            const panel = control && control.closest(".feature-panel");
+            if (panel) {
+              panel.classList.remove("hidden");
+              details.appendChild(panel);
+            }
+          }
+
+          // Health records remain a Pro feature and are only shown to Pro members.
+          const canUseHealth = await hasPlan("pro");
+          if (canUseHealth) {
+            const healthControl = el("healthPet");
+            const healthPanel = healthControl && healthControl.closest(".feature-panel");
+            if (healthPanel) {
+              healthPanel.classList.remove("hidden");
+              details.appendChild(healthPanel);
+            }
+          }
+
+          ["healthPet", "medicationPet", "carePet", "vaccinationPet"].forEach(id => {
+            const select = el(id);
+            if (select) select.value = String(pet.id);
+          });
+          details.classList.remove("hidden");
+          viewButton.textContent = "Hide details";
+          await Promise.all([
+            loadVaccinations(),
+            loadMedicationList(),
+            loadCareSchedules(),
+            loadCareNotifications(),
+            canUseHealth ? loadHealthRecords() : Promise.resolve()
+          ]);
+        } else {
+          details.classList.add("hidden");
+          viewButton.textContent = "View details";
+        }
       });
       actions.appendChild(viewButton);
       const editButton = document.createElement("button");
