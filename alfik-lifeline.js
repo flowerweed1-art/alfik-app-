@@ -28,6 +28,10 @@
       #lifelineView .ll-checks input{width:auto}
       #lifelineView .ll-warning{padding:12px;border-left:4px solid #c78a21;background:#fff8e9;border-radius:8px}
       #lifelineView .ll-empty{padding:16px;border:1px dashed #b8cddd;border-radius:10px;color:#52697c}
+      #lifelineView .ll-directory-tools{margin:12px 0}
+      #lifelineView .ll-directory-actions{margin:10px 0}
+      #lifelineView .ll-directory-actions button{flex:1 1 150px}
+      #lifelineView #llAreaPostcode,#lifelineView #llSupportFilter{width:100%;min-width:0}
       @media(max-width:520px){#lifelineView .ll-card{padding:12px}}
     `;
     document.head.appendChild(s);
@@ -96,8 +100,18 @@
         <div id="llCaseList" aria-live="polite"><p class="ll-empty">Loading your requests…</p></div>
       </div>
       <div class="ll-card">
-        <h3>Verified support directory</h3>
-        <p class="ll-small">Only listings checked by ALFIK are shown here. A verified listing does not mean it has capacity today. Always confirm eligibility, safety and availability directly.</p>
+        <h3>Find help in your area</h3>
+        <p class="ll-small">Search by UK postcode or use your device location. ALFIK uses this only to filter the directory for this search. Your precise location is not saved to your Lifeline case.</p>
+        <div class="ll-grid ll-directory-tools">
+          <div><label for="llAreaPostcode">UK postcode or area</label><input id="llAreaPostcode" maxlength="20" autocomplete="postal-code" placeholder="e.g. ME7 1AA or Maidstone"></div>
+          <div><label for="llSupportFilter">Type of support</label><select id="llSupportFilter"><option value="">All types of support</option></select></div>
+        </div>
+        <div class="ll-actions ll-directory-actions">
+          <button type="button" class="primary" id="llFindArea">Search directory</button>
+          <button type="button" class="secondary" id="llUseLocation">Use my location</button>
+          <button type="button" class="secondary" id="llClearArea">Show all services</button>
+        </div>
+        <p id="llAreaMessage" class="ll-small" role="status" aria-live="polite">All verified listings are shown below. Search to narrow results to your area and type of support.</p>
         <div id="llServiceList" aria-live="polite"><p class="ll-empty">Loading verified services…</p></div>
       </div>
       <p id="llGlobalMessage" class="message" role="status"></p>
@@ -109,6 +123,10 @@
     byId("llPlanForm").addEventListener("submit",savePlan);
     byId("llPlanReset").addEventListener("click",resetPlan);
     byId("llCaseForm").addEventListener("submit",saveCase);
+    byId("llFindArea").addEventListener("click",searchDirectory);
+    byId("llUseLocation").addEventListener("click",useDeviceLocation);
+    byId("llClearArea").addEventListener("click",clearDirectorySearch);
+    byId("llSupportFilter").addEventListener("change",renderServices);
     section.addEventListener("click",handleAction);
     addStyles();
   }
@@ -204,12 +222,79 @@
     const {error}=await db().from("alfik_lifeline_referrals").delete().eq("id",id);
     if(error){msg("llGlobalMessage","Could not delete referral: "+error.message,true);return;} await loadCases();
   }
+  function populateSupportFilter() {
+    const select=byId("llSupportFilter"); if(!select)return;
+    const selected=select.value;
+    const types=[...new Set(services.flatMap(s=>s.support_types||[]))].sort((a,b)=>a.localeCompare(b));
+    select.innerHTML='<option value="">All types of support</option>'+types.map(t=>'<option value="'+esc(t)+'">'+esc(t)+'</option>').join("");
+    if(types.includes(selected))select.value=selected;
+  }
+  function renderServices() {
+    const box=byId("llServiceList"); if(!box)return;
+    const area=(byId("llAreaPostcode")?.dataset.areaTerms||"").toLowerCase().split("|").filter(Boolean);
+    const type=byId("llSupportFilter")?.value||"";
+    const results=services.filter(s=>{
+      const coverage=[...(s.countries||[]),...(s.regions||[])].map(x=>String(x).toLowerCase());
+      const areaMatch=!area.length||area.some(term=>coverage.some(c=>c===term||c.includes(term)||term.includes(c))||
+        (term==="england"&&coverage.some(c=>c.includes("united kingdom")||c==="uk"))||
+        (term==="scotland"&&coverage.some(c=>c.includes("united kingdom")||c==="uk")));
+      const supportMatch=!type||(s.support_types||[]).some(t=>t===type);
+      return areaMatch&&supportMatch;
+    });
+    box.innerHTML=results.length?results.map(s=>`<article class="ll-card"><h3>${esc(s.organisation_name)}</h3><p>${esc(s.summary)}</p><p><strong>Support:</strong> ${esc((s.support_types||[]).join(", ")||"Ask service")}</p><p><strong>Species:</strong> ${esc((s.species||[]).join(", ")||"Check directly")}</p><p><strong>Coverage:</strong> ${esc([...(s.countries||[]),...(s.regions||[])].join(", ")||"Check directly")}</p><p><strong>Eligibility:</strong> ${esc(s.eligibility)}</p><p class="ll-small">${esc(s.capacity_note)} ${s.verified_at?"Last verified: "+esc(new Date(s.verified_at).toLocaleDateString()):""}</p>${safeUrl(s.website)?'<p><a href="'+esc(safeUrl(s.website))+'" target="_blank" rel="noopener noreferrer">Visit official website</a></p>':""}<button type="button" class="secondary" data-ll-action="refer-service" data-id="${esc(s.id)}">Add to a help request</button></article>`).join(""):'<p class="ll-empty">No listings match those filters yet. Try a broader area or choose “All types of support”. You can also contact a service directly to ask whether it covers your area.</p>';
+  }
+  async function searchDirectory() {
+    const input=byId("llAreaPostcode"), raw=input.value.trim();
+    if(!raw){input.dataset.areaTerms="";msg("llAreaMessage","Enter a postcode or area, or use your device location.");renderServices();return;}
+    msg("llAreaMessage","Checking postcode or area…");
+    try {
+      const postcodeLike=/^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(raw);
+      if(postcodeLike){
+        const response=await fetch("https://api.postcodes.io/postcodes/"+encodeURIComponent(raw.replace(/\s+/g,"")));
+        const json=await response.json();
+        if(!response.ok||!json.result)throw new Error("That postcode could not be found. Check it and try again, or enter a town or area.");
+        const p=json.result;
+        const terms=[p.admin_district,p.admin_county,p.region,p.country,p.parliamentary_constituency].filter(Boolean);
+        input.dataset.areaTerms=[...new Set(terms.map(t=>String(t).toLowerCase()))].join("|");
+        msg("llAreaMessage","Searching around "+p.postcode+" ("+[p.admin_district,p.region,p.country].filter(Boolean).join(", ")+"). Results depend on each service’s listed coverage.");
+      } else {
+        input.dataset.areaTerms=[raw.toLowerCase()];
+        msg("llAreaMessage",'Searching listings that mention "'+raw+'". For the most accurate postcode-area match, enter a full UK postcode.');
+      }
+      renderServices();
+    } catch(e) {input.dataset.areaTerms="";msg("llAreaMessage",e.message||"Could not look up that location. Try entering a town or area.",true);}
+  }
+  async function useDeviceLocation() {
+    if(!navigator.geolocation){msg("llAreaMessage","Location is not available in this browser. Enter your postcode instead.");return;}
+    const button=byId("llUseLocation"); button.disabled=true; msg("llAreaMessage","Waiting for your permission to use your location…");
+    navigator.geolocation.getCurrentPosition(async position=>{
+      try{
+        const url="https://api.postcodes.io/postcodes?lon="+encodeURIComponent(position.coords.longitude)+"&lat="+encodeURIComponent(position.coords.latitude);
+        const response=await fetch(url); const json=await response.json();
+        const p=json&&json.result&&json.result[0];
+        if(!response.ok||!p||!p.postcode)throw new Error("We could not match your location to a UK postcode. Please enter your postcode or town instead.");
+        byId("llAreaPostcode").value=p.postcode;
+        await searchDirectory();
+      }catch(e){msg("llAreaMessage",e.message||"Location lookup failed. Please enter your postcode instead.",true);}
+      finally{button.disabled=false;}
+    },error=>{
+      button.disabled=false;
+      msg("llAreaMessage",error.code===1?"Location permission was declined. You can still enter your postcode manually.":"Could not get your location. Check device location settings or enter your postcode manually.");
+    },{enableHighAccuracy:false,timeout:12000,maximumAge:300000});
+  }
+  function clearDirectorySearch() {
+    const input=byId("llAreaPostcode"); input.value=""; input.dataset.areaTerms="";
+    byId("llSupportFilter").value="";
+    msg("llAreaMessage","Showing all verified listings. No location is being used.");
+    renderServices();
+  }
   async function loadServices() {
     const d=db(); if(!d)return;
     const {data,error}=await d.from("alfik_lifeline_services").select("*").eq("verification_status","verified").order("organisation_name");
     if(error){byId("llServiceList").innerHTML='<p class="ll-empty">The verified directory will appear after the Lifeline SQL setup is installed and ALFIK adds checked listings.</p>';return;}
     services=data||[];
-    byId("llServiceList").innerHTML=services.length?services.map(s=>`<article class="ll-card"><h3>${esc(s.organisation_name)}</h3><p>${esc(s.summary)}</p><p><strong>Support:</strong> ${esc((s.support_types||[]).join(", ")||"Ask service")}</p><p><strong>Species:</strong> ${esc((s.species||[]).join(", ")||"Check directly")}</p><p><strong>Coverage:</strong> ${esc([...(s.countries||[]),...(s.regions||[])].join(", ")||"Check directly")}</p><p><strong>Eligibility:</strong> ${esc(s.eligibility)}</p><p class="ll-small">${esc(s.capacity_note)} ${s.verified_at?"Last verified: "+esc(new Date(s.verified_at).toLocaleDateString()):""}</p>${safeUrl(s.website)?'<p><a href="'+esc(safeUrl(s.website))+'" target="_blank" rel="noopener noreferrer">Visit official website</a></p>':""}<button type="button" class="secondary" data-ll-action="refer-service" data-id="${esc(s.id)}">Add to a help request</button></article>`).join(""):'<p class="ll-empty">No directory entries have been verified yet. ALFIK will show only listings checked by the team, not an unverified list that might send people to the wrong place.</p>';
+    populateSupportFilter();
+    renderServices();
   }
   async function referService(id) {
     const service=services.find(s=>s.id===id); if(!service)return;
