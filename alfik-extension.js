@@ -583,7 +583,7 @@ const list = el("petList");
 const petSelect = el("healthPet");
 
 if (list) list.replaceChildren();
-["healthPet", "medicationPet", "carePet"].forEach(selectId => {
+["healthPet", "medicationPet", "carePet", "vaccinationPet"].forEach(selectId => {
   const target = el(selectId);
   if (!target) return;
   target.replaceChildren();
@@ -765,7 +765,7 @@ try {
       item.appendChild(actions);
     }
 
-    ["medicationPet", "carePet"].forEach(selectId => {
+    ["medicationPet", "carePet", "vaccinationPet"].forEach(selectId => {
       const target = el(selectId);
       if (!target) return;
       const option = document.createElement("option");
@@ -787,6 +787,7 @@ try {
 
   await loadPetDashboard();
   await loadHealthRecords();
+  await loadVaccinations();
   await loadMedicationList();
   await loadCareSchedules();
   await loadCareNotifications();
@@ -1100,6 +1101,74 @@ try {
   container.textContent = "Health records could not be loaded: " + readableError(error);
 }
 
+}
+
+
+async function saveVaccination() {
+  const db = client();
+  const user = await currentUser();
+  if (!db || !user) return say("vaccinationMessage", "Please sign in again.");
+  const planMessage = await planAccessMessage("premium");
+  if (planMessage) return say("vaccinationMessage", planMessage);
+  const petId = el("vaccinationPet")?.value;
+  const name = el("vaccinationName")?.value.trim();
+  const dateGiven = el("vaccinationDate")?.value;
+  const dueDate = el("vaccinationDue")?.value || null;
+  if (!petId || !name || !dateGiven) return say("vaccinationMessage", "Choose a pet, enter the vaccine name and select the date given.");
+  if (dueDate && dueDate < dateGiven) return say("vaccinationMessage", "The booster due date cannot be before the date given.");
+  try {
+    const result = await db.from("alfik_pet_vaccinations").insert([{
+      owner_id: user.id, pet_id: petId, vaccine_name: name, date_given: dateGiven,
+      next_due_date: dueDate, vet_name: el("vaccinationVet")?.value.trim() || null,
+      notes: el("vaccinationNotes")?.value.trim() || null,
+      reminder_enabled: Boolean(el("vaccinationReminderEnabled")?.checked)
+    }]);
+    if (result.error) throw result.error;
+    ["vaccinationName", "vaccinationDate", "vaccinationDue", "vaccinationVet", "vaccinationNotes"].forEach(id => { if (el(id)) el(id).value = ""; });
+    say("vaccinationMessage", "Vaccination saved.");
+    await loadVaccinations();
+    await loadCareNotifications();
+  } catch (error) {
+    console.error("ALFIK save vaccination:", error);
+    say("vaccinationMessage", "Could not save vaccination: " + readableError(error) + ". If this is the first time, run vaccination-booster-tracker.sql in Supabase.");
+  }
+}
+
+async function loadVaccinations() {
+  const db = client(), user = await currentUser(), list = el("vaccinationList"), petId = el("vaccinationPet")?.value;
+  if (!db || !user || !list) return;
+  list.replaceChildren();
+  const planMessage = await planAccessMessage("premium");
+  if (planMessage) { list.textContent = planMessage; return; }
+  if (!petId) { list.textContent = "Choose a pet to view vaccinations."; return; }
+  try {
+    const result = await db.from("alfik_pet_vaccinations")
+      .select("id,vaccine_name,date_given,next_due_date,vet_name,notes,reminder_enabled")
+      .eq("owner_id", user.id).eq("pet_id", petId).order("date_given", { ascending: false });
+    if (result.error) throw result.error;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const soon = new Date(today); soon.setDate(soon.getDate() + 30);
+    (result.data || []).forEach(v => {
+      const item = card(list, v.vaccine_name || "Vaccination");
+      addText(item, "Date given", v.date_given);
+      addText(item, "Next booster", v.next_due_date || "Not scheduled");
+      addText(item, "Vet / practice", v.vet_name);
+      addText(item, "Notes", v.notes);
+      let status = "No booster scheduled";
+      if (v.next_due_date) {
+        const due = new Date(v.next_due_date + "T00:00:00");
+        if (due < today) status = "Overdue";
+        else if (due <= soon) status = "Due soon";
+        else status = "Upcoming";
+      }
+      addText(item, "Status", status);
+      addText(item, "In-app reminder", v.reminder_enabled ? "On" : "Off");
+    });
+    if (!(result.data || []).length) list.textContent = "No vaccination records saved for this pet yet.";
+  } catch (error) {
+    console.warn("ALFIK vaccinations:", error);
+    list.textContent = "Could not load vaccinations: " + readableError(error) + ". If this is the first time, run vaccination-booster-tracker.sql in Supabase.";
+  }
 }
 
 async function loadRescueWorkspace() {
@@ -2353,10 +2422,12 @@ if (el("cancelPetEditBtn")) el("cancelPetEditBtn").addEventListener("click", () 
   say("petMessage", "");
 });
 if (el("saveHealthBtn")) el("saveHealthBtn").addEventListener("click", saveHealthRecord);
+if (el("saveVaccinationBtn")) el("saveVaccinationBtn").addEventListener("click", saveVaccination);
 if (el("dashboardPetSelect")) el("dashboardPetSelect").addEventListener("change", async () => {
   await loadPetDashboard();
 });
 if (el("healthPet")) el("healthPet").addEventListener("change", loadHealthRecords);
+if (el("vaccinationPet")) el("vaccinationPet").addEventListener("change", loadVaccinations);
 if (el("medicationPet")) el("medicationPet").addEventListener("change", loadMedicationList);
 if (el("carePet")) el("carePet").addEventListener("change", loadCareSchedules);
 if (el("careType")) el("careType").addEventListener("change", () => {
