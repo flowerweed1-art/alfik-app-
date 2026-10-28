@@ -1245,6 +1245,17 @@ async function loadVaccinations() {
         await loadVaccinations(); await loadCareNotifications();
       });
       item.appendChild(edit);
+      const remove = document.createElement("button");
+      remove.type = "button"; remove.className = "secondary"; remove.textContent = "Delete vaccination";
+      remove.addEventListener("click", async () => {
+        if (!window.confirm("Delete this vaccination record? This cannot be undone.")) return;
+        const current = await currentUser();
+        const deletion = await client().from("alfik_pet_vaccinations").delete().eq("id", v.id).eq("owner_id", current.id).eq("pet_id", petId);
+        if (deletion.error) return say("vaccinationMessage", "Could not delete vaccination: " + readableError(deletion.error));
+        say("vaccinationMessage", "Vaccination deleted.");
+        await loadVaccinations(); await loadCareNotifications();
+      });
+      item.appendChild(remove);
     });
     if (!(result.data || []).length) list.textContent = "No vaccination records saved for this pet yet.";
   } catch (error) {
@@ -1530,7 +1541,6 @@ try{
  const r=await db.from("alfik_rescue_animal_medications").select("medication_name,dose,frequency,start_date,end_date,instructions").eq("org_id",orgId).eq("rescue_animal_id",animalId).order("created_at",{ascending:false});
  if(r.error)throw r.error;
  (r.data||[]).forEach(m=>{const item=card(list,m.medication_name);addText(item,"Dose",m.dose);addText(item,"Frequency",m.frequency);addText(item,"Dates",(m.start_date||"")+(m.end_date?" to "+m.end_date:""));addText(item,"Instructions",m.instructions);
- const edit=document.createElement("button");edit.type="button";edit.className="secondary";edit.textContent="Edit medication";
  edit.addEventListener("click",async()=>{
   const name=window.prompt("Medication name",m.medication_name||"");if(name===null)return;
   const dose=window.prompt("Dose",m.dose||"");if(dose===null)return;
@@ -1667,7 +1677,32 @@ if(!petId){list.textContent="Choose a pet to view medications.";return;}
 try{
  const r=await db.from("alfik_animal_medications").select("id,medication_name,dose,frequency,start_date,end_date,instructions,active").eq("owner_id",user.id).eq("pet_id",petId).order("created_at",{ascending:false});
  if(r.error)throw r.error;
- (r.data||[]).forEach(m=>{const item=card(list,m.medication_name);addText(item,"Dose",m.dose);addText(item,"Frequency",m.frequency);addText(item,"Dates",(m.start_date||"")+(m.end_date?" to "+m.end_date:""));addText(item,"Instructions",m.instructions);});
+ (r.data||[]).forEach(m=>{
+ const item=card(list,m.medication_name);addText(item,"Dose",m.dose);addText(item,"Frequency",m.frequency);addText(item,"Dates",(m.start_date||"")+(m.end_date?" to "+m.end_date:""));addText(item,"Instructions",m.instructions);
+ const edit=document.createElement("button");edit.type="button";edit.className="secondary";edit.textContent="Edit medication";
+ edit.addEventListener("click",async()=>{
+  const name=window.prompt("Medication name",m.medication_name||"");if(name===null)return;
+  const dose=window.prompt("Dose",m.dose||"");if(dose===null)return;
+  const frequency=window.prompt("Frequency",m.frequency||"");if(frequency===null)return;
+  const start=window.prompt("Start date (YYYY-MM-DD, optional)",m.start_date||"");if(start===null)return;
+  const end=window.prompt("End date (YYYY-MM-DD, optional)",m.end_date||"");if(end===null)return;
+  const instructions=window.prompt("Instructions (optional)",m.instructions||"");if(instructions===null)return;
+  if(!name.trim())return say("medicationMessage","Medication name is required.");
+  if(start.trim()&&end.trim()&&end.trim()<start.trim())return say("medicationMessage","End date cannot be before start date.");
+  const current=await currentUser();
+  const update=await client().from("alfik_animal_medications").update({medication_name:name.trim(),dose:dose.trim()||null,frequency:frequency.trim()||null,start_date:start.trim()||null,end_date:end.trim()||null,instructions:instructions.trim()||null}).eq("id",m.id).eq("owner_id",current.id).eq("pet_id",petId);
+  if(update.error)return say("medicationMessage","Could not update medication: "+readableError(update.error));
+  say("medicationMessage","Medication updated.");await loadMedicationList();
+ });item.appendChild(edit);
+ const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Delete medication";
+ remove.addEventListener("click",async()=>{
+  if(!window.confirm("Delete this medication record? This cannot be undone."))return;
+  const current=await currentUser();
+  const deletion=await client().from("alfik_animal_medications").delete().eq("id",m.id).eq("owner_id",current.id).eq("pet_id",petId);
+  if(deletion.error)return say("medicationMessage","Could not delete medication: "+readableError(deletion.error));
+  say("medicationMessage","Medication deleted.");await loadMedicationList();
+ });item.appendChild(remove);
+ });
  if(!(r.data||[]).length)list.textContent="No medications recorded for this pet.";
 }catch(e){list.textContent="Could not load medications: "+readableError(e);}
 }
@@ -1716,6 +1751,14 @@ try{
   if(update.error)return say("careMessage","Could not update reminder: "+readableError(update.error));
   say("careMessage","Reminder updated.");await loadCareSchedules();await loadCareNotifications();
  });item.appendChild(edit);
+ const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Delete reminder";
+ remove.addEventListener("click",async()=>{
+  if(!window.confirm("Delete this care reminder? This cannot be undone."))return;
+  const current=await currentUser();
+  const deletion=await client().from("alfik_care_schedules").delete().eq("id",s.id).eq("owner_id",current.id).eq("pet_id",petId);
+  if(deletion.error)return say("careMessage","Could not delete reminder: "+readableError(deletion.error));
+  say("careMessage","Reminder deleted.");await loadCareSchedules();await loadCareNotifications();
+ });item.appendChild(remove);
  const b=document.createElement("button");b.className="secondary";b.textContent=s.enabled?"Turn off":"Turn on";b.addEventListener("click",()=>toggleCareSchedule(s.id,!s.enabled));item.appendChild(b);});
  if(!(r.data||[]).length)list.textContent="No reminders set for this pet.";
 }catch(e){list.textContent="Could not load reminders: "+readableError(e);}
