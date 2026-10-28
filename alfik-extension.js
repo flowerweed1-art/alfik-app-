@@ -402,6 +402,90 @@ function petAgeText(dateValue) {
   return years + (years === 1 ? " year" : " years") + (remainder ? " " + remainder + (remainder === 1 ? " month" : " months") : "");
 }
 
+async function loadPetLifeline(pet, panel) {
+  if (!panel) return;
+  panel.replaceChildren();
+  const heading = document.createElement("h4");
+  heading.textContent = "🛟 ALFIK Lifeline";
+  panel.appendChild(heading);
+  const note = document.createElement("p");
+  note.className = "note";
+  note.textContent = "See help requests linked to this pet, or start a new request without leaving their profile.";
+  panel.appendChild(note);
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "primary";
+  button.textContent = "Request help for " + (pet.name || "this pet");
+  button.addEventListener("click", () => {
+    if (typeof window.alfikOpenLifelineForPet === "function") window.alfikOpenLifelineForPet(pet);
+    else {
+      const status = document.createElement("p");
+      status.textContent = "ALFIK Lifeline is still loading. Please try again in a moment.";
+      panel.appendChild(status);
+    }
+  });
+  panel.appendChild(button);
+  const db = client();
+  const user = await currentUser();
+  if (!db || !user || !pet || !pet.id) {
+    const empty = document.createElement("p");
+    empty.textContent = "Sign in to view this pet's private Lifeline requests.";
+    panel.appendChild(empty);
+    return;
+  }
+  const result = await db.from("alfik_lifeline_cases")
+    .select("id,animal_name,species,crisis_type,urgency,help_needed,status,created_at,next_step,closed_outcome")
+    .eq("owner_id", user.id)
+    .eq("pet_id", pet.id)
+    .order("updated_at", { ascending: false });
+  if (result.error) {
+    const error = document.createElement("p");
+    error.className = "note";
+    error.textContent = result.error.message && /pet_id|column/i.test(result.error.message)
+      ? "Linking Lifeline requests to pet profiles needs the Lifeline pet-link SQL update in Supabase."
+      : "This pet's Lifeline requests could not be loaded. Please try again later.";
+    panel.appendChild(error);
+    return;
+  }
+  const rows = result.data || [];
+  if (!rows.length) {
+    const empty = document.createElement("p");
+    empty.className = "note";
+    empty.textContent = "No help requests linked to this pet yet.";
+    panel.appendChild(empty);
+    return;
+  }
+  rows.forEach(request => {
+    const card = document.createElement("div");
+    card.className = "pet-dashboard-section";
+    const status = document.createElement("strong");
+    status.textContent = request.status || "Seeking support";
+    card.appendChild(status);
+    const detail = document.createElement("p");
+    detail.textContent = (request.crisis_type || "Help request") + " · " + (request.urgency || "Urgency not set");
+    card.appendChild(detail);
+    if (request.help_needed && request.help_needed.length) {
+      const needs = document.createElement("p");
+      needs.textContent = "Support needed: " + request.help_needed.join(", ");
+      card.appendChild(needs);
+    }
+    if (request.next_step) {
+      const next = document.createElement("p");
+      next.textContent = "Next step: " + request.next_step;
+      card.appendChild(next);
+    }
+    if (request.closed_outcome) {
+      const outcome = document.createElement("p");
+      outcome.textContent = "Outcome: " + request.closed_outcome;
+      card.appendChild(outcome);
+    }
+    const date = document.createElement("small");
+    date.textContent = "Requested " + (request.created_at ? new Date(request.created_at).toLocaleDateString() : "date not recorded");
+    card.appendChild(date);
+    panel.appendChild(card);
+  });
+}
+
 function dashboardStat(parent, value, label) {
   const tile = document.createElement("div");
   tile.className = "pet-dashboard-stat";
@@ -713,6 +797,9 @@ try {
       addText(details, "Vet address", pet.vet_address);
       addText(details, "Notes", pet.notes);
       item.appendChild(details);
+      const lifelinePanel = document.createElement("div");
+      lifelinePanel.className = "pet-dashboard-section pet-lifeline-panel";
+      details.appendChild(lifelinePanel);
       if (activeMissingReport) {
         const missingStatus = document.createElement("p");
         missingStatus.className = "pet-missing-status";
@@ -771,6 +858,7 @@ try {
             if (select) select.value = String(pet.id);
           });
           details.classList.remove("hidden");
+          await loadPetLifeline(pet, lifelinePanel);
           viewButton.textContent = "Hide details";
           await Promise.all([
             loadVaccinations(),
