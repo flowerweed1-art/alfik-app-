@@ -39,7 +39,7 @@ begin
       and (
         lower(trim(coalesce(r.location_text,''))) = lower(trim(new.location_text))
         or position(lower(trim(coalesce(r.location_text,''))) in lower(trim(new.location_text))) > 0
-        or position(lower(trim(new.location_text)) in lower(trim(coalesce(r.location_text,''))) > 0
+        or position(lower(trim(new.location_text)) in lower(trim(coalesce(r.location_text,'')))) > 0
         or exists (
           select 1
           from regexp_split_to_table(lower(coalesce(new.description,'')), '[^a-z0-9]+') as w(word)
