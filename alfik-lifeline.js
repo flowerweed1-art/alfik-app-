@@ -100,6 +100,7 @@
       <div class="ll-card">
         <h3>My open need loop</h3>
         <p class="ll-small">Track each request from seeking help through referral and confirmed outcome. If a service cannot help, record that and try an alternative.</p>
+        <div id="llNeedsAttention" aria-live="polite"></div>
         <div id="llCaseList" aria-live="polite"><p class="ll-empty">Loading your requests…</p></div>
       </div>
       <div class="ll-card">
@@ -117,6 +118,29 @@
         </div>
         <p id="llAreaMessage" class="ll-small" role="status" aria-live="polite">All verified listings are shown below. Search to narrow results to your area and type of support.</p>
         <div id="llServiceList" aria-live="polite"><p class="ll-empty">Loading verified services…</p></div>
+      <div class="ll-card" id="llOrganisationTools">
+        <h3>Organisation or rescue account</h3>
+        <p class="ll-small">Represent a rescue, charity, food bank, fostering project or other animal-support service? Request to manage an existing directory listing or submit a new one. ALFIK reviews requests before linking accounts or publishing listings.</p>
+        <form id="llOrgRequestForm">
+          <label for="llOrgRequestType">What do you want to do?</label>
+          <select id="llOrgRequestType"><option value="claim_existing">Request access to an existing listing</option><option value="new_listing">Request a new directory listing</option></select>
+          <div id="llOrgExistingWrap"><label for="llOrgExisting">Possible existing listing</label><select id="llOrgExisting"><option value="">Choose a listing to request</option></select><p class="ll-small">Choose the closest match. If you cannot find your organisation, choose “Request a new directory listing”.</p></div>
+          <label for="llOrgName">Organisation or rescue name</label><input id="llOrgName" maxlength="180" required placeholder="Official organisation name">
+          <label for="llOrgWebsite">Official website</label><input id="llOrgWebsite" maxlength="500" placeholder="https://">
+          <label for="llOrgContact">Public contact details</label><input id="llOrgContact" maxlength="250" placeholder="Public email or phone, not private personal details">
+          <label for="llOrgSummary">What help does your organisation offer?</label><textarea id="llOrgSummary" maxlength="2000" rows="3" placeholder="Brief description of services and who you help"></textarea>
+          <label for="llOrgCountries">Countries covered (comma-separated)</label><input id="llOrgCountries" maxlength="300" placeholder="e.g. England">
+          <label for="llOrgRegions">Regions or areas covered (comma-separated)</label><input id="llOrgRegions" maxlength="1000" placeholder="e.g. Kent, Medway, South East England">
+          <label for="llOrgSpecies">Species supported (comma-separated)</label><input id="llOrgSpecies" maxlength="300" placeholder="e.g. Cats, Dogs">
+          <label for="llOrgSupport">Types of support offered (comma-separated)</label><input id="llOrgSupport" maxlength="700" placeholder="e.g. Temporary fostering, Pet food">
+          <label for="llOrgEligibility">Eligibility / restrictions</label><textarea id="llOrgEligibility" maxlength="1200" rows="2" placeholder="Who can apply, referral rules, areas or restrictions"></textarea>
+          <label for="llOrgReferral">How should people contact or refer to you?</label><input id="llOrgReferral" maxlength="500" placeholder="e.g. Contact through official website">
+          <button class="primary wide" type="submit">Submit for ALFIK approval</button>
+          <p id="llOrgRequestMessage" class="message" role="status"></p>
+        </form>
+        <div id="llOrgRequestList"><p class="ll-small">Your submitted requests will appear here.</p></div>
+        <div id="llOrgOwnedListings"></div>
+      </div>
       </div>
       <p id="llGlobalMessage" class="message" role="status"></p>
     `;
@@ -127,6 +151,8 @@
     byId("llPlanForm").addEventListener("submit",savePlan);
     byId("llPlanReset").addEventListener("click",resetPlan);
     byId("llCaseForm").addEventListener("submit",saveCase);
+    byId("llOrgRequestForm").addEventListener("submit",submitOrgRequest);
+    byId("llOrgRequestType").addEventListener("change",toggleOrgRequestType);
     byId("llFindArea").addEventListener("click",searchDirectory);
     byId("llUseLocation").addEventListener("click",useDeviceLocation);
     byId("llClearArea").addEventListener("click",clearDirectorySearch);
@@ -204,6 +230,88 @@
     }).join("");
     ordered.forEach(c=>{const select=byId("llStatus-"+c.id);if(select)select.value=c.status;});
     for(const c of ordered) await loadReferrals(c.id);
+    await renderNeedsAttention(ordered);
+  }
+  async function renderNeedsAttention(orderedCases) {
+    const box=byId("llNeedsAttention"); if(!box)return;
+    const active=(orderedCases||[]).filter(c=>!["Help confirmed","Closed"].includes(c.status));
+    const {data:refs,error}=await db().from("alfik_lifeline_referrals").select("id,case_id,service_name,referral_status,updated_at,created_at,outcome_notes").order("updated_at",{ascending:false});
+    const referrals=error?[]:(refs||[]);
+    const alerts=[];
+    const now=Date.now(), twoDays=2*24*60*60*1000;
+    active.forEach(c=>{
+      const age=now-new Date(c.updated_at||c.created_at).getTime();
+      if(c.urgency==="Emergency")alerts.push({rank:0,title:"Emergency request: "+c.animal_name,detail:"This tracker is not an emergency service. Contact the appropriate emergency service or animal-welfare organisation directly.",caseId:c.id});
+      else if(c.urgency==="Today")alerts.push({rank:1,title:"Help needed today: "+c.animal_name,detail:"Contact a suitable service directly and confirm it can help within the required time.",caseId:c.id});
+      else if(age>=twoDays)alerts.push({rank:3,title:"Request may need a follow-up: "+c.animal_name,detail:"This request has not been updated for at least two days. Check whether help has been arranged or record the next step.",caseId:c.id});
+    });
+    referrals.forEach(r=>{
+      const c=(orderedCases||[]).find(x=>x.id===r.case_id);
+      if(!c||["Help confirmed","Closed"].includes(c.status))return;
+      const age=now-new Date(r.updated_at||r.created_at).getTime();
+      if(["No capacity","Not eligible","Alternative needed"].includes(r.referral_status))alerts.push({rank:0,title:"Alternative needed: "+r.service_name,detail:"The service recorded “"+r.referral_status+"”. Try another suitable service and update the request.",caseId:c.id});
+      else if(r.referral_status==="Waiting for reply"&&age>=twoDays)alerts.push({rank:2,title:"Follow up with "+r.service_name,detail:"No update has been recorded for this referral in at least two days. Contact the service directly if appropriate.",caseId:c.id});
+      else if(r.referral_status==="Not contacted"&&age>=twoDays)alerts.push({rank:3,title:"Referral not yet contacted: "+r.service_name,detail:"Contact the service if it is still suitable, then record its response.",caseId:c.id});
+    });
+    alerts.sort((a,b)=>a.rank-b.rank);
+    box.innerHTML=alerts.length?'<div class="ll-card"><h3>⚠️ Needs attention</h3><p class="ll-small">These reminders are generated from your saved statuses and dates. ALFIK does not contact services or monitor replies automatically.</p>'+alerts.slice(0,12).map(a=>'<div class="ll-next-action"><strong>'+esc(a.title)+'</strong><p>'+esc(a.detail)+'</p></div>').join("")+'</div>':'<div class="ll-card"><h3>✓ No outstanding reminders</h3><p class="ll-small">No urgent or overdue follow-ups were detected from your saved requests. Keep statuses up to date so this stays useful.</p></div>';
+  }
+  function toggleOrgRequestType() {
+    const isExisting=byId("llOrgRequestType").value==="claim_existing";
+    byId("llOrgExistingWrap").classList.toggle("hidden",!isExisting);
+    byId("llOrgExisting").required=isExisting;
+  }
+  function csvValues(value) { return String(value||"").split(",").map(x=>x.trim()).filter(Boolean).slice(0,40); }
+  async function submitOrgRequest(event) {
+    event.preventDefault();
+    const d=db(); if(!d){msg("llOrgRequestMessage","Please sign in first.",true);return;}
+    const requestType=byId("llOrgRequestType").value;
+    const serviceId=requestType==="claim_existing"?byId("llOrgExisting").value:null;
+    const name=byId("llOrgName").value.trim();
+    const website=byId("llOrgWebsite").value.trim();
+    if(website&&!safeUrl(website)){msg("llOrgRequestMessage","Please enter a valid http or https website address.",true);return;}
+    if(requestType==="claim_existing"&&!serviceId){msg("llOrgRequestMessage","Choose the existing listing you want to claim.",true);return;}
+    const {data:userData,error:userError}=await d.auth.getUser();
+    if(userError||!userData.user){msg("llOrgRequestMessage","Please sign in again and retry.",true);return;}
+    const payload={owner_id:userData.user.id,service_id:serviceId,request_type:requestType,organisation_name:name,website,public_contact:byId("llOrgContact").value.trim(),summary:byId("llOrgSummary").value.trim(),countries:csvValues(byId("llOrgCountries").value),regions:csvValues(byId("llOrgRegions").value),species:csvValues(byId("llOrgSpecies").value),support_types:csvValues(byId("llOrgSupport").value),eligibility:byId("llOrgEligibility").value.trim()||"Check directly with the service",referral_method:byId("llOrgReferral").value.trim()||"Contact the service directly",status:"pending"};
+    const {error}=await d.from("alfik_lifeline_org_requests").insert(payload);
+    if(error){msg("llOrgRequestMessage","Could not submit the request. Make sure the organisation-claims SQL setup has been run. "+error.message,true);return;}
+    msg("llOrgRequestMessage","Request submitted for ALFIK review. Your listing will not be linked or published until it is approved.");
+    byId("llOrgRequestForm").reset();toggleOrgRequestType();await loadOrganisationTools();
+  }
+  async function loadOrganisationTools() {
+    const d=db(); if(!d)return;
+    const {data:userData}=await d.auth.getUser(); const user=userData&&userData.user;
+    if(!user)return;
+    const existing=byId("llOrgExisting");
+    if(existing){
+      const selected=existing.value;
+      existing.innerHTML='<option value="">Choose a listing to request</option>'+services.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.organisation_name)+'</option>').join("");
+      if(services.some(s=>s.id===selected))existing.value=selected;
+    }
+    const {data:requests,error}=await d.from("alfik_lifeline_org_requests").select("*").order("created_at",{ascending:false});
+    const requestBox=byId("llOrgRequestList");
+    if(requestBox)requestBox.innerHTML=error?'<p class="ll-small">Request history is unavailable until the organisation-claims SQL setup has been run.</p>':(requests||[]).length?'<h4>Your approval requests</h4>'+(requests||[]).map(r=>'<div class="ll-card"><strong>'+esc(r.organisation_name)+'</strong><p>Status: <strong>'+esc(r.status)+'</strong></p><p class="ll-small">'+(r.request_type==="claim_existing"?"Request to manage an existing listing":"New listing request")+' · Submitted '+esc(new Date(r.created_at).toLocaleDateString())+'</p>'+(r.review_notes?'<p><strong>Review notes:</strong> '+esc(r.review_notes)+'</p>':"")+'</div>').join(""):'<p class="ll-small">You have not submitted an organisation request yet.</p>';
+    const {data:listings,listError}=await d.from("alfik_lifeline_services").select("*").eq("claimed_by",user.id).order("organisation_name");
+    const owned=byId("llOrgOwnedListings");
+    if(!owned)return;
+    if(listError){owned.innerHTML='<p class="ll-small">Your managed listings are unavailable until the organisation-claims SQL setup has been run.</p>';return;}
+    const rows=listings||[];
+    owned.innerHTML='<h4>Your managed directory listings</h4>'+(rows.length?rows.map(s=>'<form class="ll-card" data-ll-org-edit="'+esc(s.id)+'"><strong>'+esc(s.organisation_name)+'</strong><p>Status: <strong>'+esc(s.verification_status)+'</strong>. '+(s.verification_status==="verified"?"Visible in the directory.":"Not visible to the public until ALFIK verifies it.")+'</p><label>Organisation name</label><input name="organisation_name" maxlength="180" required value="'+esc(s.organisation_name)+'"><label>Official website</label><input name="website" maxlength="500" value="'+esc(s.website||"")+'"><label>Public contact</label><input name="public_contact" maxlength="250" value="'+esc(s.public_contact||"")+'"><label>Summary</label><textarea name="summary" maxlength="2000" rows="3">'+esc(s.summary||"")+'</textarea><label>Countries (comma-separated)</label><input name="countries" value="'+esc((s.countries||[]).join(", "))+'"><label>Regions (comma-separated)</label><input name="regions" value="'+esc((s.regions||[]).join(", "))+'"><label>Species (comma-separated)</label><input name="species" value="'+esc((s.species||[]).join(", "))+'"><label>Support types (comma-separated)</label><input name="support_types" value="'+esc((s.support_types||[]).join(", "))+'"><label>Eligibility</label><textarea name="eligibility" rows="2" maxlength="1200">'+esc(s.eligibility||"")+'</textarea><label>Referral method</label><input name="referral_method" maxlength="500" value="'+esc(s.referral_method||"")+'"><label>Capacity / availability note</label><input name="capacity_note" maxlength="1000" value="'+esc(s.capacity_note||"")+'"><button class="primary" type="submit">Save listing changes</button><p class="message" role="status"></p></form>').join(""):'<p class="ll-small">No listings have been linked to your account yet. Submit a claim or new listing request above.</p>';
+    owned.querySelectorAll("form[data-ll-org-edit]").forEach(form=>form.addEventListener("submit",saveOwnedListing));
+  }
+  async function saveOwnedListing(event) {
+    event.preventDefault();
+    const form=event.currentTarget,id=form.dataset.llOrgEdit;
+    const field=name=>form.elements.namedItem(name);
+    const website=field("website").value.trim();
+    if(website&&!safeUrl(website)){form.querySelector('[role="status"]').textContent="Please enter a valid http or https website.";return;}
+    const payload={organisation_name:field("organisation_name").value.trim(),website,public_contact:field("public_contact").value.trim(),summary:field("summary").value.trim(),countries:csvValues(field("countries").value),regions:csvValues(field("regions").value),species:csvValues(field("species").value),support_types:csvValues(field("support_types").value),eligibility:field("eligibility").value.trim()||"Check directly with the service",referral_method:field("referral_method").value.trim()||"Contact the service directly",capacity_note:field("capacity_note").value.trim()||"Availability must be confirmed directly with the service.",updated_at:nowIso()};
+    const {error}=await db().from("alfik_lifeline_services").update(payload).eq("id",id);
+    const note=form.querySelector('[role="status"]');
+    if(error){note.textContent="Could not save listing. Check the SQL setup and try again. "+error.message;return;}
+    note.textContent="Listing details saved. Verification status is controlled by ALFIK and has not changed.";
+    await loadServices();await loadOrganisationTools();
   }
   async function updateCase(id) {
     const status=byId("llStatus-"+id).value;
@@ -380,7 +488,7 @@
     const d=db(); if(!d){msg("llGlobalMessage","Please sign in to use ALFIK Lifeline.",true);return;}
     const {data,error}=await d.auth.getUser();
     if(error||!data.user){msg("llGlobalMessage","Please sign in to use ALFIK Lifeline.",true);return;}
-    await Promise.all([loadPlans(),loadCases(),loadServices()]);
+    await Promise.all([loadPlans(),loadCases(),loadServices(),loadOrganisationTools()]);
   }
   function init() {
     inject();
