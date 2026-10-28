@@ -44,7 +44,7 @@
     const nav=byId("alfikMainNav"), site=byId("siteContent");
     if(!nav || !site || byId("lifelineView")) return;
     const b=document.createElement("button");
-    b.type="button"; b.className="secondary"; b.dataset.view="lifelineView"; b.dataset.accountTypes="public";
+    b.type="button"; b.className="secondary"; b.dataset.view="lifelineView"; b.dataset.accountTypes="public,rescue,veterinary";
     b.textContent="🛟 ALFIK Lifeline";
     const anchor=nav.querySelector('[data-view="petsView"]');
     if(anchor) anchor.insertAdjacentElement("afterend",b); else nav.appendChild(b);
