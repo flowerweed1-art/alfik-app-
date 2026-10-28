@@ -12,6 +12,12 @@
   "theme_color": "#0d2f50",
   "icons": [
     {
+      "src": "/Screenshot_20261021_113202_Gallery.jpg?v=original-logo-icon-8",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
       "src": "/icons/alfik-192.png",
       "sizes": "192x192",
       "type": "image/png",
