@@ -582,6 +582,15 @@ const db = client();
 const list = el("petList");
 const petSelect = el("healthPet");
 
+// Restore movable care panels before rebuilding the pet cards, so a refresh of pet data never deletes them.
+const petsSection = el("petsView");
+if (petsSection) {
+  ["vaccinationTrackerPanel", "medicationPet", "carePet", "healthPet"].forEach(id => {
+    const control = el(id);
+    const panel = control && control.closest(".feature-panel");
+    if (panel && panel.parentElement !== petsSection) petsSection.appendChild(panel);
+  });
+}
 if (list) list.replaceChildren();
 ["healthPet", "medicationPet", "carePet", "vaccinationPet"].forEach(selectId => {
   const target = el(selectId);
