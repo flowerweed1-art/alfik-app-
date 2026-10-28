@@ -1870,20 +1870,34 @@ function dateMatch(a,b){
 }
 
 function similarity(a,b){
-  if(a.animal_type!==b.animal_type)return {score:0,reasons:[]};
+  if(normalise(a.animal_type)!==normalise(b.animal_type))return {score:0,reasons:[]};
   let score=4;
   const reasons=["same animal type"];
+
   const place=locationMatch(a.location_text,b.location_text);
-  score+=place.score;if(place.reason)reasons.push(place.reason);
+  score+=place.score;
+  if(place.reason)reasons.push(place.reason);
+
   const date=dateMatch(a.date_seen,b.date_seen);
-  score+=date.score;if(date.reason)reasons.push(date.reason);
-  const wordsA=new Set(matchWords((a.description||"")+" "+(a.animal_name||"")));
-  const wordsB=new Set(matchWords((b.description||"")+" "+(b.animal_name||"")));
+  score+=date.score;
+  if(date.reason)reasons.push(date.reason);
+
+  const nameA=normalise(a.animal_name||"");
+  const nameB=normalise(b.animal_name||"");
+  if(nameA&&nameB&&nameA===nameB){
+    score+=5;
+    reasons.push("same animal name");
+  }
+
+  const wordsA=new Set(matchWords(a.description||""));
+  const wordsB=new Set(matchWords(b.description||""));
   const shared=[...wordsA].filter(word=>wordsB.has(word));
   const distinctive=shared.filter(word=>word.length>=4);
-  const wordScore=Math.min(4,distinctive.length*2+Math.max(0,shared.length-distinctive.length));
-  score+=wordScore;
-  if(shared.length)reasons.push("shared description details: "+shared.slice(0,5).join(", "));
+  const descriptionScore=Math.min(6,distinctive.length*2+Math.max(0,shared.length-distinctive.length));
+  score+=descriptionScore;
+  if(shared.length)reasons.push("shared identifying details: "+shared.slice(0,6).join(", "));
+
+  if(a.photo_url&&b.photo_url)reasons.push("both reports include photos to compare");
   return {score,reasons};
 }
 
@@ -2082,8 +2096,9 @@ function renderMatches(){
     card.className="report-card";
     const title=element("h3","Possible match: "+match.a.animal_type);
     card.appendChild(title);
-    const scoreLabel=match.score>=13?"Several details line up":match.score>=9?"Some useful details line up":"Worth checking";
+    const scoreLabel=match.score>=16?"Strong possible match":match.score>=11?"Several details line up":match.score>=8?"Some useful details line up":"Worth checking";
     card.appendChild(element("p",scoreLabel+" · Match score "+match.score));
+    if(match.a.photo_url&&match.b.photo_url)card.appendChild(element("p","Both reports include photos. Compare markings and other identifying details carefully."));
     card.appendChild(element("p","Why it appeared: "+match.reasons.join(" · ")));
     addField(card,"Lost location",match.a.location_text);
     addField(card,"Lost date",match.a.date_seen);
