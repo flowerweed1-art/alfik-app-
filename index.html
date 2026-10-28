@@ -2044,6 +2044,8 @@ async function renderAnimalReportsMap(){
   const modeText=mapViewMode==="lost"?"lost animals":mapViewMode==="found"?"found animals":"active lost/found reports";
   status.textContent=shown+" "+modeText+" mapped approximately"+(mapUserLocation?" within 30 miles of your shared location":"")+". "+(candidates.length-shown>0?(candidates.length-shown)+" report(s) could not be mapped, were outside your radius, or were beyond the 12-location map limit.":"");
   if(mapUserLocation)applyFilters();
+  // Recalculate possible-match location scores after approximate map coordinates are cached.
+  if(typeof renderMatches==="function")renderMatches();
 }
 
 function escapeMapText(value){
