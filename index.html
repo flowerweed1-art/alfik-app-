@@ -1677,7 +1677,7 @@ function makeReportCard(report,isOwn){
   addField(card,"Description",report.description);
   addField(card,"Location",report.location_text);
   addField(card,"Date",report.date_seen);
-  addField(card,"Status",report.status==="resolved"?"Resolved / reunited":"Active");
+  addField(card,"Status",["resolved","reunited","closed"].includes(report.status)?"Resolved / reunited":"Active");
 
   addShareStudio(card,report);
 
@@ -1711,12 +1711,12 @@ function makeReportCard(report,isOwn){
     edit.onclick=()=>editReport(report);
     actions.appendChild(edit);
 
-    const statusButton=element("button",report.status==="resolved"?"Reopen report":"Mark resolved / reunited");
+    const statusButton=element("button",["resolved","reunited","closed"].includes(report.status)?"Reopen report":"Mark resolved / reunited");
     statusButton.className="secondary";
     statusButton.onclick=()=>changeReportStatus(report);
     actions.appendChild(statusButton);
 
-    if(report.photo_url&&report.report_type!=="found_deceased"&&report.status!=="resolved"){
+    if(report.photo_url&&report.report_type!=="found_deceased"&&!["resolved","reunited","closed"].includes(report.status)){
       const visual=element("button","🆓 Compare photos for possible matches");
       visual.className="primary";
       visual.onclick=()=>runFreePhotoMatch(report,visual,card);
@@ -1732,8 +1732,8 @@ function makeReportCard(report,isOwn){
 }
 
 async function changeReportStatus(report){
-  const next=report.status==="resolved"?"active":"resolved";
-  if(!confirm(next==="resolved"?"Mark this report as resolved or reunited?":"Reopen this report?"))return;
+  const next=["resolved","reunited","closed"].includes(report.status)?"active":"reunited";
+  if(!confirm(next==="reunited"?"Mark this report as resolved or reunited?":"Reopen this report?"))return;
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
   if(!user){alert("Please sign in again.");return;}
