@@ -2116,8 +2116,44 @@ function renderMatches(){
     card.appendChild(title);
     const scoreLabel=match.score>=16?"Strong possible match":match.score>=11?"Several details line up":match.score>=8?"Some useful details line up":"Worth checking";
     card.appendChild(element("p",scoreLabel+" · Match score "+match.score));
-    if(match.a.photo_url&&match.b.photo_url)card.appendChild(element("p","Both reports include photos. Compare markings and other identifying details carefully."));
-    card.appendChild(element("p","Why it appeared: "+match.reasons.join(" · ")));
+
+    const breakdown=element("div","");
+    breakdown.className="match-breakdown";
+    breakdown.appendChild(element("h4","What lines up"));
+    const reasonsList=document.createElement("ul");
+    reasonsList.className="match-reasons";
+    const reasonItems=[["Animal type", "Both reports are for "+String(match.a.animal_type||"the same animal type")+"."]];
+    const placeCheck=locationMatch(match.a.location_text,match.b.location_text);
+    if(placeCheck.reason)reasonItems.push(["Location",placeCheck.reason+"."]);
+    else reasonItems.push(["Location","No clear location overlap detected. Compare the places manually."]);
+    const dateCheck=dateMatch(match.a.date_seen,match.b.date_seen);
+    if(dateCheck.reason)reasonItems.push(["Dates",dateCheck.reason+"."]);
+    else reasonItems.push(["Dates","Dates are missing or more than 14 days apart. Check the timelines manually."]);
+    const nameA=normalise(match.a.animal_name||"");
+    const nameB=normalise(match.b.animal_name||"");
+    if(nameA&&nameB&&nameA===nameB)reasonItems.push(["Name","Both reports use the name "+(match.a.animal_name||"")+"."]);
+    const wordsA=new Set(matchWords(match.a.description||""));
+    const wordsB=new Set(match.b.description||"");
+    const sharedDetails=[...wordsA].filter(word=>wordsB.has(word));
+    if(sharedDetails.length)reasonItems.push(["Description details","Shared words: "+sharedDetails.slice(0,8).join(", ")+"."]);
+    else reasonItems.push(["Description details","No shared descriptive words detected. Compare colour, markings, size and other details yourself."]);
+    reasonItems.forEach(item=>{
+      const li=document.createElement("li");
+      li.appendChild(element("strong",item[0]+": "));
+      li.appendChild(document.createTextNode(item[1]));
+      reasonsList.appendChild(li);
+    });
+    breakdown.appendChild(reasonsList);
+    if(match.a.photo_url&&match.b.photo_url){
+      const photoNote=element("p","📷 Both reports have photos available. Compare face, coat pattern, markings and other distinctive features.");
+      photoNote.className="note";
+      breakdown.appendChild(photoNote);
+    }else{
+      const photoNote=element("p","📷 One or both reports do not have a photo, so visual comparison may be limited.");
+      photoNote.className="note";
+      breakdown.appendChild(photoNote);
+    }
+    card.appendChild(breakdown);
     addField(card,"Lost location",match.a.location_text);
     addField(card,"Lost date",match.a.date_seen);
     addField(card,"Lost description",match.a.description);
@@ -2126,7 +2162,7 @@ function renderMatches(){
     addField(card,"Found date",match.b.date_seen);
     addField(card,"Found description",match.b.description);
     addPhoto(card,match.b.photo_url,"Found animal");
-    card.appendChild(element("p","Automated suggestion only, not a confirmed identification. Compare the photos and details carefully."));
+    card.appendChild(element("p","Automated suggestion only, not a confirmed identification. Matching words and dates are clues, not proof. Compare the photos and details carefully."));
     box.appendChild(card);
   });
   if(!box.children.length)box.appendChild(element("p",query
