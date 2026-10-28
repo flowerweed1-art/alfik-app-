@@ -2066,14 +2066,32 @@ function renderMatches(){
 
 async function loadReports(){
   const box=$("reportsList");
+  const pageSize=500;
+  let allReports=[];
+  let from=0;
   box.replaceChildren(element("p","Loading community reports..."));
-  const {data,error}=await supabaseClient.from("animal_reports")
-    .select("id,report_type,animal_type,animal_name,description,location_text,date_seen,photo_url,status,owner_id,created_at")
-    .eq("status","active").order("created_at",{ascending:false}).limit(100);
-  if(error){box.replaceChildren(element("p","Could not load reports: "+error.message));return;}
-  activeReports=data||[];
-  applyFilters();
-  renderAnimalReportsMap();
+  try{
+    while(true){
+      const {data,error}=await supabaseClient.from("animal_reports")
+        .select("id,report_type,animal_type,animal_name,description,location_text,date_seen,photo_url,status,owner_id,created_at")
+        .eq("status","active")
+        .order("created_at",{ascending:false})
+        .order("id",{ascending:false})
+        .range(from,from+pageSize-1);
+      if(error)throw error;
+      const page=data||[];
+      allReports=allReports.concat(page);
+      if(page.length<pageSize)break;
+      from+=pageSize;
+      box.replaceChildren(element("p","Loading community reports... "+allReports.length+" loaded"));
+    }
+    activeReports=allReports;
+    applyFilters();
+    renderAnimalReportsMap();
+  }catch(error){
+    activeReports=[];
+    box.replaceChildren(element("p","Could not load all community reports: "+(error&&error.message?error.message:"Please try again.")));
+  }
 }
 
 function applyFilters(){
