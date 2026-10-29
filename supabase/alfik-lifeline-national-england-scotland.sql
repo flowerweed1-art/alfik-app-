@@ -210,7 +210,7 @@ insert into public.alfik_lifeline_services
   (organisation_name, summary, countries, regions, species, support_types, eligibility, referral_method, website, public_contact, verification_status, verified_at, capacity_note)
 select v.organisation_name, v.summary, v.countries, v.regions, v.species, v.support_types,
        v.eligibility, v.referral_method, v.website, v.public_contact,
-       'verified', now(), v.capacity_note
+       'needs_verification', null, v.capacity_note
 from (values
   ('RSPCA Surrey East Branch',
    'Local support for pet owners including veterinary financial assistance for eligible residents and pet food bank links through local partners.',
@@ -310,7 +310,7 @@ insert into public.alfik_lifeline_services
   (organisation_name, summary, countries, regions, species, support_types, eligibility, referral_method, website, public_contact, verification_status, verified_at, capacity_note)
 select v.organisation_name, v.summary, v.countries, v.regions, v.species, v.support_types,
        v.eligibility, v.referral_method, v.website, v.public_contact,
-       'verified', now(), v.capacity_note
+       'needs_verification', null, v.capacity_note
 from (values
   ('RSPCA Essex South, Southend & District Branch',
    'Local animal welfare charity offering limited financial assistance for veterinary consultations or pet food, cat neutering support, advice and rehoming.',
@@ -401,7 +401,7 @@ insert into public.alfik_lifeline_services
   (organisation_name, summary, countries, regions, species, support_types, eligibility, referral_method, website, public_contact, verification_status, verified_at, capacity_note)
 select v.organisation_name, v.summary, v.countries, v.regions, v.species, v.support_types,
        v.eligibility, v.referral_method, v.website, v.public_contact,
-       'verified', now(), v.capacity_note
+       'needs_verification', null, v.capacity_note
 from (values
   ('RSPCA Cotswolds, Gloucester & District Branch',
    'Local animal welfare charity serving Gloucestershire, with a low-cost veterinary clinic, financial assistance, pet food bank and a pet retreat scheme for people fleeing domestic violence.',
@@ -474,7 +474,7 @@ insert into public.alfik_lifeline_services
   (organisation_name, summary, countries, regions, species, support_types, eligibility, referral_method, website, public_contact, verification_status, verified_at, capacity_note)
 select v.organisation_name, v.summary, v.countries, v.regions, v.species, v.support_types,
        v.eligibility, v.referral_method, v.website, v.public_contact,
-       'verified', now(), v.capacity_note
+       'needs_verification', null, v.capacity_note
 from (values
   ('The Yorkshire Rescue Pet Food Bank',
    'Pet food bank offering short-term pet food and essential items such as coats, leads, collars, towels and bedding to help owners keep their pets during hardship.',
@@ -547,7 +547,7 @@ insert into public.alfik_lifeline_services
   (organisation_name, summary, countries, regions, species, support_types, eligibility, referral_method, website, public_contact, verification_status, verified_at, capacity_note)
 select v.organisation_name, v.summary, v.countries, v.regions, v.species, v.support_types,
        v.eligibility, v.referral_method, v.website, v.public_contact,
-       'verified', now(), v.capacity_note
+       'needs_verification', null, v.capacity_note
 from (values
   ('RSPCA Lincolnshire East Branch',
    'Local animal welfare branch offering limited one-off veterinary welfare vouchers for eligible applicants, alongside animal welfare and rehoming work.',
@@ -620,7 +620,7 @@ insert into public.alfik_lifeline_services
   (organisation_name, summary, countries, regions, species, support_types, eligibility, referral_method, website, public_contact, verification_status, verified_at, capacity_note)
 select v.organisation_name, v.summary, v.countries, v.regions, v.species, v.support_types,
        v.eligibility, v.referral_method, v.website, v.public_contact,
-       'verified', now(), v.capacity_note
+       'needs_verification', null, v.capacity_note
 from (values
   ('Jerry Green Dog Rescue Community Support',
    'Community support for dog owners facing hardship, including free donated essentials such as dog food, leads, collars, beds and crates, with limited discretionary veterinary help in rare cases.',
@@ -680,7 +680,7 @@ insert into public.alfik_lifeline_services
   (organisation_name, summary, countries, regions, species, support_types, eligibility, referral_method, website, public_contact, verification_status, verified_at, capacity_note)
 select v.organisation_name, v.summary, v.countries, v.regions, v.species, v.support_types,
        v.eligibility, v.referral_method, v.website, v.public_contact,
-       'verified', now(), v.capacity_note
+       'needs_verification', null, v.capacity_note
 from (values
   ('Scottish Animal Welfare',
    'Scotland-wide animal help and welfare advice, including guidance for domestic animals, wildlife and animal welfare concerns.',
