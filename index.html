@@ -565,6 +565,29 @@ footer{background:#f8fbfe}
 @media(max-width:420px){#rescueView .rescue-dashboard{gap:9px}#rescueView .rescue-action-card{padding:12px 9px;gap:9px;border-radius:13px}#rescueView .rescue-action-icon{flex-basis:34px;width:34px;height:34px;font-size:19px;border-radius:10px}#rescueView .rescue-action-card strong{font-size:13px}#rescueView .rescue-action-card small{font-size:10px}}
 </style>
 
+<style id="alfik-rescue-animal-card-styles">
+#rescueView #rescueAnimalList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+#rescueView .rescue-animal-card{min-width:0;padding:15px;border:1px solid #d5e5f2;border-radius:16px;background:#fff;box-shadow:0 3px 12px rgba(18,59,99,.055);overflow-wrap:anywhere}
+#rescueView .rescue-animal-card h4,#rescueView .rescue-animal-card h3{margin:0 0 8px;color:#123b63;font-size:17px}
+#rescueView .rescue-animal-status{display:inline-block;margin:0 0 10px;padding:4px 9px;border-radius:20px;background:#eaf3fb;color:#14558b;font-size:11px;font-weight:700}
+#rescueView .rescue-animal-indicators{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 11px}
+#rescueView .rescue-animal-chip{display:inline-block;padding:5px 8px;border-radius:9px;background:#f0f4f8;color:#41576b;font-size:11px;font-weight:600;line-height:1.35}
+#rescueView .rescue-animal-chip.is-overdue{background:#fff0ef;color:#a72c25}
+#rescueView .rescue-animal-chip.is-due{background:#fff5df;color:#8a5700}
+#rescueView .rescue-animal-chip.is-ok{background:#eaf7ef;color:#24633b}
+#rescueView .rescue-animal-facts{display:grid;gap:5px;color:#52677b;font-size:12px}
+#rescueView .rescue-animal-details{margin-top:12px;border-top:1px solid #e5edf4;padding-top:9px}
+#rescueView .rescue-animal-details summary{cursor:pointer;color:#14558b;font-size:12px;font-weight:700}
+#rescueView .rescue-animal-detail-body{padding-top:5px}
+#rescueView .rescue-animal-detail-body p{margin:7px 0;color:#52677b;font-size:12px;line-height:1.4}
+#rescueView .rescue-animal-detail-body strong{color:#123b63}
+#rescueView .rescue-animal-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+#rescueView .rescue-animal-actions button{flex:1 1 auto;min-width:85px;margin:0;padding:9px 10px;font-size:12px}
+#rescueView .rescue-animal-actions .rescue-rehome-button{border-color:#e6caca;color:#9a302a;background:#fffafa}
+#rescueView .rescue-animal-empty{grid-column:1/-1;padding:18px;border:1px dashed #bfd5e8;border-radius:14px;color:#52677b;background:#f8fbfe;text-align:center}
+@media(max-width:520px){#rescueView #rescueAnimalList{grid-template-columns:1fr;gap:10px}#rescueView .rescue-animal-card{padding:14px}}
+</style>
+
 </head>
 <body>
 <header>
@@ -3158,7 +3181,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 </script>
 
 <script src="alfik-config.js"></script>
-<script src="alfik-extension.js?v=20261029-rescue-dashboard-summary-1"></script>
+<script src="alfik-extension.js?v=20261029-rescue-animal-cards-1"></script>
 <script src="alfik-lifeline.js?v=20261029-show-unverified-1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
