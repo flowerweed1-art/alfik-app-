@@ -3184,8 +3184,40 @@ function renderLifelineDirectoryAdminQueue(rows) {
   });
 }
 
+
+async function loadLifelineClaimsAdminQueue(){
+ const db=client(),box=el("lifelineClaimsAdminQueue"),msg=el("lifelineClaimsAdminMessage");if(!box)return;
+ const refresh=el("refreshLifelineClaimsAdminBtn");if(refresh&&!refresh.dataset.wired){refresh.dataset.wired="1";refresh.addEventListener("click",loadLifelineClaimsAdminQueue);}
+ box.textContent="Loading ownership requests…";
+ try{
+  const r=await db.rpc("alfik_admin_list_lifeline_claim_requests");if(r.error)throw r.error;
+  const rows=r.data||[];box.replaceChildren();
+  if(!rows.length){box.textContent="No pending ownership requests.";if(msg)msg.textContent="Ownership queue is clear.";return;}
+  rows.forEach(row=>{
+   const card=document.createElement("div");card.className="feature-panel";
+   const title=document.createElement("h4");title.textContent=row.listing_name||"Lifeline listing";card.appendChild(title);
+   const org=document.createElement("p");org.textContent="Claiming organisation: "+(row.claimant_name||"Unknown")+" ("+(row.claimant_type||"type not set")+")";card.appendChild(org);
+   const evidence=document.createElement("p");evidence.textContent="Evidence supplied: "+(row.evidence||"No evidence supplied");card.appendChild(evidence);
+   const date=document.createElement("p");date.textContent="Requested: "+new Date(row.created_at).toLocaleString();card.appendChild(date);
+   const notes=document.createElement("textarea");notes.rows=2;notes.maxLength=2000;notes.placeholder="Review note (optional)";card.appendChild(notes);
+   const actions=document.createElement("div");actions.className="button-row";
+   [{label:"Approve ownership",decision:"approved"},{label:"Reject claim",decision:"rejected"}].forEach(a=>{
+    const b=document.createElement("button");b.type="button";b.className=a.decision==="approved"?"primary":"secondary";b.textContent=a.label;
+    b.addEventListener("click",async()=>{
+     if(a.decision==="approved"&&!window.confirm("Have you independently confirmed this organisation is entitled to manage this listing? Ownership approval does not mark the listing verified."))return;
+     b.disabled=true;
+     try{const saved=await client().rpc("alfik_admin_review_lifeline_claim",{p_claim_id:row.id,p_decision:a.decision,p_notes:notes.value.trim()});if(saved.error)throw saved.error;if(saved.data!==true)throw new Error("The database did not confirm the decision.");if(msg)msg.textContent="Claim "+a.decision+".";await loadLifelineClaimsAdminQueue();}
+     catch(error){if(msg)msg.textContent="Could not review claim: "+readableError(error);b.disabled=false;}
+    });actions.appendChild(b);
+   });card.appendChild(actions);box.appendChild(card);
+  });
+  if(msg)msg.textContent=rows.length+" pending ownership request(s).";
+ }catch(error){box.textContent="Could not load ownership requests: "+readableError(error)+". Run supabase/alfik-lifeline-partner-listings.sql in Supabase.";if(msg)msg.textContent="Authorised admin access is required.";}
+}
+
 window.loadAlfikAdminTools = async function () {
   await loadLifelineDirectoryAdminQueue();
+  await loadLifelineClaimsAdminQueue();
   await loadAlfikAdminReportQueue();
   await loadVerificationAdminQueue();
   await loadMemberReportsAdminQueue();
