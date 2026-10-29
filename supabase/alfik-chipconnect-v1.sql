@@ -29,7 +29,6 @@ alter table public.alfik_chip_lookup_audit enable row level security;
 
 -- Audit records are only written by the protected RPC. No direct table access.
 revoke all on public.alfik_chip_lookup_audit from public, anon, authenticated;
-grant select, insert, update, delete on public.alfik_pets to authenticated;
 
 create or replace function public.alfik_set_chip_lookup_consent(
   p_pet_id uuid,
