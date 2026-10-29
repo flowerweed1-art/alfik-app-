@@ -2988,7 +2988,138 @@ async function loadAlfikAdminReportQueue() {
   }
 }
 
+
+async function loadLifelineDirectoryAdminQueue() {
+  const db = client();
+  const panel = el("lifelineDirectoryAdminPanel");
+  const list = el("lifelineDirectoryAdminQueue");
+  const status = el("lifelineDirectoryAdminMessage");
+  if (!panel || !list) return;
+  panel.classList.remove("hidden");
+  list.textContent = "Loading Lifeline directory listings...";
+  if (status) status.textContent = "";
+  const search = el("lifelineDirectoryAdminSearch");
+  const filter = el("lifelineDirectoryAdminStatus");
+  const refresh = el("refreshLifelineDirectoryAdminBtn");
+  if (refresh && !refresh.dataset.wired) {
+    refresh.dataset.wired = "true";
+    refresh.addEventListener("click", loadLifelineDirectoryAdminQueue);
+  }
+  if (search && !search.dataset.wired) {
+    search.dataset.wired = "true";
+    search.addEventListener("input", () => renderLifelineDirectoryAdminQueue(window.alfikLifelineAdminRows || []));
+  }
+  if (filter && !filter.dataset.wired) {
+    filter.dataset.wired = "true";
+    filter.addEventListener("change", () => renderLifelineDirectoryAdminQueue(window.alfikLifelineAdminRows || []));
+  }
+  if (!db) { list.textContent = "Supabase is unavailable. Refresh ALFIK and sign in again."; return; }
+  try {
+    const result = await db.rpc("alfik_admin_list_lifeline_verification");
+    if (result.error) throw result.error;
+    window.alfikLifelineAdminRows = Array.isArray(result.data) ? result.data : [];
+    renderLifelineDirectoryAdminQueue(window.alfikLifelineAdminRows);
+    if (status) status.textContent = window.alfikLifelineAdminRows.length + " Lifeline listings loaded.";
+  } catch (error) {
+    list.textContent = "Could not load Lifeline listings: " + readableError(error) + ". Run supabase/alfik-lifeline-admin-verification.sql in Supabase and add your account to the administrator allow-list.";
+    if (status) status.textContent = "Lifeline verification requires authorised administrator access.";
+  }
+}
+
+function renderLifelineDirectoryAdminQueue(rows) {
+  const list = el("lifelineDirectoryAdminQueue");
+  const search = String(el("lifelineDirectoryAdminSearch")?.value || "").trim().toLowerCase();
+  const filter = String(el("lifelineDirectoryAdminStatus")?.value || "all");
+  if (!list) return;
+  list.replaceChildren();
+  const filtered = (rows || []).filter(org => {
+    const status = String(org.verification_status || "needs_verification");
+    const searchable = [org.organisation_name, org.summary, ...(org.countries || []), ...(org.regions || []), ...(org.support_types || [])].join(" ").toLowerCase();
+    return (filter === "all" || status === filter) && searchable.includes(search);
+  });
+  if (!filtered.length) {
+    list.textContent = rows.length ? "No listings match those filters." : "No Lifeline listings found.";
+    return;
+  }
+  filtered.forEach(org => {
+    const item = document.createElement("article");
+    item.className = "report-card";
+    const heading = document.createElement("h3");
+    heading.textContent = org.organisation_name || "Unnamed organisation";
+    item.appendChild(heading);
+    const meta = document.createElement("p");
+    meta.textContent = "Status: " + org.verification_status + " · Region: " + ((org.regions || []).join(", ") || "Not specified") + " · Country: " + ((org.countries || []).join(", ") || "Not specified");
+    item.appendChild(meta);
+    const summary = document.createElement("p");
+    summary.textContent = org.summary || "No summary provided.";
+    item.appendChild(summary);
+    const support = document.createElement("p");
+    support.textContent = "Support: " + ((org.support_types || []).join(", ") || "Not specified");
+    item.appendChild(support);
+    const eligibility = document.createElement("p");
+    eligibility.textContent = "Eligibility: " + (org.eligibility || "Check directly with the service");
+    item.appendChild(eligibility);
+    const referral = document.createElement("p");
+    referral.textContent = "Referral: " + (org.referral_method || "Contact the service directly");
+    item.appendChild(referral);
+    const website = document.createElement("p");
+    website.textContent = "Website: " + (org.website || "Not provided") + " · Contact: " + (org.public_contact || "Not provided");
+    item.appendChild(website);
+    const capacity = document.createElement("p");
+    capacity.textContent = "Availability note: " + (org.capacity_note || "Not recorded");
+    item.appendChild(capacity);
+    const notesLabel = document.createElement("label");
+    notesLabel.textContent = "Verification notes";
+    const notes = document.createElement("textarea");
+    notes.rows = 2;
+    notes.maxLength = 2000;
+    notes.value = org.verification_notes || "";
+    notes.placeholder = "Record what you checked, source and date, or why the listing is paused.";
+    item.append(notesLabel, notes);
+    if (org.verified_at) {
+      const verified = document.createElement("p");
+      verified.className = "note";
+      verified.textContent = "Marked verified: " + new Date(org.verified_at).toLocaleString();
+      item.appendChild(verified);
+    }
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    [
+      {label:"Mark Verified", value:"verified", css:"primary"},
+      {label:"Needs verification", value:"needs_verification", css:"secondary"},
+      {label:"Pause listing", value:"paused", css:"secondary"}
+    ].forEach(action => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = action.css;
+      button.textContent = action.label;
+      button.addEventListener("click", async () => {
+        if (action.value === "verified" && !window.confirm("Confirm you have checked the organisation's identity, official details, eligibility and current service availability before publishing this listing?")) return;
+        button.disabled = true;
+        try {
+          const saved = await client().rpc("alfik_admin_review_lifeline_service", {
+            p_service_id: org.id,
+            p_status: action.value,
+            p_notes: notes.value.trim()
+          });
+          if (saved.error) throw saved.error;
+          if (saved.data !== true) throw new Error("The database did not confirm the decision.");
+          if (status) status.textContent = org.organisation_name + " updated to " + action.value.replace(/_/g, " ") + ".";
+          await loadLifelineDirectoryAdminQueue();
+        } catch (error) {
+          if (status) status.textContent = "Could not update listing: " + readableError(error);
+          button.disabled = false;
+        }
+      });
+      actions.appendChild(button);
+    });
+    item.appendChild(actions);
+    list.appendChild(item);
+  });
+}
+
 window.loadAlfikAdminTools = async function () {
+  await loadLifelineDirectoryAdminQueue();
   await loadAlfikAdminReportQueue();
   await loadVerificationAdminQueue();
   await loadMemberReportsAdminQueue();
