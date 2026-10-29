@@ -28,7 +28,8 @@ create index if not exists animal_reports_active_followup_idx
   where status = 'active';
 
 -- Aggregate-only public impact counts. No report details or personal data are exposed.
-create or replace function public.alfik_public_impact_counts()
+drop function if exists public.alfik_public_impact_counts();
+create function public.alfik_public_impact_counts()
 returns table(total_reports bigint, reunited_count bigint, found_safe_count bigint, rescued_count bigint)
 language sql
 security definer
