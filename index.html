@@ -3183,6 +3183,21 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
     const buttons=Array.from(root.querySelectorAll("[data-rescue-panel]"));
     const panels=["rescueOrgPanel","lifelinePartnerPanel","rescueVerificationPanel","rescueAnimalsPanel","rescueCarePanel","rescueMedicationPanel"]
       .map(id=>document.getElementById(id)).filter(Boolean);
+    const dashboard=document.getElementById("rescueDashboard");
+    function showDashboard(){
+      panels.forEach(panel=>panel.classList.add("hidden"));
+      buttons.forEach(item=>item.setAttribute("aria-pressed","false"));
+      const status=document.getElementById("rescuePanelStatus");
+      if(status)status.textContent="Choose a tool above to get started.";
+      if(dashboard)dashboard.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+    panels.forEach(panel=>{
+      if(panel.querySelector(".rescue-back-button"))return;
+      const back=document.createElement("button");
+      back.type="button";back.className="rescue-back-button";back.textContent="← Back to Rescue Dashboard";
+      back.addEventListener("click",showDashboard);
+      panel.insertBefore(back,panel.firstChild);
+    });
     buttons.forEach(button=>button.addEventListener("click",()=>{
       const targetId=button.getAttribute("data-rescue-panel");
       panels.forEach(panel=>panel.classList.toggle("hidden",panel.id!==targetId));
