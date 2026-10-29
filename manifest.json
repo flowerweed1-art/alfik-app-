@@ -8,13 +8,13 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "background_color": "#f2f7fc",
+  "background_color": "#0d2f50",
   "theme_color": "#0d2f50",
   "icons": [
     {
-      "src": "/Screenshot_20261021_113202_Gallery.jpg?v=original-logo-icon-8",
-      "sizes": "any",
-      "type": "image/jpeg",
+      "src": "/icons/alfik-original-icon.svg?v=20261029",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
