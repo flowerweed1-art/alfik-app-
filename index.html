@@ -857,6 +857,23 @@ footer{background:#f8fbfe}
 <section id="adminView" class="hidden">
 <h2>ALFIK Admin Tools</h2>
 <p class="note">Administrator controls appear only when Supabase confirms that your signed-in account is authorised.</p>
+
+<div class="feature-panel hidden" id="lifelineDirectoryAdminPanel">
+<h3>ALFIK Lifeline directory verification</h3>
+<p>Review Lifeline support listings before publishing them. Only listings marked Verified appear in the member directory. Check the organisation's official information and current service availability before approving.</p>
+<label for="lifelineDirectoryAdminSearch">Search listings</label>
+<input id="lifelineDirectoryAdminSearch" type="search" placeholder="Organisation, country, region or support">
+<label for="lifelineDirectoryAdminStatus">Filter by status</label>
+<select id="lifelineDirectoryAdminStatus">
+<option value="all">All statuses</option>
+<option value="needs_verification">Needs verification</option>
+<option value="verified">Verified</option>
+<option value="paused">Paused</option>
+</select>
+<button class="secondary" id="refreshLifelineDirectoryAdminBtn" type="button">Refresh Lifeline listings</button>
+<p id="lifelineDirectoryAdminMessage" class="message" role="status"></p>
+<div id="lifelineDirectoryAdminQueue">Checking administrator access...</div>
+</div>
 <div class="feature-panel hidden" id="animalReportsAdminPanel">
 <h3>Lost &amp; Found Report Management</h3>
 <p>Review all lost, found and found-deceased animal reports. Only authorised administrators can access this list or delete reports.</p>
