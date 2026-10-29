@@ -1588,76 +1588,112 @@ const db = client();
 const user = await currentUser();
 const list = el("rescueAnimalList");
 const orgId = el("rescueOrgSelect")?.value;
-
 if (!db || !user || !list) return;
 list.replaceChildren();
-
 if (!orgId) {
   list.textContent = "Choose an organisation to view its animal register.";
   return;
 }
-
 try {
-  const result = await db
-    .from("alfik_rescue_animals")
+  const result = await db.from("alfik_rescue_animals")
     .select("id,name,species,status,notes,microchip,neutering_status,neutered_date,care_reminders_enabled")
-    .eq("org_id", orgId)
-    .order("name");
-
+    .eq("org_id", orgId).order("name");
   if (result.error) throw result.error;
-
+  const animals = result.data || [];
   const careAnimalSelect = el("rescueCareAnimal");
   const medAnimalSelect = el("rescueMedicationAnimal");
   [careAnimalSelect, medAnimalSelect].forEach(target => {
     if (!target) return;
-    target.replaceChildren();
-    const placeholder = document.createElement("option");
-    placeholder.value = "";
-    placeholder.textContent = "Choose an animal";
-    target.appendChild(placeholder);
+    const previous = target.value;
+    target.replaceChildren(new Option("Choose an animal", ""));
+    animals.forEach(animal => target.appendChild(new Option(animal.name + (["rehomed","reunited","closed"].includes(animal.status) ? " · " + animal.status : ""), animal.id)));
+    if (animals.some(animal => animal.id === previous)) target.value = previous;
   });
-  (result.data || []).forEach(animal => {
-    [careAnimalSelect, medAnimalSelect].forEach(target => {
-      if (!target) return;
-      const option = document.createElement("option");
-      option.value = animal.id;
-      option.textContent = animal.name + (animal.status === "rehomed" ? " (rehomed)" : "");
-      target.appendChild(option);
-    });
-    const item = card(list, animal.name);
-    addText(item, "Species", animal.species);
-    addText(item, "Status", animal.status);
-    addText(item, "Care reminders", animal.care_reminders_enabled && animal.status !== "rehomed" ? "On" : "Off");
-    addText(item, "Microchip", animal.microchip);
-    addText(item, "Neutering status", ({neutered:"Neutered / spayed",not_neutered:"Not neutered",unknown:"Unknown / not confirmed"})[animal.neutering_status] || "Unknown / not confirmed");
-    addText(item, "Date neutered", animal.neutered_date);
-    addText(item, "Notes", animal.notes);
-    if (animal.status !== "rehomed" && animal.status !== "reunited" && animal.status !== "closed") {
-      const rehome = document.createElement("button");
-      rehome.className = "secondary";
-      rehome.textContent = "Mark rehomed and stop reminders";
-      rehome.addEventListener("click", async () => {
-        if (!window.confirm("Mark this animal as rehomed and turn off its rescue care reminders?")) return;
-        const update = await db.from("alfik_rescue_animals").update({status:"rehomed",care_reminders_enabled:false}).eq("id",animal.id).eq("org_id",orgId);
-        if (update.error) { say("rescueAnimalMessage","Could not update animal: "+readableError(update.error)); return; }
-        const schedules = await db.from("alfik_care_schedules").update({enabled:false}).eq("rescue_animal_id",animal.id);
-        if (schedules.error) say("rescueAnimalMessage","Animal marked rehomed, but reminders could not all be switched off: "+readableError(schedules.error));
-        else say("rescueAnimalMessage","Animal marked rehomed. Rescue reminders are off.");
-        await loadRescueAnimals();
-        await loadRescueCareSchedules();
+  let schedules = [];
+  let medicationRows = [];
+  try {
+    const careResult = await db.from("alfik_care_schedules")
+      .select("rescue_animal_id,schedule_type,treatment_name,next_due_date,enabled")
+      .eq("org_id", orgId).eq("enabled", true);
+    if (!careResult.error) schedules = careResult.data || [];
+  } catch (e) { console.warn("ALFIK animal card care indicators:", e); }
+  try {
+    const medicationResult = await db.from("alfik_rescue_animal_medications")
+      .select("rescue_animal_id").eq("org_id", orgId);
+    if (!medicationResult.error) medicationRows = medicationResult.data || [];
+  } catch (e) { console.warn("ALFIK animal card medication indicators:", e); }
+  const todayDate = new Date();
+  const today = todayDate.getFullYear()+"-"+String(todayDate.getMonth()+1).padStart(2,"0")+"-"+String(todayDate.getDate()).padStart(2,"0");
+  const statusLabels = {in_care:"In care",foster:"In foster",available:"Available for adoption",reunited:"Reunited",rehomed:"Rehomed",closed:"Closed"};
+  const neuteringLabels = {neutered:"Neutered / spayed",not_neutered:"Not neutered",unknown:"Unknown / not confirmed"};
+  animals.forEach(animal => {
+    const item = card(list, animal.name || "Unnamed animal");
+    item.classList.add("rescue-animal-card");
+    const status = document.createElement("span");
+    status.className = "rescue-animal-status";
+    status.textContent = statusLabels[animal.status] || String(animal.status || "Status unknown").replace(/_/g," ");
+    item.appendChild(status);
+    const animalCare = schedules.filter(schedule => schedule.rescue_animal_id === animal.id);
+    const overdue = animalCare.filter(schedule => schedule.next_due_date && schedule.next_due_date < today);
+    const dueToday = animalCare.filter(schedule => schedule.next_due_date === today);
+    const upcoming = animalCare.filter(schedule => schedule.next_due_date && schedule.next_due_date > today)
+      .sort((a,b)=>String(a.next_due_date).localeCompare(String(b.next_due_date)));
+    const indicator = document.createElement("div");
+    indicator.className = "rescue-animal-indicators";
+    const careChip = document.createElement("span");
+    careChip.className = "rescue-animal-chip " + (overdue.length ? "is-overdue" : dueToday.length ? "is-due" : animalCare.length ? "is-ok" : "is-neutral");
+    careChip.textContent = overdue.length ? overdue.length+" overdue" : dueToday.length ? dueToday.length+" due today" : upcoming.length ? "Next care: "+upcoming[0].next_due_date : animalCare.length ? "No date set" : "No active reminders";
+    indicator.appendChild(careChip);
+    const medsChip = document.createElement("span");
+    medsChip.className = "rescue-animal-chip is-neutral";
+    const medCount = medicationRows.filter(med => med.rescue_animal_id === animal.id).length;
+    medsChip.textContent = medCount ? medCount+" medication "+(medCount===1?"record":"records") : "No medication records";
+    indicator.appendChild(medsChip);
+    item.appendChild(indicator);
+    const facts = document.createElement("div");
+    facts.className = "rescue-animal-facts";
+    const species = document.createElement("span"); species.textContent = "🐾 "+(animal.species || "Species not recorded"); facts.appendChild(species);
+    const chip = document.createElement("span"); chip.textContent = "Microchip: "+(animal.microchip || "Not recorded"); facts.appendChild(chip);
+    item.appendChild(facts);
+    const details = document.createElement("details");
+    details.className = "rescue-animal-details";
+    const summary = document.createElement("summary"); summary.textContent = "View full record"; details.appendChild(summary);
+    const detailBody = document.createElement("div"); detailBody.className = "rescue-animal-detail-body";
+    const addFact = (label,value) => { const row=document.createElement("p"); const strong=document.createElement("strong"); strong.textContent=label+": "; row.appendChild(strong); row.appendChild(document.createTextNode(value || "Not recorded")); detailBody.appendChild(row); };
+    addFact("Neutering",neuteringLabels[animal.neutering_status] || neuteringLabels.unknown);
+    addFact("Date neutered",animal.neutered_date);
+    addFact("Care reminders",animal.care_reminders_enabled && !["rehomed","reunited","closed"].includes(animal.status) ? "On" : "Off");
+    addFact("Notes",animal.notes);
+    details.appendChild(detailBody); item.appendChild(details);
+    const actions = document.createElement("div"); actions.className = "rescue-animal-actions";
+    const careButton = document.createElement("button"); careButton.type="button"; careButton.className="secondary"; careButton.textContent="📅 Care";
+    careButton.addEventListener("click",()=>{const dashboardButton=document.querySelector('[data-rescue-panel="rescueCarePanel"]');if(dashboardButton)dashboardButton.click();if(careAnimalSelect){careAnimalSelect.value=animal.id;careAnimalSelect.dispatchEvent(new Event("change"));}});
+    actions.appendChild(careButton);
+    const medicationButton = document.createElement("button"); medicationButton.type="button"; medicationButton.className="secondary"; medicationButton.textContent="💊 Medication";
+    medicationButton.addEventListener("click",()=>{const dashboardButton=document.querySelector('[data-rescue-panel="rescueMedicationPanel"]');if(dashboardButton)dashboardButton.click();if(medAnimalSelect){medAnimalSelect.value=animal.id;medAnimalSelect.dispatchEvent(new Event("change"));}});
+    actions.appendChild(medicationButton);
+    if (!["rehomed","reunited","closed"].includes(animal.status)) {
+      const rehome = document.createElement("button"); rehome.type="button"; rehome.className="secondary rescue-rehome-button"; rehome.textContent="Mark rehomed";
+      rehome.addEventListener("click",async()=>{
+        if(!window.confirm("Mark "+(animal.name||"this animal")+" as rehomed and turn off its care reminders?"))return;
+        const update=await db.from("alfik_rescue_animals").update({status:"rehomed",care_reminders_enabled:false}).eq("id",animal.id).eq("org_id",orgId);
+        if(update.error){say("rescueAnimalMessage","Could not update animal: "+readableError(update.error));return;}
+        const schedulesUpdate=await db.from("alfik_care_schedules").update({enabled:false}).eq("rescue_animal_id",animal.id).eq("org_id",orgId);
+        say("rescueAnimalMessage",schedulesUpdate.error ? "Animal marked rehomed, but some reminders may need checking: "+readableError(schedulesUpdate.error) : "Animal marked rehomed. Care reminders are off.");
+        await loadRescueAnimals();await loadRescueCareSchedules();await refreshRescueDashboardSummary();
       });
-      item.appendChild(rehome);
+      actions.appendChild(rehome);
     }
+    item.appendChild(actions);
   });
-
-  if (!(result.data || []).length) {
-    list.textContent = "No rescue animals recorded yet.";
+  if (!animals.length) {
+    const empty=document.createElement("div");empty.className="rescue-animal-empty";
+    empty.textContent="No rescue animals yet. Add your first animal using the form above.";list.appendChild(empty);
   }
-} catch (error) {
-  console.warn("ALFIK rescue animals:", error);
-  list.textContent = "Could not load the animal register: " + readableError(error);
+} catch(error) {
+  console.warn("ALFIK rescue animals:",error);
+  list.textContent="Could not load the animal register: "+readableError(error);
 }
-
 }
 
 async function saveRescueMedication(){
