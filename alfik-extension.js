@@ -1418,6 +1418,7 @@ try {
   await loadCareNotifications();
   await loadOrganisationVerificationStatus();
   await loadVerificationAdminQueue();
+  await loadLifelinePartnerWorkspace();
 } catch (error) {
   console.warn("ALFIK rescue workspace:", error);
   say("rescueAnimalMessage", "Could not load rescue workspaces: " + readableError(error));
@@ -2698,6 +2699,7 @@ if (el("saveRescueAnimalBtn")) {
 
 if (el("rescueOrgSelect")) {
   el("rescueOrgSelect").addEventListener("change", async () => {
+    await loadLifelinePartnerWorkspace();
     await loadRescueAnimals();
     await loadRescueCareSchedules();
     await loadRescueMedicationList();
@@ -2708,6 +2710,13 @@ if (el("rescueCareAnimal")) el("rescueCareAnimal").addEventListener("change", lo
 if (el("rescueMedicationAnimal")) el("rescueMedicationAnimal").addEventListener("change", loadRescueMedicationList);
 if (el("saveRescueMedicationBtn")) el("saveRescueMedicationBtn").addEventListener("click", saveRescueMedication);
 if (el("submitVerificationBtn")) el("submitVerificationBtn").addEventListener("click", submitOrganisationVerification);
+if (el("lifelinePartnerListingSelect")) el("lifelinePartnerListingSelect").addEventListener("change", () => {
+  const id=el("lifelinePartnerListingSelect").value;
+  const row=(window.alfikPartnerLifelineRows||[]).find(x=>x.id===id);
+  if(row)fillLifelinePartnerForm(row);else clearLifelinePartnerForm();
+});
+if (el("saveLifelinePartnerListingBtn")) el("saveLifelinePartnerListingBtn").addEventListener("click", saveLifelinePartnerListing);
+if (el("requestLifelineClaimBtn")) el("requestLifelineClaimBtn").addEventListener("click", requestLifelineClaim);
 if (el("refreshVerificationQueueBtn")) el("refreshVerificationQueueBtn").addEventListener("click", loadVerificationAdminQueue);
 if (el("refreshMemberReportsBtn")) el("refreshMemberReportsBtn").addEventListener("click", loadMemberReportsAdminQueue);
 if (el("refreshVerificationHistoryBtn")) el("refreshVerificationHistoryBtn").addEventListener("click", loadVerificationAdminHistory);
@@ -2988,6 +2997,63 @@ async function loadAlfikAdminReportQueue() {
   }
 }
 
+
+
+function lifelinePartnerSelectedOrg(){return el("rescueOrgSelect")?.value||"";}
+function lifelinePartnerCsv(value){return String(value||"").split(",").map(x=>x.trim()).filter(Boolean);}
+function lifelinePartnerSet(id,value){const f=el(id);if(f)f.value=value==null?"":value;}
+function fillLifelinePartnerForm(row){
+  lifelinePartnerSet("lifelinePartnerName",row.organisation_name);lifelinePartnerSet("lifelinePartnerSummary",row.summary);
+  lifelinePartnerSet("lifelinePartnerCountries",(row.countries||[]).join(", "));lifelinePartnerSet("lifelinePartnerRegions",(row.regions||[]).join(", "));
+  lifelinePartnerSet("lifelinePartnerSpecies",(row.species||[]).join(", "));lifelinePartnerSet("lifelinePartnerTypes",(row.support_types||[]).join(", "));
+  lifelinePartnerSet("lifelinePartnerEligibility",row.eligibility);lifelinePartnerSet("lifelinePartnerReferral",row.referral_method);
+  lifelinePartnerSet("lifelinePartnerWebsite",row.website);lifelinePartnerSet("lifelinePartnerContact",row.public_contact);lifelinePartnerSet("lifelinePartnerCapacity",row.capacity_note);
+  const m=el("lifelinePartnerMessage");if(m)m.textContent="Listing status: "+String(row.verification_status||"needs verification").replace(/_/g," ")+(row.partner_update_needs_review?". Your latest changes need ALFIK review before appearing as verified.":".");
+}
+function clearLifelinePartnerForm(){
+  ["lifelinePartnerName","lifelinePartnerSummary","lifelinePartnerCountries","lifelinePartnerRegions","lifelinePartnerSpecies","lifelinePartnerTypes","lifelinePartnerWebsite","lifelinePartnerContact"].forEach(id=>lifelinePartnerSet(id,""));
+  lifelinePartnerSet("lifelinePartnerEligibility","Check directly with the service");lifelinePartnerSet("lifelinePartnerReferral","Contact the service directly");lifelinePartnerSet("lifelinePartnerCapacity","Availability must be confirmed directly with the service.");
+}
+async function loadLifelinePartnerWorkspace(){
+ const db=client(),orgId=lifelinePartnerSelectedOrg(),select=el("lifelinePartnerListingSelect"),claimSelect=el("lifelineClaimListingSelect"),msg=el("lifelinePartnerMessage");
+ if(!el("lifelinePartnerPanel"))return;
+ if(!orgId){if(select)select.replaceChildren(new Option("Create a new listing",""));if(claimSelect)claimSelect.replaceChildren(new Option("Choose a listing",""));if(msg)msg.textContent="Choose your organisation above to manage its Lifeline listing.";return;}
+ try{
+  const [owned,available,claims]=await Promise.all([
+   db.rpc("alfik_partner_list_lifeline_services",{p_org_id:orgId}),
+   db.from("alfik_lifeline_services").select("id,organisation_name,organisation_id").eq("verification_status","verified").is("organisation_id",null).order("organisation_name"),
+   db.rpc("alfik_partner_list_lifeline_claims",{p_org_id:orgId})
+  ]);
+  if(owned.error)throw owned.error;
+  window.alfikPartnerLifelineRows=owned.data||[];
+  const selectedId=select?.value||"";
+  if(select){select.replaceChildren(new Option("Create a new listing",""));window.alfikPartnerLifelineRows.forEach(row=>select.appendChild(new Option(row.organisation_name+" · "+String(row.verification_status).replace(/_/g," "),row.id)));if(selectedId&&window.alfikPartnerLifelineRows.some(x=>x.id===selectedId))select.value=selectedId;}
+  if(claimSelect){claimSelect.replaceChildren(new Option("Choose a listing",""));if(!available.error)(available.data||[]).forEach(row=>claimSelect.appendChild(new Option(row.organisation_name,row.id)));}
+  const box=el("lifelinePartnerClaims");if(box){box.replaceChildren();if(claims.error)box.textContent="Could not load ownership requests: "+readableError(claims.error);else if(!(claims.data||[]).length)box.textContent="No ownership requests yet.";else claims.data.forEach(row=>{const p=document.createElement("p");p.textContent=(row.listing_name||"Listing")+" · "+row.status+(row.admin_notes?" · ALFIK note: "+row.admin_notes:"");box.appendChild(p);});}
+  const current=window.alfikPartnerLifelineRows.find(row=>row.id===select?.value);
+  if(current)fillLifelinePartnerForm(current);else if(select&&!select.value)clearLifelinePartnerForm();
+  if(msg)msg.textContent=window.alfikPartnerLifelineRows.length+" Lifeline listing(s) linked to this organisation.";
+ }catch(error){console.warn("ALFIK Lifeline partner workspace:",error);if(msg)msg.textContent="Could not load partner listings: "+readableError(error)+". Run supabase/alfik-lifeline-partner-listings.sql in Supabase if you have not installed it yet.";}
+}
+async function saveLifelinePartnerListing(){
+ const db=client(),orgId=lifelinePartnerSelectedOrg(),selected=el("lifelinePartnerListingSelect")?.value||"",msg=el("lifelinePartnerMessage"),button=el("saveLifelinePartnerListingBtn");
+ if(!orgId){if(msg)msg.textContent="Choose your organisation first.";return;}
+ const name=el("lifelinePartnerName")?.value.trim()||"";if(!name){if(msg)msg.textContent="Enter the public organisation name.";return;}
+ if(button)button.disabled=true;if(msg)msg.textContent="Saving your listing…";
+ try{
+  const r=await db.rpc("alfik_partner_save_lifeline_service",{p_org_id:orgId,p_service_id:selected||null,p_organisation_name:name,p_summary:el("lifelinePartnerSummary")?.value||"",p_countries:lifelinePartnerCsv(el("lifelinePartnerCountries")?.value),p_regions:lifelinePartnerCsv(el("lifelinePartnerRegions")?.value),p_species:lifelinePartnerCsv(el("lifelinePartnerSpecies")?.value),p_support_types:lifelinePartnerCsv(el("lifelinePartnerTypes")?.value),p_eligibility:el("lifelinePartnerEligibility")?.value||"",p_referral_method:el("lifelinePartnerReferral")?.value||"",p_website:el("lifelinePartnerWebsite")?.value||"",p_public_contact:el("lifelinePartnerContact")?.value||"",p_capacity_note:el("lifelinePartnerCapacity")?.value||""});
+  if(r.error)throw r.error;if(msg)msg.textContent="Saved. This listing is awaiting ALFIK review before it can appear as Verified.";
+  await loadLifelinePartnerWorkspace();const s=el("lifelinePartnerListingSelect");if(s&&r.data)s.value=r.data;const row=(window.alfikPartnerLifelineRows||[]).find(x=>x.id===r.data);if(row)fillLifelinePartnerForm(row);
+ }catch(error){if(msg)msg.textContent="Could not save listing: "+readableError(error);}finally{if(button)button.disabled=false;}
+}
+async function requestLifelineClaim(){
+ const db=client(),orgId=lifelinePartnerSelectedOrg(),serviceId=el("lifelineClaimListingSelect")?.value||"",msg=el("lifelineClaimMessage"),button=el("requestLifelineClaimBtn"),evidence=el("lifelineClaimEvidence")?.value.trim()||"";
+ if(!orgId){if(msg)msg.textContent="Choose your organisation first.";return;}if(!serviceId){if(msg)msg.textContent="Choose the existing listing you want to claim.";return;}
+ if(evidence.length<20){if(msg)msg.textContent="Please give enough detail for ALFIK to independently check your connection to this organisation.";return;}
+ if(button)button.disabled=true;
+ try{const r=await db.rpc("alfik_partner_request_lifeline_claim",{p_service_id:serviceId,p_org_id:orgId,p_evidence:evidence});if(r.error)throw r.error;if(msg)msg.textContent="Ownership request submitted. The listing will not be transferred until an ALFIK administrator reviews it.";lifelinePartnerSet("lifelineClaimEvidence","");await loadLifelinePartnerWorkspace();}
+ catch(error){if(msg)msg.textContent="Could not submit ownership request: "+readableError(error);}finally{if(button)button.disabled=false;}
+}
 
 async function loadLifelineDirectoryAdminQueue() {
   const db = client();
