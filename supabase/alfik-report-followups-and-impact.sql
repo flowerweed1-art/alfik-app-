@@ -6,24 +6,42 @@ alter table public.animal_reports
   add column if not exists followup_reminder_3d_sent_at timestamptz,
   add column if not exists followup_reminder_7d_sent_at timestamptz;
 
+alter table public.animal_reports
+  add column if not exists resolution_outcome text;
+
+do $outcome_constraint$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'animal_reports_resolution_outcome_check'
+      and conrelid = 'public.animal_reports'::regclass
+  ) then
+    alter table public.animal_reports
+      add constraint animal_reports_resolution_outcome_check
+      check (resolution_outcome is null or resolution_outcome in ('reunited','rescued','safe_with_finder','other'));
+  end if;
+end;
+$outcome_constraint$;
+
 create index if not exists animal_reports_active_followup_idx
   on public.animal_reports (status, created_at)
   where status = 'active';
 
 -- Aggregate-only public impact counts. No report details or personal data are exposed.
 create or replace function public.alfik_public_impact_counts()
-returns table(total_reports bigint, reunited_count bigint, found_safe_count bigint)
+returns table(total_reports bigint, reunited_count bigint, found_safe_count bigint, rescued_count bigint)
 language sql
 security definer
 set search_path = public
-as $$
+as $
   select
     count(*)::bigint,
-    count(*) filter (where status = 'reunited' and report_type in ('lost','found'))::bigint,
-    count(*) filter (where status = 'reunited' and report_type = 'found')::bigint
+    count(*) filter (where report_type = 'lost' and status = 'reunited')::bigint,
+    count(*) filter (where report_type = 'found' and status = 'reunited' and coalesce(resolution_outcome,'safe_with_finder') in ('safe_with_finder','reunited','other'))::bigint,
+    count(*) filter (where report_type = 'found' and status = 'reunited' and resolution_outcome = 'rescued')::bigint
   from public.animal_reports
   where report_type in ('lost','found');
-$$;
+$;
 
 revoke all on function public.alfik_public_impact_counts() from public;
 grant execute on function public.alfik_public_impact_counts() to anon, authenticated;
