@@ -34,7 +34,7 @@ returns table(total_reports bigint, reunited_count bigint, found_safe_count bigi
 language sql
 security definer
 set search_path = public
-as $
+as $$
   select
     count(*)::bigint,
     count(*) filter (where report_type = 'lost' and status = 'reunited')::bigint,
@@ -42,7 +42,7 @@ as $
     count(*) filter (where report_type = 'found' and status = 'reunited' and resolution_outcome = 'rescued')::bigint
   from public.animal_reports
   where report_type in ('lost','found');
-$;
+$$;
 
 revoke all on function public.alfik_public_impact_counts() from public;
 grant execute on function public.alfik_public_impact_counts() to anon, authenticated;
