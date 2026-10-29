@@ -588,6 +588,17 @@ footer{background:#f8fbfe}
 @media(max-width:520px){#rescueView #rescueAnimalList{grid-template-columns:1fr;gap:10px}#rescueView .rescue-animal-card{padding:14px}}
 </style>
 
+<style id="alfik-impact-counter-styles">
+#alfikImpactPanel{margin:22px 0;padding:20px;border:1px solid #c9dfef;border-radius:20px;background:linear-gradient(145deg,#f4faff,#fff);box-shadow:0 8px 24px #123b630b}
+#alfikImpactPanel h3{margin:0 0 6px;color:#123b63;font-size:20px}
+#alfikImpactPanel>p{margin:0 0 15px;color:#526b80;font-size:13px;line-height:1.5}
+.alfik-impact-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.alfik-impact-stat{padding:15px 10px;border:1px solid #d8e7f3;border-radius:14px;background:#fff;text-align:center}
+.alfik-impact-number{display:block;color:#1769aa;font-size:clamp(24px,5vw,34px);font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums}
+.alfik-impact-label{display:block;margin-top:5px;color:#456178;font-size:11px;font-weight:700;line-height:1.35}
+.alfik-impact-footnote{display:block;margin-top:12px;color:#718496;font-size:10px;line-height:1.4}
+@media(max-width:520px){#alfikImpactPanel{padding:15px}.alfik-impact-grid{gap:6px}.alfik-impact-stat{padding:12px 5px}.alfik-impact-label{font-size:10px}}
+</style>
 </head>
 <body>
 <header>
@@ -686,6 +697,16 @@ footer{background:#f8fbfe}
 <section id="homeView">
 <h2>Every animal matters.</h2>
 <p>Helping lost animals find their way home, with a community that cares.</p>
+<div id="alfikImpactPanel" aria-live="polite">
+  <h3>🐾 ALFIK makes a difference</h3>
+  <p>Every report helps the community act. These totals update from outcomes recorded by our members.</p>
+  <div class="alfik-impact-grid">
+    <div class="alfik-impact-stat"><span class="alfik-impact-number" id="alfikImpactTotal">…</span><span class="alfik-impact-label">Reports shared</span></div>
+    <div class="alfik-impact-stat"><span class="alfik-impact-number" id="alfikImpactReunited">…</span><span class="alfik-impact-label">Animals reunited</span></div>
+    <div class="alfik-impact-stat"><span class="alfik-impact-number" id="alfikImpactFoundSafe">…</span><span class="alfik-impact-label">Found animals marked resolved</span></div>
+  </div>
+  <span class="alfik-impact-footnote">Reunion and resolution totals count reports whose status has been updated by a member. One animal may have more than one report.</span>
+</div>
 <div class="my-reports-shortcut" data-account-types="public">
   <div class="my-reports-shortcut-copy"><span class="my-reports-shortcut-icon" aria-hidden="true">📋</span><div><h3>Already reported an animal?</h3><p>Find your own posts, check their details, and see or make updates.</p></div></div>
   <button class="primary" type="button" data-view="myView">View my reports</button>
@@ -1366,6 +1387,7 @@ function showView(id){
     if(section)section.classList.toggle("hidden",view!==id);
   });
 
+  if(id==="homeView")loadAlfikImpactCounters();
   if(id==="reportsView")loadReports();
   if(id==="possibleMatchesView")loadPossibleMatches();
   if(id==="myView")loadMyReports();
@@ -1887,6 +1909,12 @@ function makeReportCard(report,isOwn){
     edit.onclick=()=>editReport(report);
     actions.appendChild(edit);
 
+    if(report.status==="active" && (report.report_type==="lost" || report.report_type==="found")){
+      const confirmButton=element("button",report.report_type==="lost"?"🔎 Still missing":"🐾 Still safe / awaiting owner");
+      confirmButton.className="secondary";
+      confirmButton.onclick=()=>confirmReportStillActive(report,confirmButton);
+      actions.appendChild(confirmButton);
+    }
     const statusButton=element("button",["resolved","reunited","closed"].includes(report.status)?"Reopen report":"Mark resolved / reunited");
     statusButton.className="secondary";
     statusButton.onclick=()=>changeReportStatus(report);
@@ -1907,13 +1935,54 @@ function makeReportCard(report,isOwn){
   return card;
 }
 
+async function confirmReportStillActive(report,button){
+  const isLost=report.report_type==="lost";
+  const messageText=isLost
+    ? "Confirm this animal is still missing. ALFIK will record today's check and restart the reminder schedule."
+    : "Confirm this found animal is still safe and awaiting its owner. ALFIK will record today's check and restart the reminder schedule.";
+  if(!confirm(messageText))return;
+  const {data:sessionData}=await supabaseClient.auth.getSession();
+  const user=sessionData.session?.user;
+  if(!user){alert("Please sign in again.");return;}
+  if(button)button.disabled=true;
+  try{
+    const {data,error}=await supabaseClient.from("animal_reports")
+      .update({last_status_confirmed_at:new Date().toISOString(),followup_reminder_3d_sent_at:null,followup_reminder_7d_sent_at:null})
+      .eq("id",report.id).eq("owner_id",user.id).eq("status","active").select("id").maybeSingle();
+    if(error)throw error;
+    if(!data)throw new Error("The report could not be updated. It may already have been resolved.");
+    alert("Thanks for checking in. Your report is confirmed as current, and the reminder schedule has restarted. 💙");
+    await loadMyReports();
+  }catch(error){
+    alert("Could not confirm the report. Please make sure the ALFIK follow-up SQL migration has been run in Supabase. "+(error.message||""));
+    if(button)button.disabled=false;
+  }
+}
+
+async function loadAlfikImpactCounters(){
+  const total=$("alfikImpactTotal"),reunited=$("alfikImpactReunited"),safe=$("alfikImpactFoundSafe");
+  if(!total||!reunited||!safe)return;
+  try{
+    const {data,error}=await supabaseClient.rpc("alfik_public_impact_counts");
+    if(error)throw error;
+    const row=Array.isArray(data)?data[0]:data;
+    if(!row)throw new Error("No impact totals returned.");
+    total.textContent=Number(row.total_reports||0).toLocaleString("en-GB");
+    reunited.textContent=Number(row.reunited_count||0).toLocaleString("en-GB");
+    safe.textContent=Number(row.found_safe_count||0).toLocaleString("en-GB");
+  }catch(error){
+    console.warn("ALFIK impact counters:",error);
+    [total,reunited,safe].forEach(node=>node.textContent="—");
+  }
+}
+
 async function changeReportStatus(report){
   const next=["resolved","reunited","closed"].includes(report.status)?"active":"reunited";
   if(!confirm(next==="reunited"?"Mark this report as resolved or reunited?":"Reopen this report?"))return;
   const {data:sessionData}=await supabaseClient.auth.getSession();
   const user=sessionData.session?.user;
   if(!user){alert("Please sign in again.");return;}
-  const {data,error}=await supabaseClient.from("animal_reports").update({status:next})
+  const {data,error}=await supabaseClient.from("animal_reports").update({status:next,last_status_confirmed_at:new Date().toISOString(),followup_reminder_3d_sent_at:null,followup_reminder_7d_sent_at:null})
     .eq("id",report.id).eq("owner_id",user.id).select("id").maybeSingle();
   if(error||!data){alert("Could not change the status. Check your Supabase permissions."+(error?" "+error.message:""));return;}
   await loadReports();
