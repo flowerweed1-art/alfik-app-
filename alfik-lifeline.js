@@ -147,8 +147,8 @@
           <button type="button" class="secondary" id="llUseLocation">Use my location</button>
           <button type="button" class="secondary" id="llClearArea">Show all services</button>
         </div>
-        <p id="llAreaMessage" class="ll-small" role="status" aria-live="polite">All verified listings are shown below. Search to narrow results to your area and type of support.</p>
-        <div id="llServiceList" aria-live="polite"><p class="ll-empty">Loading verified services…</p></div>
+        <p id="llAreaMessage" class="ll-small" role="status" aria-live="polite">All directory listings are shown below. Each listing clearly states whether ALFIK has verified it. Search to narrow results to your area and type of support.</p>
+        <div id="llServiceList" aria-live="polite"><p class="ll-empty">Loading Lifeline directory…</p></div>
       <div class="ll-card" id="llOrganisationTools">
         <h3>Organisation or rescue account</h3>
         <p class="ll-small">Represent a rescue, charity, food bank, fostering project or other animal-support service? Request to manage an existing directory listing or submit a new one. ALFIK reviews requests before linking accounts or publishing listings.</p>
@@ -582,13 +582,13 @@
   function clearDirectorySearch() {
     const input=byId("llAreaPostcode"); input.value=""; input.dataset.areaTerms="";
     byId("llSupportFilter").value="";
-    msg("llAreaMessage","Showing all verified listings. No location is being used.");
+    msg("llAreaMessage","Showing all directory listings, verified and unverified. No location is being used.");
     renderServices();
   }
   async function loadServices() {
     const d=db(); if(!d)return;
-    const {data,error}=await d.from("alfik_lifeline_services").select("*").eq("verification_status","verified").order("organisation_name");
-    if(error){byId("llServiceList").innerHTML='<p class="ll-empty">The verified directory will appear after the Lifeline SQL setup is installed and ALFIK adds checked listings.</p>';return;}
+    const {data,error}=await d.from("alfik_lifeline_services").select("*").neq("verification_status","paused").order("organisation_name");
+    if(error){byId("llServiceList").innerHTML='<p class="ll-empty">The Lifeline directory could not be loaded. Please refresh and try again.</p>';return;}
     services=data||[];
     populateSupportFilter();
     renderServices();
