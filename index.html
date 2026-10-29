@@ -1034,6 +1034,34 @@ footer{background:#f8fbfe}
 <p id="rescueOrgMessage" class="message" role="status"></p>
 <label for="rescueOrgSelect">Your rescue organisation</label><select id="rescueOrgSelect"><option value="">Choose an organisation</option></select>
 </div>
+<div class="feature-panel" id="lifelinePartnerPanel">
+<h3>ALFIK Lifeline directory listing</h3>
+<p class="note">Manage the support listing for your selected organisation. New listings and edits to verified listings return to ALFIK for review before appearing as Verified.</p>
+<label for="lifelinePartnerListingSelect">Your Lifeline listings</label>
+<select id="lifelinePartnerListingSelect"><option value="">Create a new listing</option></select>
+<label for="lifelinePartnerName">Public organisation name</label><input id="lifelinePartnerName" maxlength="200">
+<label for="lifelinePartnerSummary">What support do you provide?</label><textarea id="lifelinePartnerSummary" rows="3" maxlength="5000"></textarea>
+<label for="lifelinePartnerCountries">Countries served (comma-separated)</label><input id="lifelinePartnerCountries" placeholder="England, Scotland">
+<label for="lifelinePartnerRegions">Regions or areas served (comma-separated)</label><input id="lifelinePartnerRegions" placeholder="Kent, Fife">
+<label for="lifelinePartnerSpecies">Species supported (comma-separated)</label><input id="lifelinePartnerSpecies" placeholder="Cats, dogs, rabbits">
+<label for="lifelinePartnerTypes">Support types (comma-separated)</label><input id="lifelinePartnerTypes" placeholder="Food, temporary fostering, veterinary help">
+<label for="lifelinePartnerEligibility">Eligibility</label><textarea id="lifelinePartnerEligibility" rows="2" maxlength="2000"></textarea>
+<label for="lifelinePartnerReferral">How can people request help?</label><textarea id="lifelinePartnerReferral" rows="2" maxlength="1000"></textarea>
+<label for="lifelinePartnerWebsite">Official website</label><input id="lifelinePartnerWebsite" type="url" maxlength="1000" placeholder="https://">
+<label for="lifelinePartnerContact">Public contact details</label><input id="lifelinePartnerContact" maxlength="1000">
+<label for="lifelinePartnerCapacity">Availability note</label><textarea id="lifelinePartnerCapacity" rows="2" maxlength="1000">Availability must be confirmed directly with the service.</textarea>
+<button class="primary wide" id="saveLifelinePartnerListingBtn" type="button">Save listing and submit for review</button>
+<p id="lifelinePartnerMessage" class="message" role="status"></p>
+<hr>
+<h4>Claim an existing listing</h4>
+<p class="note">If a listing already exists, request ownership instead of creating a duplicate. ALFIK will review the claim before linking it to your organisation.</p>
+<label for="lifelineClaimListingSelect">Existing verified listing</label><select id="lifelineClaimListingSelect"><option value="">Choose a listing</option></select>
+<label for="lifelineClaimEvidence">How can ALFIK verify your connection to this organisation?</label><textarea id="lifelineClaimEvidence" rows="3" maxlength="4000" placeholder="Explain your role and provide official website, registration, or other independently checkable evidence. Do not enter passwords or sensitive personal data."></textarea>
+<button class="primary wide" id="requestLifelineClaimBtn" type="button">Request listing ownership</button>
+<p id="lifelineClaimMessage" class="message" role="status"></p>
+<div id="lifelinePartnerClaims">Your ownership requests will appear here.</div>
+</div>
+
 <div class="feature-panel">
 <h3>Organisation verification</h3>
 <p>Verification is reviewed by an ALFIK administrator. Creating a workspace does not automatically verify it.</p>
