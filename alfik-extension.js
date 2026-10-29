@@ -1352,6 +1352,64 @@ async function loadVaccinations() {
   }
 }
 
+async function refreshRescueDashboardSummary() {
+const db = client();
+const orgId = el("rescueOrgSelect")?.value || "";
+const overview = el("rescueOrgOverview");
+const animalCount = el("rescueAnimalCount");
+const dueCount = el("rescueDueCount");
+const medicationCount = el("rescueMedicationCount");
+if (!orgId || !db) {
+  if (overview) overview.innerHTML = "<strong>Organisation overview</strong><p>Select your rescue organisation to see its profile and verification status.</p>";
+  [animalCount,dueCount,medicationCount].forEach(node => { if(node) node.textContent = "—"; });
+  return;
+}
+try {
+  const orgResult = await db.from("alfik_organisations")
+    .select("id,name,org_type,verification_status")
+    .eq("id", orgId).maybeSingle();
+  if (orgResult.error) throw orgResult.error;
+  const org = orgResult.data;
+  if (overview) {
+    overview.replaceChildren();
+    const title = document.createElement("strong");
+    title.textContent = org?.name || "Selected organisation";
+    overview.appendChild(title);
+    const detail = document.createElement("p");
+    detail.textContent = "Type: " + (org?.org_type || "Rescue");
+    overview.appendChild(detail);
+    const status = document.createElement("span");
+    status.className = "rescue-status-pill";
+    const rawStatus = String(org?.verification_status || "unverified").toLowerCase().replace(/_/g," ");
+    status.textContent = rawStatus === "verified" ? "✓ ALFIK Verified" : "Verification: " + rawStatus;
+    overview.appendChild(status);
+    const helper = document.createElement("p");
+    helper.textContent = rawStatus === "verified"
+      ? "Your organisation has been verified by ALFIK."
+      : "Your organisation is not yet verified. You can review or submit evidence under Verification & Evidence.";
+    overview.appendChild(helper);
+  }
+  const todayDate = new Date();
+  const today = todayDate.getFullYear() + "-" + String(todayDate.getMonth()+1).padStart(2,"0") + "-" + String(todayDate.getDate()).padStart(2,"0");
+  const [animals, due, meds] = await Promise.all([
+    db.from("alfik_rescue_animals").select("id",{count:"exact",head:true}).eq("org_id",orgId),
+    db.from("alfik_care_schedules").select("id",{count:"exact",head:true}).eq("org_id",orgId).eq("enabled",true).lte("next_due_date",today),
+    db.from("alfik_rescue_animal_medications").select("id",{count:"exact",head:true}).eq("org_id",orgId)
+  ]);
+  if(animalCount) animalCount.textContent = animals.error ? "—" : String(animals.count ?? 0);
+  if(dueCount) dueCount.textContent = due.error ? "—" : String(due.count ?? 0);
+  if(medicationCount) medicationCount.textContent = meds.error ? "—" : String(meds.count ?? 0);
+} catch(error) {
+  console.warn("ALFIK rescue dashboard summary:", error);
+  if (overview) {
+    const detail = document.createElement("p");
+    detail.textContent = "Could not load organisation details. Please try refreshing the workspace.";
+    overview.replaceChildren(detail);
+  }
+  [animalCount,dueCount,medicationCount].forEach(node => { if(node) node.textContent = "—"; });
+}
+}
+
 async function loadRescueWorkspace() {
 const db = client();
 const list = el("rescueAnimalList");
@@ -1412,6 +1470,7 @@ try {
     }
   }
 
+  await refreshRescueDashboardSummary();
   await loadRescueAnimals();
   await loadRescueCareSchedules();
   await loadRescueMedicationList();
@@ -1516,6 +1575,7 @@ try {
 
   say("rescueAnimalMessage", "Rescue animal saved.");
   await loadRescueAnimals();
+  await refreshRescueDashboardSummary();
 } catch (error) {
   console.error("ALFIK save rescue animal:", error);
   say("rescueAnimalMessage", "Could not save the animal: " + readableError(error));
@@ -1618,7 +1678,7 @@ try{
  }]);
  if(r.error)throw r.error;
  ["rescueMedicationName","rescueMedicationDose","rescueMedicationFrequency","rescueMedicationStart","rescueMedicationEnd","rescueMedicationInstructions"].forEach(id=>{if(el(id))el(id).value="";});
- say("rescueMedicationMessage","Rescue medication saved.");await loadRescueMedicationList();
+ say("rescueMedicationMessage","Rescue medication saved.");await loadRescueMedicationList();await refreshRescueDashboardSummary();
 }catch(e){say("rescueMedicationMessage","Could not save rescue medication: "+readableError(e));}
 }
 
@@ -1872,7 +1932,7 @@ try{
   next_due_date:due,enabled:el("rescueCareEnabled").checked,advance_notice_days:0,created_by:user.id
  }]);
  if(r.error)throw r.error;
- el("rescueCareName").value="";say("rescueCareMessage","Rescue reminder saved.");await loadRescueCareSchedules();
+ el("rescueCareName").value="";say("rescueCareMessage","Rescue reminder saved.");await loadRescueCareSchedules();await refreshRescueDashboardSummary();
 }catch(e){say("rescueCareMessage","Could not save rescue reminder: "+readableError(e));}
 }
 
@@ -2699,6 +2759,7 @@ if (el("saveRescueAnimalBtn")) {
 
 if (el("rescueOrgSelect")) {
   el("rescueOrgSelect").addEventListener("change", async () => {
+    await refreshRescueDashboardSummary();
     await loadLifelinePartnerWorkspace();
     await loadRescueAnimals();
     await loadRescueCareSchedules();
