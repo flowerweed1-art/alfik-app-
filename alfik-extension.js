@@ -705,7 +705,7 @@ if (!db) return;
 try {
   const result = await db
     .from("alfik_pets")
-    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date,life_status,photo_path,allergies,vet_name,vet_phone,vet_email,vet_address")
+    .select("id,name,species,breed,date_of_birth,microchip,notes,neutering_status,neutered_date,life_status,photo_path,allergies,vet_name,vet_phone,vet_email,vet_address,chip_lookup_enabled")
     .eq("owner_id", user.id);
 
   if (result.error) throw result.error;
@@ -788,6 +788,50 @@ try {
       details.className = "pet-card-details hidden";
       addText(details, "Date of birth", pet.date_of_birth);
       addText(details, "Microchip", pet.microchip);
+      if (pet.microchip) {
+        const chipConsentBox = document.createElement("div");
+        chipConsentBox.className = "pet-dashboard-section";
+        chipConsentBox.style.cssText = "margin:12px 0;padding:12px;border:1px solid #d5e3ef;border-radius:12px";
+        const chipConsentLabel = document.createElement("label");
+        chipConsentLabel.style.cssText = "display:flex;gap:10px;align-items:flex-start;font-weight:700";
+        const chipConsent = document.createElement("input");
+        chipConsent.type = "checkbox";
+        chipConsent.checked = pet.chip_lookup_enabled === true;
+        chipConsent.style.cssText = "width:auto;min-width:20px;margin-top:3px";
+        const chipConsentText = document.createElement("span");
+        chipConsentText.textContent = "Allow verified ALFIK veterinary practices to check this microchip and notify me if it matches.";
+        chipConsentLabel.append(chipConsent, chipConsentText);
+        chipConsentBox.appendChild(chipConsentLabel);
+        const chipConsentNote = document.createElement("p");
+        chipConsentNote.className = "note";
+        chipConsentNote.textContent = "Optional and off by default. Your chip number is not shown to vets. Only a verified veterinary practice can search, and your personal contact details are not shared.";
+        chipConsentBox.appendChild(chipConsentNote);
+        chipConsent.addEventListener("change", async () => {
+          chipConsent.disabled = true;
+          try {
+            const consentResult = await db.rpc("alfik_set_chip_lookup_consent", {
+              p_pet_id: String(pet.id),
+              p_enabled: chipConsent.checked
+            });
+            if (consentResult.error) throw consentResult.error;
+            pet.chip_lookup_enabled = chipConsent.checked;
+            say("petMessage", chipConsent.checked
+              ? "ChipConnect is enabled for " + (pet.name || "this pet") + ". Verified veterinary practices can trigger an owner alert if the chip matches."
+              : "ChipConnect is turned off for " + (pet.name || "this pet") + ".");
+          } catch (error) {
+            chipConsent.checked = pet.chip_lookup_enabled === true;
+            say("petMessage", "Could not update ChipConnect consent: " + readableError(error) + ". Make sure the ChipConnect SQL setup has been run.");
+          } finally {
+            chipConsent.disabled = false;
+          }
+        });
+        details.appendChild(chipConsentBox);
+      } else {
+        const chipNote = document.createElement("p");
+        chipNote.className = "note";
+        chipNote.textContent = "Add a microchip number to this pet profile to enable optional ChipConnect lookup consent.";
+        details.appendChild(chipNote);
+      }
       addText(details, "Neutering status", ({neutered:"Neutered / spayed",not_neutered:"Not neutered",unknown:"Unknown / not confirmed"})[pet.neutering_status] || "Unknown / not confirmed");
       addText(details, "Date neutered", pet.neutered_date);
       addText(details, "Allergies", pet.allergies);
@@ -2731,7 +2775,75 @@ try {
 }
 }
 
+function ensureChipConnectPanel() {
+  const vetView = el("vetView");
+  if (!vetView || el("chipConnectPanel")) return;
+  const panel = document.createElement("div");
+  panel.className = "feature-panel";
+  panel.id = "chipConnectPanel";
+  const heading = document.createElement("h3");
+  heading.textContent = "🔐 ALFIK ChipConnect";
+  const intro = document.createElement("p");
+  intro.textContent = "Securely check whether a microchip is registered on ALFIK and whether its owner has opted in to alerts. This does not replace an established microchip database.";
+  const numberLabel = document.createElement("label");
+  numberLabel.htmlFor = "chipConnectNumber";
+  numberLabel.textContent = "Microchip number";
+  const number = document.createElement("input");
+  number.id = "chipConnectNumber";
+  number.inputMode = "numeric";
+  number.autocomplete = "off";
+  number.maxLength = 30;
+  number.placeholder = "Enter scanned chip number";
+  const reasonLabel = document.createElement("label");
+  reasonLabel.htmlFor = "chipConnectReason";
+  reasonLabel.textContent = "Reason for lookup";
+  const reason = document.createElement("select");
+  reason.id = "chipConnectReason";
+  [["animal_found","Animal found"],["treatment","Veterinary treatment"],["routine_identification","Routine identification"],["other","Other"]].forEach(([value,label]) => reason.appendChild(new Option(label,value)));
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "primary wide";
+  button.id = "chipConnectLookupBtn";
+  button.textContent = "Check microchip securely";
+  const status = document.createElement("p");
+  status.id = "chipConnectStatus";
+  status.className = "message";
+  status.setAttribute("role","status");
+  status.setAttribute("aria-live","polite");
+  const privacy = document.createElement("p");
+  privacy.className = "note";
+  privacy.textContent = "Lookups are audited, limited to verified veterinary practices, and rate-limited. Do not use this for curiosity or unrelated purposes. ALFIK never returns the owner's contact details.";
+  panel.append(heading,intro,numberLabel,number,reasonLabel,reason,button,status,privacy);
+  vetView.appendChild(panel);
+  button.addEventListener("click", async () => {
+    const db = client();
+    const chip = number.value.trim();
+    if (!chip) { status.textContent = "Enter the microchip number scanned by your practice."; return; }
+    button.disabled = true;
+    status.textContent = "Checking securely…";
+    try {
+      const lookup = await db.rpc("alfik_vet_lookup_microchip", {
+        p_microchip: chip,
+        p_reason: reason.value
+      });
+      if (lookup.error) throw lookup.error;
+      const row = Array.isArray(lookup.data) ? lookup.data[0] : lookup.data;
+      if (!row) throw new Error("No lookup result was returned.");
+      status.textContent = row.message || (row.match_found ? "Match found. The owner has been notified." : "No ALFIK ChipConnect match available.");
+      if (row.match_found && row.pet_name) {
+        status.textContent += " Pet record: " + row.pet_name + (row.species ? " (" + row.species + ")" : "") + ". This is not proof of ownership.";
+      }
+      number.value = "";
+    } catch (error) {
+      status.textContent = "Lookup could not be completed: " + readableError(error) + ". Only members of an ALFIK-verified veterinary practice can use ChipConnect.";
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
+
 function wireEvents() {
+  ensureChipConnectPanel();
 if (el("premiumPromoDismissBtn")) {
   el("premiumPromoDismissBtn").addEventListener("click", async () => {
     const user = await currentUser();
