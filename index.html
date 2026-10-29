@@ -487,6 +487,20 @@ footer{background:#f8fbfe}
 
 /* ALFIK compact pet profiles page: keep management tools out of the main view */
 #petsView #petMessage ~ .feature-panel{display:none!important}
+<style id="alfik-rescue-dashboard-polish">
+#rescueView .rescue-org-overview{margin:12px 0;padding:14px 15px;border:1px solid #d5e5f2;border-radius:14px;background:linear-gradient(135deg,#f0f7fd,#fff);color:#123b63}
+#rescueView .rescue-org-overview strong{display:block;font-size:15px}
+#rescueView .rescue-org-overview p{margin:5px 0 0;font-size:13px;color:#52697c;overflow-wrap:anywhere}
+#rescueView .rescue-status-pill{display:inline-block;margin-top:8px;padding:4px 9px;border-radius:20px;background:#e7f1fa;color:#14558b;font-size:12px;font-weight:700;text-transform:capitalize}
+#rescueView .rescue-dashboard-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0 18px}
+#rescueView .rescue-stat{min-width:0;padding:12px 8px;border:1px solid #d6e5f2;border-radius:13px;background:#fff;text-align:center}
+#rescueView .rescue-stat span{display:block;color:#52697c;font-size:11px;line-height:1.3}
+#rescueView .rescue-stat strong{display:block;margin-top:5px;color:#1769aa;font-size:23px;line-height:1.2}
+#rescueView .rescue-back-button{display:block;width:100%;margin:0 0 14px;text-align:left;background:#edf5fc;color:#14558b;border:1px solid #c8deef}
+#rescueView .rescue-tool-panel h3{margin-top:0}
+@media(max-width:390px){#rescueView .rescue-dashboard-stats{gap:6px}#rescueView .rescue-stat{padding:10px 5px}#rescueView .rescue-stat span{font-size:10px}#rescueView .rescue-stat strong{font-size:20px}}
+</style>
+
 </style>
 
 <style id="alfik-share-studio-styles">
@@ -1055,6 +1069,15 @@ footer{background:#f8fbfe}
 <button type="button" class="rescue-action-card" data-rescue-panel="rescueOrgPanel"><span class="rescue-action-icon">🏢</span><span><strong>Organisation Profile</strong><small>Choose or create an organisation</small></span></button>
 </div>
 <p id="rescuePanelStatus" class="note" role="status">Choose a tool above to get started.</p>
+<div class="rescue-org-overview" id="rescueOrgOverview" aria-live="polite">
+<strong>Organisation overview</strong>
+<p>Select your rescue organisation to see its profile and verification status.</p>
+</div>
+<div class="rescue-dashboard-stats" id="rescueDashboardStats" aria-live="polite">
+<div class="rescue-stat"><span>Animals in care</span><strong id="rescueAnimalCount">—</strong></div>
+<div class="rescue-stat"><span>Reminders due</span><strong id="rescueDueCount">—</strong></div>
+<div class="rescue-stat"><span>Medication records</span><strong id="rescueMedicationCount">—</strong></div>
+</div>
 <div class="feature-panel rescue-tool-panel hidden" id="rescueOrgPanel">
 <h3>Create or select an organisation</h3>
 <label for="rescueOrgName">Organisation name</label><input id="rescueOrgName" maxlength="200">
