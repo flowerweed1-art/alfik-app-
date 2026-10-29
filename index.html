@@ -536,6 +536,21 @@ footer{background:#f8fbfe}
 #reportsView>#nearbyMapPanel{margin-top:28px}
 @media(max-width:520px){.report-choice-card{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:13px}.report-choice-card button{grid-column:1/-1;width:100%}.search-quick-choices{gap:8px}.search-quick-choices button{font-size:13px;padding:10px 7px}}
 </style>
+
+<style id="alfik-rescue-dashboard-styles">
+#rescueView .rescue-dashboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
+#rescueView .rescue-action-card{display:flex;align-items:center;gap:12px;min-width:0;text-align:left;padding:16px 13px;background:#fff;border:1px solid #d6e5f2;border-radius:16px;color:#123b63;box-shadow:0 3px 12px rgba(18,59,99,.06);cursor:pointer;transition:transform .15s ease,border-color .15s ease}
+#rescueView .rescue-action-card:active{transform:scale(.985)}
+#rescueView .rescue-action-card:hover,#rescueView .rescue-action-card:focus-visible{border-color:#1769aa;outline:2px solid #b8d8f4;outline-offset:1px}
+#rescueView .rescue-action-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:12px;background:#edf5fc;font-size:22px}
+#rescueView .rescue-action-card strong,#rescueView .rescue-action-card small{display:block}
+#rescueView .rescue-action-card strong{font-size:14px;line-height:1.3}
+#rescueView .rescue-action-card small{margin-top:4px;color:#52677b;font-size:11px;line-height:1.35}
+#rescueView .rescue-tool-panel{scroll-margin-top:18px}
+#rescueView .rescue-tool-panel h3{margin-top:0}
+@media(max-width:420px){#rescueView .rescue-dashboard{gap:9px}#rescueView .rescue-action-card{padding:12px 9px;gap:9px;border-radius:13px}#rescueView .rescue-action-icon{flex-basis:34px;width:34px;height:34px;font-size:19px;border-radius:10px}#rescueView .rescue-action-card strong{font-size:13px}#rescueView .rescue-action-card small{font-size:10px}}
+</style>
+
 </head>
 <body>
 <header>
@@ -1029,9 +1044,18 @@ footer{background:#f8fbfe}
 
 <section id="rescueView" class="hidden">
 <h2>Rescue workspace</h2>
-<p>Tools for animal rescue and welfare organisations.</p>
-<p class="note">Organisation access and plan eligibility are checked by Supabase.</p>
-<div class="feature-panel">
+<p>Everything your rescue needs, organised in one place.</p>
+<p class="note">Organisation access and plan eligibility are checked securely by Supabase.</p>
+<div class="rescue-dashboard" id="rescueDashboard">
+<button type="button" class="rescue-action-card" data-rescue-panel="rescueAnimalsPanel"><span class="rescue-action-icon">🐾</span><span><strong>Animal Register</strong><small>Animals in your care</small></span></button>
+<button type="button" class="rescue-action-card" data-rescue-panel="rescueCarePanel"><span class="rescue-action-icon">📅</span><span><strong>Care Reminders</strong><small>Flea, worming and care dates</small></span></button>
+<button type="button" class="rescue-action-card" data-rescue-panel="rescueMedicationPanel"><span class="rescue-action-icon">💊</span><span><strong>Medication</strong><small>Animal medication records</small></span></button>
+<button type="button" class="rescue-action-card" data-rescue-panel="lifelinePartnerPanel"><span class="rescue-action-icon">🛟</span><span><strong>Lifeline Listings</strong><small>Manage support information</small></span></button>
+<button type="button" class="rescue-action-card" data-rescue-panel="rescueVerificationPanel"><span class="rescue-action-icon">🛡️</span><span><strong>Verification & Evidence</strong><small>Organisation checks</small></span></button>
+<button type="button" class="rescue-action-card" data-rescue-panel="rescueOrgPanel"><span class="rescue-action-icon">🏢</span><span><strong>Organisation Profile</strong><small>Choose or create an organisation</small></span></button>
+</div>
+<p id="rescuePanelStatus" class="note" role="status">Choose a tool above to get started.</p>
+<div class="feature-panel rescue-tool-panel" id="rescueOrgPanel">
 <h3>Create or select an organisation</h3>
 <label for="rescueOrgName">Organisation name</label><input id="rescueOrgName" maxlength="200">
 <label for="rescueOrgType">Organisation type</label><select id="rescueOrgType"><option value="rescue">Rescue</option></select><p class="note">Rescue workspaces require a Premium or Pro plan. Veterinary workspaces are available separately on the Pro plan.</p>
@@ -1040,7 +1064,7 @@ footer{background:#f8fbfe}
 <p id="rescueOrgMessage" class="message" role="status"></p>
 <label for="rescueOrgSelect">Your rescue organisation</label><select id="rescueOrgSelect"><option value="">Choose an organisation</option></select>
 </div>
-<div class="feature-panel" id="lifelinePartnerPanel">
+<div class="feature-panel rescue-tool-panel hidden" id="lifelinePartnerPanel">
 <h3>ALFIK Lifeline directory listing</h3>
 <p class="note">Manage the support listing for your selected organisation. New listings and edits to verified listings return to ALFIK for review before appearing as Verified.</p>
 <label for="lifelinePartnerListingSelect">Your Lifeline listings</label>
@@ -1068,7 +1092,7 @@ footer{background:#f8fbfe}
 <div id="lifelinePartnerClaims">Your ownership requests will appear here.</div>
 </div>
 
-<div class="feature-panel">
+<div class="feature-panel rescue-tool-panel hidden" id="rescueVerificationPanel">
 <h3>Organisation verification</h3>
 <p>Verification is reviewed by an ALFIK administrator. Creating a workspace does not automatically verify it.</p>
 <p>Tell us who you are, how the rescue operates, and how we can independently check your details. Registration is helpful where applicable but is not compulsory for every legitimate rescue.</p>
@@ -1098,7 +1122,7 @@ footer{background:#f8fbfe}
 <p id="verificationStatusNote" class="note">Choose your organisation above to see its current verification status.</p>
 </div>
 
-<div class="feature-panel">
+<div class="feature-panel rescue-tool-panel hidden" id="rescueAnimalsPanel">
 <h3>Rescue animal records</h3>
 <label for="rescueAnimalName">Animal name or reference</label><input id="rescueAnimalName" maxlength="150">
 <label for="rescueAnimalType">Animal type</label><select id="rescueAnimalType"><option value="cat">Cat</option><option value="dog">Dog</option><option value="other">Other</option></select>
@@ -1111,7 +1135,8 @@ footer{background:#f8fbfe}
 <button class="primary wide" id="saveRescueAnimalBtn" type="button">Save rescue animal record</button>
 <p id="rescueAnimalMessage" class="message" role="status"></p>
 <div id="rescueAnimalList">Rescue animal records will appear here.</div>
-<div class="feature-panel">
+</div>
+<div class="feature-panel rescue-tool-panel hidden" id="rescueCarePanel">
 <h3>Rescue care reminders</h3>
 <p class="note">Set reminders for animals in your care. Disable reminders or mark the animal rehomed when responsibility ends.</p>
 <label for="rescueCareAnimal">Rescue animal</label><select id="rescueCareAnimal"><option value="">Choose an animal</option></select>
@@ -1124,7 +1149,8 @@ footer{background:#f8fbfe}
 <p id="rescueCareMessage" class="message" role="status"></p>
 <div id="rescueCareList">Rescue reminders will appear here.</div>
 </div>
-<div class="feature-panel">
+</div>
+<div class="feature-panel rescue-tool-panel hidden" id="rescueMedicationPanel">
 <h3>Rescue medication list</h3>
 <label for="rescueMedicationAnimal">Rescue animal</label><select id="rescueMedicationAnimal"><option value="">Choose an animal</option></select>
 <label for="rescueMedicationName">Medication name</label><input id="rescueMedicationName" maxlength="160">
@@ -1138,7 +1164,6 @@ footer{background:#f8fbfe}
 <div id="rescueMedicationList">Rescue medications will appear here.</div>
 </div>
 <p id="rescuePlanMessage" class="note"></p>
-</div>
 </section>
 
 <section id="vetView" class="hidden">
@@ -3125,6 +3150,31 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 })();
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script id="alfik-rescue-dashboard-script">
+(function(){
+  function initRescueDashboard(){
+    const root=document.getElementById("rescueView");
+    if(!root||root.dataset.dashboardWired==="true")return;
+    root.dataset.dashboardWired="true";
+    const buttons=Array.from(root.querySelectorAll("[data-rescue-panel]"));
+    const panels=["rescueOrgPanel","lifelinePartnerPanel","rescueVerificationPanel","rescueAnimalsPanel","rescueCarePanel","rescueMedicationPanel"]
+      .map(id=>document.getElementById(id)).filter(Boolean);
+    buttons.forEach(button=>button.addEventListener("click",()=>{
+      const targetId=button.getAttribute("data-rescue-panel");
+      panels.forEach(panel=>panel.classList.toggle("hidden",panel.id!==targetId));
+      const target=document.getElementById(targetId);
+      const status=document.getElementById("rescuePanelStatus");
+      buttons.forEach(item=>item.setAttribute("aria-pressed",item===button?"true":"false"));
+      if(status)status.textContent=button.querySelector("strong")?.textContent+" opened.";
+      if(target){target.scrollIntoView({behavior:"smooth",block:"start"});}
+    }));
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initRescueDashboard);
+  else initRescueDashboard();
+})();
+</script>
+
 </body>
 </html>
 
