@@ -841,6 +841,13 @@ footer{background:#f8fbfe}
 <label for="location" id="locationLabel">Where was the animal last seen? *</label>
 <p class="field-help" id="locationHelp">A town, neighbourhood or nearby landmark is enough. Please don't add your home address.</p>
 <input id="location" maxlength="250" required placeholder="e.g. Kirkcaldy, near the high street" aria-describedby="locationHelp">
+<div id="privateReportLocationPanel" class="feature-panel">
+  <h3>Optional private map pin</h3>
+  <p class="field-help">You can mark where the animal was last seen or found. This pin is private and used only to help ALFIK compare possible matches. It will not appear on the public map. You do not need to mark your home.</p>
+  <div id="privateReportLocationMap" role="application" aria-label="Map for choosing the animal's last-seen or found location" style="height:260px;width:100%;border:1px solid #c7d7e5;border-radius:12px;overflow:hidden;background:#edf3f8"></div>
+  <p id="privateReportLocationStatus" class="note" aria-live="polite">No private pin selected. You can still publish using the approximate area above.</p>
+  <button id="clearPrivateReportLocationBtn" class="secondary wide" type="button">Remove private pin</button>
+</div>
 <label for="dateSeen" id="dateSeenLabel">When was the animal last seen? *</label>
 <input id="dateSeen" type="date" required>
 <label for="photo">Add a photo (optional)</label>
@@ -1667,6 +1674,20 @@ $("reportForm").addEventListener("submit",async event=>{
     editingReportId=null;
     editingPhotoUrl=null;
     editingOriginalStatus="active";
+
+    if(window.alfikPrivateReportPin){
+      const privateLocationResult=await supabaseClient.from("alfik_private_report_locations").upsert({
+        report_id:savedReportId,
+        owner_id:user.id,
+        latitude:window.alfikPrivateReportPin.lat,
+        longitude:window.alfikPrivateReportPin.lon,
+        updated_at:new Date().toISOString()
+      },{onConflict:"report_id"});
+      if(privateLocationResult.error){
+        console.error("Private report pin could not be saved:",privateLocationResult.error);
+        message("reportMessage","Your report was saved, but its private map pin could not be saved. You can edit the report and try again.");
+      }
+    }
 
     if(!wasEditing){
       message("reportMessage","Your report has been published.");
@@ -3332,6 +3353,64 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 })();
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+/* ALFIK private report-location pin. No device location is requested. */
+(function(){
+  let privateMap=null;
+  let privateMarker=null;
+  let selectedPin=null;
+  const defaultView=[54.5,-3.0];
+
+  function updateStatus(){
+    const status=document.getElementById("privateReportLocationStatus");
+    if(!status)return;
+    status.textContent=selectedPin
+      ? "Private pin selected. It will only be used for matching and won't appear on the public map."
+      : "No private pin selected. You can still publish using the approximate area above.";
+    window.alfikPrivateReportPin=selectedPin?{lat:selectedPin.lat,lon:selectedPin.lon}:null;
+  }
+
+  function setPin(lat,lon){
+    selectedPin={lat:Number(lat),lon:Number(lon)};
+    if(privateMarker)privateMarker.setLatLng([selectedPin.lat,selectedPin.lon]);
+    else privateMarker=L.marker([selectedPin.lat,selectedPin.lon]).addTo(privateMap);
+    updateStatus();
+  }
+
+  function clearPin(){
+    selectedPin=null;
+    if(privateMarker){privateMap.removeLayer(privateMarker);privateMarker=null;}
+    updateStatus();
+  }
+
+  function initMap(){
+    const el=document.getElementById("privateReportLocationMap");
+    if(!el||typeof L==="undefined")return;
+    if(!privateMap){
+      privateMap=L.map(el,{scrollWheelZoom:false}).setView(defaultView,5);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+        maxZoom:19,
+        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+      }).addTo(privateMap);
+      privateMap.on("click",function(event){setPin(event.latlng.lat,event.latlng.lng);});
+      const clearButton=document.getElementById("clearPrivateReportLocationBtn");
+      if(clearButton)clearButton.addEventListener("click",clearPin);
+    }
+    window.setTimeout(function(){privateMap.invalidateSize();},120);
+  }
+
+  window.alfikPrivateReportPin=null;
+  window.alfikInitPrivateReportMap=initMap;
+  const form=document.getElementById("reportForm");
+  if(form){
+    const observer=new MutationObserver(function(){
+      if(!form.classList.contains("hidden"))initMap();
+    });
+    observer.observe(form,{attributes:true,attributeFilter:["class"]});
+  }
+})();
+</script>
+
 
 <script id="alfik-rescue-dashboard-script">
 (function(){
