@@ -1675,6 +1675,7 @@ $("reportForm").addEventListener("submit",async event=>{
     editingPhotoUrl=null;
     editingOriginalStatus="active";
 
+    let privatePinSaveFailed=false;
     if(window.alfikPrivateReportPin){
       const privateLocationResult=await supabaseClient.from("alfik_private_report_locations").upsert({
         report_id:savedReportId,
@@ -1684,13 +1685,15 @@ $("reportForm").addEventListener("submit",async event=>{
         updated_at:new Date().toISOString()
       },{onConflict:"report_id"});
       if(privateLocationResult.error){
+        privatePinSaveFailed=true;
         console.error("Private report pin could not be saved:",privateLocationResult.error);
-        message("reportMessage","Your report was saved, but its private map pin could not be saved. You can edit the report and try again.");
       }
     }
 
     if(!wasEditing){
-      message("reportMessage","Your report has been published.");
+      message("reportMessage",privatePinSaveFailed
+        ?"Your report was published, but its private map pin could not be saved. You can edit the report and try again."
+        :"Your report has been published.");
       showReportAdvicePanel({report_type:reportStatus,animal_type:animal});
       try{
         const alertResult=await supabaseClient.functions.invoke("alfik-match-alerts",{body:{report_id:savedReportId}});
@@ -3403,6 +3406,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
   window.alfikInitPrivateReportMap=initMap;
   const form=document.getElementById("reportForm");
   if(form){
+    form.addEventListener("reset",clearPin);
     const observer=new MutationObserver(function(){
       if(!form.classList.contains("hidden"))initMap();
     });
