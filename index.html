@@ -678,6 +678,7 @@ footer{background:#f8fbfe}
 <button class="secondary" data-view="petsView" data-account-types="public">My pets</button>
 <button class="secondary" data-view="rescueView" data-account-types="rescue">Rescue workspace</button>
 <button class="secondary" data-view="vetView" data-account-types="veterinary">Vet workspace</button>
+<button class="secondary" type="button" id="shareAlfikMenuButton">📣 Share ALFIK</button>
 <button class="secondary" data-view="billingView" data-account-types="public,rescue,veterinary">Plans</button>
 <button class="secondary" data-view="accountView" data-account-types="public,rescue,veterinary">Account</button>
 <button class="secondary" data-view="adminView" data-account-types="public,rescue,veterinary">Admin Tools</button>
@@ -709,6 +710,12 @@ footer{background:#f8fbfe}
 <section id="homeView">
 <h2>Every animal matters.</h2>
 <p>Helping lost animals find their way home, with a community that cares.</p>
+<div class="feature-panel" id="shareAlfikPanel" style="border:1px solid #b9d5e9;background:linear-gradient(145deg,#f0f7fd,#fff 70%);">
+  <h3>📣 Help more people discover ALFIK</h3>
+  <p>Share ALFIK with friends, family, local communities and animal lovers. Every new person who joins can help an animal find their way home.</p>
+  <button class="primary wide" type="button" id="shareAlfikButton">📲 Share ALFIK</button>
+  <p class="note" id="shareAlfikStatus" role="status" aria-live="polite"></p>
+</div>
 <div id="alfikImpactPanel" aria-live="polite">
   <span class="alfik-impact-eyebrow">A COMMUNITY THAT CARES</span>
   <h3>🐾 ALFIK makes a difference</h3>
@@ -3452,6 +3459,35 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initRescueDashboard);
   else initRescueDashboard();
+})();
+</script>
+
+
+<script id="alfik-app-sharing">
+(function(){
+  const shareUrl="https://alfik.co.uk/";
+  const shareTitle="ALFIK | Animals Lost and Found Information Keeper";
+  const shareText="Help animals find their way home. Discover ALFIK, the animal lost-and-found community helping owners, finders and rescues work together. Share lost and found reports, search for animals and help spread the word.\n\n"+shareUrl;
+  async function shareAlfik(){
+    const status=document.getElementById("shareAlfikStatus");
+    try{
+      if(navigator.share){
+        await navigator.share({title:shareTitle,text:shareText,url:shareUrl});
+        if(status)status.textContent="Thanks for helping spread the word about ALFIK. 💙";
+      }else if(navigator.clipboard&&navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(shareText);
+        if(status)status.textContent="ALFIK sharing message copied. Paste it into Facebook, WhatsApp or wherever you share.";
+      }else{
+        window.prompt("Copy this message to share ALFIK:",shareText);
+      }
+    }catch(error){
+      if(error&&error.name!=="AbortError"&&status)status.textContent="Sharing wasn't available. You can copy the ALFIK link: "+shareUrl;
+    }
+  }
+  const homeButton=document.getElementById("shareAlfikButton");
+  const menuButton=document.getElementById("shareAlfikMenuButton");
+  if(homeButton)homeButton.addEventListener("click",shareAlfik);
+  if(menuButton)menuButton.addEventListener("click",shareAlfik);
 })();
 </script>
 
