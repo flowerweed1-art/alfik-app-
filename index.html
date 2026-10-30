@@ -778,6 +778,139 @@ footer{
 }
 </style>
 
+
+<style id="alfik-screen-polish-four">
+/* Screen polish: reports, matching, member hub, pets and rescue */
+#reportsView,#possibleMatchesView,#myView,#petsView,#rescueView{
+  padding:clamp(18px,3.5vw,30px);
+  background:linear-gradient(155deg,#fff 0%,#fff 72%,#f4f9fd 100%);
+}
+#reportsView>h2,#possibleMatchesView>h2,#myView>h2,#petsView>h2,#rescueView>h2{
+  margin-top:0;color:#102f4b;font-size:clamp(25px,4vw,32px);
+  letter-spacing:-.7px;line-height:1.18;
+}
+#reportsView>p:first-of-type,#possibleMatchesView>p:first-of-type,
+#myView>p:first-of-type,#petsView>p:first-of-type,#rescueView>p:first-of-type{
+  color:#5b7184;line-height:1.65;max-width:680px;
+}
+#reportsView .search-quick-choices{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0;
+}
+#reportsView .quick-filter{
+  min-height:58px;border-radius:15px;font-weight:800;
+  box-shadow:0 5px 14px #153e5c0a;
+}
+#reportsView #nearbyMapPanel{
+  margin:20px 0;padding:16px;border:1px solid #d5e5f1;
+  border-radius:18px;background:linear-gradient(145deg,#f0f7fd,#fff 75%);
+}
+#reportsView #animalReportsMap{border:1px solid #d2e1ed;box-shadow:0 5px 16px #153e5c0c}
+#reportsView #reportsList{display:grid;gap:13px;margin-top:12px}
+#reportsView .report-card{
+  position:relative;padding:17px;border:1px solid #d8e5ef;
+  border-left-width:5px;border-radius:17px;background:#fff;
+  box-shadow:0 7px 20px #173b5b0b;
+}
+#reportsView .report-card h3{margin-top:0;color:#123b63;font-size:19px}
+#reportsView .report-card .animal-photo{width:100%;max-width:none;max-height:320px;object-fit:cover;border-radius:13px}
+#reportsView .report-card .actions{grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px}
+#possibleMatchesView #possibleMatchesStatus{
+  margin:14px 0;padding:12px 14px;border:1px solid #d9e7f1;
+  border-radius:13px;background:#f5f9fd;
+}
+#possibleMatchesView #possibleMatchesList{display:grid;gap:14px;margin-top:15px}
+#possibleMatchesView .report-card,#possibleMatchesView .possible-match-card{
+  padding:17px;border:1px solid #d4e4f0;border-radius:18px;
+  background:linear-gradient(145deg,#fff,#f8fbfe);
+  box-shadow:0 8px 22px #123b6310;
+}
+#possibleMatchesView .possible-match-comparison{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px;
+}
+#possibleMatchesView .possible-match-side{
+  min-width:0;padding:12px;border:1px solid #dce8f1;border-radius:14px;background:#f6fafe;
+}
+#possibleMatchesView .possible-match-side h4{margin-top:0;color:#123b63}
+#possibleMatchesView .possible-match-side .animal-photo{width:100%;max-width:none;height:190px;object-fit:cover;border-radius:11px}
+#possibleMatchesView .possible-match-evidence{
+  margin-top:13px;padding:13px;border:1px solid #dce8f1;
+  border-radius:13px;background:#f7fafd;color:#496277;line-height:1.55;
+}
+#myView #myReportsList{display:grid;gap:13px;margin-top:18px}
+#myView #myReportsList .report-card{
+  padding:17px;border:1px solid #d7e5ef;border-left:5px solid #1769aa;
+  border-radius:17px;background:#fff;box-shadow:0 7px 20px #173b5b0b;
+}
+#myView #myReportsList .report-card h3{margin-top:0;color:#123b63}
+#myView #myReportsList .animal-photo{width:100%;max-width:none;max-height:300px;object-fit:cover;border-radius:12px}
+#petsView .pet-list-heading{
+  margin:20px 0 13px;padding:14px 15px;border:1px solid #d7e6f1;
+  border-radius:16px;background:linear-gradient(110deg,#eff7fd,#fff);
+}
+#petsView .pet-list-heading h3{color:#123b63}
+#petsView .pet-profile-grid{gap:14px}
+#petsView .pet-profile-card{
+  padding:16px;border:1px solid #d5e4ef;border-radius:18px;
+  background:linear-gradient(145deg,#fff,#f5faff);
+  box-shadow:0 7px 20px #173b5b0b;
+}
+#petsView .pet-profile-card .pet-profile-photo{
+  width:100%;max-height:230px;object-fit:cover;border-radius:13px;
+}
+#petsView #petDashboardPanel{
+  padding:17px;border:1px solid #c9dfef;border-radius:18px;
+  background:linear-gradient(145deg,#edf6fd,#fff 75%);
+}
+#petsView #petForm{
+  padding:18px;border:1px solid #d7e5ef;border-radius:17px;background:#f8fbfe;
+}
+#rescueView .rescue-dashboard{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:18px 0;
+}
+#rescueView .rescue-action-card{
+  min-width:0;min-height:84px;padding:14px;
+  border:1px solid #d5e5f1;border-radius:16px;
+  background:linear-gradient(145deg,#fff,#f2f8fd);
+  box-shadow:0 6px 17px #173b5b0a;text-align:left;
+}
+#rescueView .rescue-action-card:active{transform:translateY(1px)}
+#rescueView .rescue-action-card strong{color:#123b63;font-size:14px}
+#rescueView .rescue-action-card small{color:#61788b;line-height:1.4}
+#rescueView .rescue-action-icon{
+  display:flex;align-items:center;justify-content:center;
+  flex:0 0 40px;width:40px;height:40px;border-radius:12px;
+  background:#e8f3fb;color:#1769aa;font-size:21px;
+}
+#rescueView .rescue-org-overview{
+  padding:16px;border:1px solid #cbdfee;border-radius:16px;
+  background:linear-gradient(120deg,#edf6fd,#fff);
+}
+#rescueView .rescue-dashboard-stats{gap:10px;margin:14px 0 20px}
+#rescueView .rescue-stat{
+  padding:14px 9px;border:1px solid #d8e6f0;border-radius:15px;
+  background:#fff;box-shadow:0 4px 13px #173b5b08;
+}
+#rescueView .rescue-stat strong{font-size:25px;color:#1769aa}
+#rescueView .rescue-tool-panel{
+  padding:18px;border:1px solid #d8e6f0;border-radius:17px;background:#f8fbfe;
+}
+@media(max-width:560px){
+  #reportsView,#possibleMatchesView,#myView,#petsView,#rescueView{padding:17px 14px}
+  #reportsView .search-quick-choices{gap:7px}
+  #reportsView .quick-filter{padding:9px 6px;font-size:13px}
+  #possibleMatchesView .possible-match-comparison{grid-template-columns:1fr}
+  #possibleMatchesView .possible-match-side .animal-photo{height:210px}
+  #rescueView .rescue-dashboard{gap:8px}
+  #rescueView .rescue-action-card{min-height:78px;padding:11px 9px;gap:8px}
+  #rescueView .rescue-action-icon{flex-basis:34px;width:34px;height:34px;font-size:18px}
+  #rescueView .rescue-action-card strong{font-size:12px}
+  #rescueView .rescue-action-card small{font-size:10px}
+}
+@media(max-width:360px){
+  #rescueView .rescue-dashboard{grid-template-columns:1fr}
+}
+</style>
+
 </head>
 <body>
 <header>
