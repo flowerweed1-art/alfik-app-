@@ -949,6 +949,14 @@ footer{
 }
 </style>
 
+<style>
+.animal-news-header{padding:4px 0 12px}.animal-news-kicker{font-size:11px;letter-spacing:.12em;font-weight:800;color:#1769aa}
+.animal-news-settings{background:linear-gradient(145deg,#f4f9fe,#fff)}.animal-news-optin{display:flex;align-items:center;gap:9px;padding:12px;border:1px solid #cbddec;border-radius:10px;background:#fff}.animal-news-optin input{width:20px;height:20px;flex:0 0 auto}
+.animal-news-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0 16px}.animal-news-check{display:flex;align-items:center;gap:7px;padding:9px;border:1px solid #d8e5ef;border-radius:9px;background:#fff;font-size:13px}.animal-news-check input{width:17px;height:17px;flex:0 0 auto}
+.animal-news-feed-panel{background:#fff;border:1px solid #dce7f0;border-radius:15px;padding:16px;margin:14px 0}.animal-news-feed-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.animal-news-feed-heading h3{margin:0}
+.animal-news-card{padding:14px 0;border-bottom:1px solid #e1eaf2}.animal-news-card:last-child{border-bottom:0}.animal-news-card h3{margin:7px 0;color:#123b63;font-size:17px}.animal-news-card p{margin:6px 0}.animal-news-card a{display:inline-block;margin-top:7px;color:#1769aa;font-weight:700;text-decoration:none}.animal-news-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#61778a;font-size:12px}.animal-news-tag{display:inline-block;padding:3px 8px;border-radius:20px;background:#eaf4fc;color:#14558b;font-weight:700}.animal-news-count{font-weight:700;color:#123b63}
+@media(max-width:480px){.animal-news-category-grid{grid-template-columns:1fr}.animal-news-feed-heading button{width:100%}}
+</style>
 </head>
 <body>
 <header>
@@ -1030,6 +1038,7 @@ footer{
 </button>
 <nav id="alfikMainNav">
 <button class="secondary" data-view="homeView">Home</button>
+<button class="secondary" data-view="animalNewsView">🐾 Animal News</button>
 <button class="secondary" type="button" onclick="window.location.href='/about-alfik.html'">About Us</button>
 <button class="secondary" data-view="reportsView">🔎 Find an animal</button>
 <button class="secondary" data-view="possibleMatchesView" data-account-types="public,rescue,veterinary">🐾 Possible Matches</button>
@@ -1070,6 +1079,18 @@ footer{
 </script>
 
 
+<section id="animalNewsView" class="hidden">
+<div class="animal-news-header"><span class="animal-news-kicker">ALFIK COMMUNITY SERVICE</span><h2>🐾 Animal Newswire</h2><p>Animal news, rescue stories, welfare updates and wildlife news relevant to your chosen area.</p></div>
+<div class="feature-panel animal-news-settings"><h3>Your local news preferences</h3>
+<label class="animal-news-optin"><input id="animalNewsOptIn" type="checkbox"> Switch on my optional Animal Newswire digest</label>
+<label for="animalNewsArea">Your area</label><input id="animalNewsArea" type="text" maxlength="100" placeholder="e.g. Fife, Kent, Glasgow or Canterbury"><p class="note">Enter a town, city or county. You can change this whenever you like.</p>
+<label for="animalNewsFrequency">Digest frequency</label><select id="animalNewsFrequency"><option value="daily">Daily digest (last 24 hours)</option><option value="weekly" selected>Weekly digest (last 7 days)</option></select>
+<label>News topics</label><div id="animalNewsCategories" class="animal-news-category-grid"></div>
+<button type="button" class="primary wide" id="animalNewsSave">Save preferences and find news</button>
+<p class="note">Your preferences are saved on this device. The digest refreshes when you open Animal Newswire, daily or weekly. It does not send push or email alerts.</p></div>
+<div class="animal-news-feed-panel"><div class="animal-news-feed-heading"><h3>Your animal news</h3><button type="button" class="secondary" id="animalNewsRefresh">Refresh animal news</button></div><p id="animalNewsStatus" class="message" role="status" aria-live="polite">Switch on Animal Newswire and choose your area to get started.</p><div id="animalNewsResults" aria-live="polite"></div></div>
+<p class="note">ALFIK displays headlines, short feed descriptions and links to original publishers. It does not copy or store full articles or article images. News availability depends on public feeds and publisher permissions.</p>
+</section>
 <section id="homeView">
 <h2>Every animal matters.</h2>
 <p>Helping lost animals find their way home, with a community that cares.</p>
@@ -1773,9 +1794,9 @@ const accountTypeLabels={
   veterinary:"Veterinary practice"
 };
 const roleViews={
-  public:["homeView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView","petsView","lifelineView","billingView","adminView"],
-  rescue:["homeView","reportsView","possibleMatchesView","messagesView","accountView","rescueView","billingView","adminView"],
-  veterinary:["homeView","reportsView","possibleMatchesView","messagesView","accountView","vetView","billingView","adminView"]
+  public:["homeView","animalNewsView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView","petsView","lifelineView","billingView","adminView"],
+  rescue:["homeView","animalNewsView","reportsView","possibleMatchesView","messagesView","accountView","rescueView","billingView","adminView"],
+  veterinary:["homeView","animalNewsView","reportsView","possibleMatchesView","messagesView","accountView","vetView","billingView","adminView"]
 };
 function applyAccountType(user){
   const metadata=user?.user_metadata||{};
@@ -1795,7 +1816,7 @@ function showView(id){
   const allowedViews=roleViews[activeAccountType]||roleViews.public;
   if(!allowedViews.includes(id))id="homeView";
   [
-    "homeView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView",
+    "homeView","animalNewsView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView",
     "petsView","rescueView","vetView","billingView","adminView","lifelineView"
   ].forEach(view=>{
     const section=$(view);
@@ -1803,6 +1824,7 @@ function showView(id){
   });
 
   if(id==="homeView")loadAlfikImpactCounters();
+  if(id==="animalNewsView"&&window.loadAlfikAnimalNews)window.loadAlfikAnimalNews();
   if(id==="reportsView")loadReports();
   if(id==="possibleMatchesView")loadPossibleMatches();
   if(id==="myView")loadMyReports();
@@ -3960,6 +3982,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 })();
 </script>
 <script src="alfik-sightings.js?v=20261101-live-sightings-1"></script>
+<script src="alfik-animal-news.js?v=20261101-animal-newswire-1"></script>
 
 </body>
 </html>
