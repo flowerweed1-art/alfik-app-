@@ -1234,7 +1234,7 @@ footer{
 <input id="dateSeen" type="date" required>
 <label for="photo">Add a photo (optional)</label>
 <input id="photo" type="file" accept="image/jpeg,image/png,image/webp" multiple>
-<p id="photoSelectionNote" class="field-help">You can add up to 5 photos. JPG, PNG or WebP, maximum 5 MB each. Choose saved photos from your phone or take new ones.</p>
+<p id="photoSelectionNote" class="field-help">You can add up to 5 photos. JPG, PNG or WebP, maximum 5 MB each. ALFIK automatically compresses photos before storing them.</p>
 <p class="note">A clear photo can help with recognition. JPG, PNG or WebP, maximum 5 MB. Photos are publicly viewable with the report.</p>
 <img id="photoPreview" class="animal-photo hidden" alt="Selected photo preview">
 <button id="removePhotoBtn" class="secondary wide hidden" type="button">Remove selected photo</button>
@@ -1865,22 +1865,57 @@ photoInput.addEventListener("change",()=>{
   $("photoPreview").src=previewUrl;
   $("photoPreview").classList.remove("hidden");
   $("removePhotoBtn").classList.remove("hidden");
-  $("photoSelectionNote").textContent=files.length+" photo"+(files.length===1?"":"s")+" selected. Up to 5 photos, maximum 5 MB each.";
+  $("photoSelectionNote").textContent=files.length+" photo"+(files.length===1?"":"s")+" selected. ALFIK will automatically compress them before storing.";
   message("reportMessage","");
 });
 $("removePhotoBtn").addEventListener("click",resetPhoto);
 
-async function uploadAnimalPhoto(file,userId){
+async function compressAnimalPhoto(file){
   if(!file)return null;
   if(!ALLOWED_PHOTO_TYPES.includes(file.type)||file.size>MAX_PHOTO_BYTES){
     throw new Error("Choose a JPG, PNG or WebP photo no larger than 5 MB.");
   }
 
-  const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"}[file.type];
-  const path=userId+"/"+crypto.randomUUID()+"."+ext;
+  let bitmap;
+  try{
+    if(typeof createImageBitmap!=="function")throw new Error("Image compression is not supported by this browser.");
+    bitmap=await createImageBitmap(file);
+    const maxDimension=1600;
+    const scale=Math.min(1,maxDimension/Math.max(bitmap.width,bitmap.height));
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+    canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+    const context=canvas.getContext("2d",{alpha:false});
+    if(!context)throw new Error("Could not prepare this photo for upload.");
+    context.fillStyle="#ffffff";
+    context.fillRect(0,0,canvas.width,canvas.height);
+    context.drawImage(bitmap,0,0,canvas.width,canvas.height);
 
-  const {error}=await supabaseClient.storage.from(PHOTO_BUCKET).upload(path,file,{
-    cacheControl:"3600",contentType:file.type,upsert:false
+    const makeWebp=quality=>new Promise((resolve,reject)=>{
+      canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("Could not compress this photo.")),"image/webp",quality);
+    });
+    let blob=await makeWebp(0.82);
+    if(blob.type!=="image/webp")throw new Error("This browser cannot create compressed WebP photos. Please try a newer browser.");
+    for(const quality of [0.76,0.70,0.64]){
+      if(blob.size<=1200*1024)break;
+      blob=await makeWebp(quality);
+    }
+    if(blob.size>1200*1024)throw new Error("This photo is still too large after compression. Please choose a smaller photo.");
+    return new File([blob],"alfik-"+crypto.randomUUID()+".webp",{type:"image/webp",lastModified:Date.now()});
+  }catch(error){
+    console.error("ALFIK photo compression failed:",error);
+    throw new Error(error.message||"Could not optimise this photo. Please try another image.");
+  }finally{
+    if(bitmap)bitmap.close();
+  }
+}
+
+async function uploadAnimalPhoto(file,userId){
+  if(!file)return null;
+  const optimisedFile=await compressAnimalPhoto(file);
+  const path=userId+"/"+crypto.randomUUID()+".webp";
+  const {error}=await supabaseClient.storage.from(PHOTO_BUCKET).upload(path,optimisedFile,{
+    cacheControl:"31536000",contentType:"image/webp",upsert:false
   });
   if(error)throw new Error("Photo upload failed: "+error.message);
   return supabaseClient.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
