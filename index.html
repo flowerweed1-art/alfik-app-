@@ -526,6 +526,17 @@ footer{background:#f8fbfe}
 #accountSection #alfikSecurityPanel{margin-top:16px}
 #accountSection #accountMessage{padding:0 3px;font-weight:600;line-height:1.55}
 @media(max-width:420px){#accountSection .account-form{padding:14px}#accountSection .password-toggle{flex-basis:68px}}
+
+.urgent-report-actions{display:grid;grid-template-columns:1fr;gap:12px;margin:18px 0 24px}
+.urgent-report-button{display:flex;align-items:center;gap:14px;width:100%;min-height:86px;padding:17px 18px;border:0;border-radius:16px;text-align:left;cursor:pointer;box-shadow:0 3px 12px rgba(13,47,80,.13);transition:transform .15s ease,box-shadow .15s ease}
+.urgent-report-button:active{transform:scale(.99)}
+.urgent-report-lost{background:#a92d3a;color:#fff}
+.urgent-report-found{background:#1769aa;color:#fff}
+.urgent-report-icon{display:grid;place-items:center;flex:0 0 46px;width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.17);font-size:1.55rem}
+.urgent-report-button strong{display:block;font-size:1.18rem;line-height:1.25}
+.urgent-report-button small{display:block;margin-top:4px;font-size:.88rem;color:rgba(255,255,255,.9)}
+.urgent-report-arrow{margin-left:auto;font-size:2rem;line-height:1;color:#fff}
+@media(min-width:620px){.urgent-report-actions{grid-template-columns:1fr 1fr}}
 </style>
 
 </style>
@@ -1062,6 +1073,18 @@ footer{
 <section id="homeView">
 <h2>Every animal matters.</h2>
 <p>Helping lost animals find their way home, with a community that cares.</p>
+<div class="urgent-report-actions" aria-label="Quick animal report actions">
+  <button type="button" class="urgent-report-button urgent-report-lost" onclick="startNewReport('lost')">
+    <span class="urgent-report-icon" aria-hidden="true">🐾</span>
+    <span><strong>I've lost a pet</strong><small>Tell us about your missing animal</small></span>
+    <span class="urgent-report-arrow" aria-hidden="true">›</span>
+  </button>
+  <button type="button" class="urgent-report-button urgent-report-found" onclick="startNewReport('found')">
+    <span class="urgent-report-icon" aria-hidden="true">💙</span>
+    <span><strong>I've found an animal</strong><small>Help them find their person</small></span>
+    <span class="urgent-report-arrow" aria-hidden="true">›</span>
+  </button>
+</div>
 <div class="feature-panel" id="shareAlfikPanel" style="border:1px solid #b9d5e9;background:linear-gradient(145deg,#f0f7fd,#fff 70%);">
   <h3>📣 Help more people discover ALFIK</h3>
   <p>Share ALFIK with friends, family, local communities and animal lovers. Every new person who joins can help an animal find their way home.</p>
