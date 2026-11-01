@@ -140,6 +140,7 @@
         <div class="ll-grid ll-directory-tools">
           <div><label for="llAreaPostcode">UK postcode or area</label><input id="llAreaPostcode" maxlength="20" autocomplete="postal-code" placeholder="e.g. ME7 1AA or Maidstone"></div>
           <div><label for="llSupportFilter">Type of support</label><select id="llSupportFilter"><option value="">All types of support</option></select></div>
+          <div><label for="llSpeciesFilter">Animal type</label><select id="llSpeciesFilter"><option value="">All animals</option><option value="cat">Cats</option><option value="dog">Dogs</option><option value="other">Other animals</option></select></div>
           <div><label for="llSituationFilter">Prioritise help for</label><select id="llSituationFilter"><option value="">Any situation</option><option value="temporary-care">Emergency or temporary animal care</option><option value="food">Pet food or supplies</option><option value="vet">Veterinary costs or advice</option><option value="housing">Housing or homelessness</option><option value="domestic-abuse">Domestic abuse or personal safety</option><option value="illness">Illness or hospitalisation</option><option value="bereavement">Bereavement or owner incapacity</option><option value="avoid-surrender">Help to avoid surrender</option></select></div>
         </div>
         <div class="ll-actions ll-directory-actions">
@@ -231,6 +232,7 @@
     byId("llUseLocation").addEventListener("click",useDeviceLocation);
     byId("llClearArea").addEventListener("click",clearDirectorySearch);
     byId("llSupportFilter").addEventListener("change",renderServices);
+    byId("llSpeciesFilter").addEventListener("change",renderServices);
     byId("llSituationFilter").addEventListener("change",renderServices);
     section.addEventListener("click",handleAction);
     addStyles();
@@ -482,6 +484,7 @@
     const area=(byId("llAreaPostcode")?.dataset.areaTerms||"").toLowerCase().split("|").filter(Boolean);
     const type=byId("llSupportFilter")?.value||"";
     const situation=byId("llSituationFilter")?.value||"";
+    const speciesFilter=byId("llSpeciesFilter")?.value||"";
     const normalise=value=>String(value||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
     const nationalTags=new Set(["england","scotland","wales","northern ireland","united kingdom","uk","nationwide","national","uk wide","all england","england wide","scotland wide","wales wide"]);
     const needs={
@@ -514,7 +517,11 @@
         return localMatch||nationalMatch;
       });
       const supportMatch=!type||(s.support_types||[]).some(t=>t===type);
-      return areaMatch&&supportMatch;
+      const speciesValues=(s.species||[]).map(normalise);
+      const speciesMatch=!speciesFilter||speciesValues.some(v=>speciesFilter==="cat"?/^(cat|cats|feline)$/.test(v):speciesFilter==="dog"?/^(dog|dogs|canine)$/.test(v):!/(cat|cats|feline|dog|dogs|canine)/.test(v));
+      const rescueText=normalise([s.organisation_name,s.summary,...(s.support_types||[])].join(" "));
+      const rescueMatch=speciesFilter!=="cat"||/(rescue|rehom|stray|animal welfare|cat welfare)/.test(rescueText);
+      return areaMatch&&supportMatch&&speciesMatch&&rescueMatch;
     }).map(s=>({...s,_relevance:scoreService(s)})).sort((a,b)=>b._relevance-a._relevance||String(a.organisation_name||"").localeCompare(String(b.organisation_name||"")));
     const suggested=results.filter(s=>s._relevance>0).length;
     const note=byId("llAreaMessage");
@@ -582,6 +589,7 @@
   function clearDirectorySearch() {
     const input=byId("llAreaPostcode"); input.value=""; input.dataset.areaTerms="";
     byId("llSupportFilter").value="";
+    if(byId("llSpeciesFilter"))byId("llSpeciesFilter").value="";
     msg("llAreaMessage","Showing all directory listings, verified and unverified. No location is being used.");
     renderServices();
   }
@@ -634,6 +642,17 @@
     window.alfikShowView=function(id){oldShow(id);if(id==="lifelineView")loadAll();};
     loadAll();
   }
+  window.alfikFindCatRescues=async function(){
+    if(window.alfikShowView)window.alfikShowView("lifelineView");
+    await loadAll();
+    const species=byId("llSpeciesFilter");
+    if(species){species.value="cat";renderServices();}
+    const directory=byId("llServiceList");
+    if(directory){const heading=document.createElement("p");heading.className="ll-small";heading.textContent="Showing ALFIK directory listings that support cats and provide rescue, rehoming or stray-animal help. Choose Use my location or enter a postcode to narrow the results.";directory.prepend(heading);}
+    if(byId("llUseLocation"))useDeviceLocation();
+    else if(byId("llAreaMessage"))msg("llAreaMessage","Choose Use my location or enter your postcode to find cat rescues nearby.");
+    byId("llSpeciesFilter")?.scrollIntoView({behavior:"smooth",block:"center"});
+  };
   window.alfikOpenLifelineForPet=function(pet){
     if(!pet||!pet.id)return;
     if(window.alfikShowView)window.alfikShowView("lifelineView");
