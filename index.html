@@ -1865,7 +1865,7 @@ photoInput.addEventListener("change",()=>{
   $("photoPreview").src=previewUrl;
   $("photoPreview").classList.remove("hidden");
   $("removePhotoBtn").classList.remove("hidden");
-  $("photoSelectionNote").textContent=files.length+" photo"+(files.length===1?"":"s")+" selected. Up to 5 photos selected. ALFIK will automatically compress them before storing.";
+  $("photoSelectionNote").textContent=files.length+" photo"+(files.length===1?"":"s")+" selected. ALFIK will automatically compress them before storing.";
   message("reportMessage","");
 });
 $("removePhotoBtn").addEventListener("click",resetPhoto);
