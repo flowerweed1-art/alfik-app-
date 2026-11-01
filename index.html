@@ -509,6 +509,23 @@ footer{background:#f8fbfe}
 #rescueView .rescue-back-button{display:block;width:100%;margin:0 0 14px;text-align:left;background:#edf5fc;color:#14558b;border:1px solid #c8deef}
 #rescueView .rescue-tool-panel h3{margin-top:0}
 @media(max-width:390px){#rescueView .rescue-dashboard-stats{gap:6px}#rescueView .rescue-stat{padding:10px 5px}#rescueView .rescue-stat span{font-size:10px}#rescueView .rescue-stat strong{font-size:20px}}
+
+/* Clearer, friendlier sign-in and registration */
+#accountSection{max-width:560px}
+#accountSection .account-intro{margin:0 0 22px;color:#526d83}
+#accountSection .account-form{padding:18px;border:1px solid #d8e7f3;border-radius:16px;background:#f8fbff}
+#accountSection .account-form label{margin-top:10px}
+#accountSection .password-input-wrap{display:flex;gap:8px;align-items:stretch}
+#accountSection .password-input-wrap input{flex:1;min-width:0}
+#accountSection .password-toggle{flex:0 0 76px;margin:0;min-height:46px;padding:8px}
+#accountSection .account-form button.wide{margin-top:12px}
+#accountSection .text-button{border:0;background:transparent;color:#14558b;text-decoration:underline;box-shadow:none}
+#accountSection .account-type-details{margin:16px 2px;padding:12px 14px;border:1px solid #d8e5f1;border-radius:12px;background:#fff}
+#accountSection .account-type-details summary{color:#164f7a;font-weight:700;cursor:pointer}
+#accountSection .account-type-details label{margin-top:12px}
+#accountSection #alfikSecurityPanel{margin-top:16px}
+#accountSection #accountMessage{padding:0 3px;font-weight:600;line-height:1.55}
+@media(max-width:420px){#accountSection .account-form{padding:14px}#accountSection .password-toggle{flex-basis:68px}}
 </style>
 
 </style>
@@ -935,28 +952,38 @@ footer{
 </header>
 
 <main>
-<section id="accountSection">
-<h2>Your ALFIK account</h2>
-<p>Sign in or create a free account. Choose the type that fits you when creating an account.</p>
-<label for="newAccountType">I am joining ALFIK as</label>
-<select id="newAccountType">
-<option value="public">A member of the public / pet owner</option>
-<option value="rescue">A rescue or animal welfare organisation</option>
-<option value="veterinary">A veterinary practice</option>
-</select>
+<section id="accountSection" aria-labelledby="accountHeading">
+<h2 id="accountHeading">Welcome to ALFIK</h2>
+<p class="account-intro">Sign in to your account, or create a free account to report and help reunite animals.</p>
+<div class="account-form">
 <label for="accountEmail">Email address</label>
-<input id="accountEmail" type="email" autocomplete="email">
+<input id="accountEmail" type="email" autocomplete="username" inputmode="email" placeholder="you@example.com" aria-describedby="accountEmailHelp" required>
+<p id="accountEmailHelp" class="field-help">Use the email address you registered with.</p>
 <label for="accountPassword">Password</label>
-<input id="accountPassword" type="password" minlength="6" autocomplete="current-password">
+<div class="password-input-wrap">
+<input id="accountPassword" type="password" minlength="6" autocomplete="current-password" placeholder="Enter your password" required>
+<button class="secondary password-toggle" id="togglePasswordBtn" type="button" aria-controls="accountPassword" aria-pressed="false">Show</button>
+</div>
 <button class="primary wide" id="signInBtn" type="button">Sign in</button>
-<button class="secondary wide" id="signUpBtn" type="button">Create account</button>
-<button class="secondary wide" id="forgotPasswordBtn" type="button">Forgot password?</button>
+<button class="secondary wide" id="signUpBtn" type="button">Create a free account</button>
+<button class="text-button wide" id="forgotPasswordBtn" type="button">Forgot your password?</button>
+</div>
+<details class="account-type-details">
+<summary>Creating an account for a rescue or veterinary practice?</summary>
+<label for="newAccountType">Choose your account type</label>
+<select id="newAccountType">
+<option value="public">Member of the public / pet owner</option>
+<option value="rescue">Rescue or animal welfare organisation</option>
+<option value="veterinary">Veterinary practice</option>
+</select>
+<p class="field-help">This selection is used when you create your account. Organisation verification may be required to access rescue or veterinary tools.</p>
+</details>
 <div class="feature-panel" id="alfikSecurityPanel">
-<p><strong>Cloudflare security check</strong></p>
-<p class="note">Complete this quick check before signing in or creating an account.</p>
+<p><strong>Quick security check</strong></p>
+<p class="note">Complete this check before signing in or creating an account.</p>
 <div id="alfikTurnstile" class="cf-turnstile" data-sitekey="0x4AAAAAAFiK2Uh9rYAy9ril" data-callback="onAlfikCaptchaSuccess" data-expired-callback="onAlfikCaptchaExpired" data-error-callback="onAlfikCaptchaError" data-theme="light"></div>
 </div>
-<p id="accountMessage" class="message" role="status"></p>
+<p id="accountMessage" class="message" role="status" aria-live="polite"></p>
 </section>
 
 <section id="passwordRecoverySection" class="hidden">
@@ -1655,7 +1682,7 @@ const SUPABASE_KEY="sb_publishable_krU5ZaSiuDwCniAycXr0cw_ZfTosBJ8";
 const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window.supabaseClient=supabaseClient;
 
-const ALFIK_URL="https://flowerweed1-art.github.io/alfik-app-/";
+const ALFIK_URL="https://alfik.co.uk/";
 const PHOTO_BUCKET="animal-photos";
 const MAX_PHOTO_BYTES=5*1024*1024;
 const ALLOWED_PHOTO_TYPES=["image/jpeg","image/png","image/webp"];
@@ -3414,6 +3441,18 @@ $("saveEmailBtn").addEventListener("click",async()=>{
   finally{button.disabled=false;}
 });
 
+
+$("togglePasswordBtn").addEventListener("click",()=>{
+  const input=$("accountPassword");
+  const showing=input.type==="text";
+  input.type=showing?"password":"text";
+  $("togglePasswordBtn").textContent=showing?"Show":"Hide";
+  $("togglePasswordBtn").setAttribute("aria-pressed",String(!showing));
+});
+["accountEmail","accountPassword"].forEach(id=>$(id).addEventListener("keydown",event=>{
+  if(event.key==="Enter"){event.preventDefault();$("signInBtn").click();}
+}));
+
 $("signUpBtn").addEventListener("click",async()=>{
   const email=$("accountEmail").value.trim(),password=$("accountPassword").value;
   const accountType=$("newAccountType").value||"public";
@@ -3425,8 +3464,13 @@ $("signUpBtn").addEventListener("click",async()=>{
   try{
     const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:ALFIK_URL,captchaToken,data:{alfik_account_type:accountType}}});
     if(error)throw error;
-    if(data.session){message("accountMessage","Account created.");showSignedIn(data.session);}
-    else message("accountMessage","Account created. Check your email to confirm, then sign in.");
+    if(data.session){
+      message("accountMessage","Your account is ready. You are now signed in.");
+      showSignedIn(data.session);
+    }else{
+      message("accountMessage","Registration started successfully. Please check your inbox for the ALFIK confirmation email. Open the confirmation link to activate your account, then return here to sign in. If it isn't there, check your spam or junk folder too.");
+      $("accountPassword").value="";
+    }
   }catch(error){message("accountMessage",error.message||"Could not create the account.");}
   finally{resetAlfikCaptcha();$("signUpBtn").disabled=false;}
 });
@@ -3499,7 +3543,12 @@ $("signInBtn").addEventListener("click",async()=>{
     if(error)throw error;
     message("accountMessage","");
     showSignedIn(data.session);
-  }catch(error){message("accountMessage",error.message||"Could not sign in.");}
+  }catch(error){
+    const detail=error.message||"Please check your details and try again.";
+    const friendly=/invalid login credentials/i.test(detail)
+      ?"Those details don't match an ALFIK account. Check your email and password, or use Forgot your password?":detail;
+    message("accountMessage",friendly);
+  }
   finally{resetAlfikCaptcha();$("signInBtn").disabled=false;}
 });
 
