@@ -966,6 +966,7 @@ footer{
 </div>
 <button class="primary wide" id="signInBtn" type="button">Sign in</button>
 <button class="secondary wide" id="signUpBtn" type="button">Create a free account</button>
+<button class="text-button wide" id="resendConfirmationBtn" type="button">Resend confirmation email</button>
 <button class="text-button wide" id="forgotPasswordBtn" type="button">Forgot your password?</button>
 </div>
 <details class="account-type-details">
@@ -3473,6 +3474,26 @@ $("signUpBtn").addEventListener("click",async()=>{
     }
   }catch(error){message("accountMessage",error.message||"Could not create the account.");}
   finally{resetAlfikCaptcha();$("signUpBtn").disabled=false;}
+});
+
+
+$("resendConfirmationBtn").addEventListener("click",async()=>{
+  const email=$("accountEmail").value.trim();
+  if(!email){message("accountMessage","Enter the email address you used to register first.");$("accountEmail").focus();return;}
+  if(!alfikCaptchaToken){message("accountMessage","Please complete the Cloudflare security check before requesting another confirmation email.");return;}
+  const button=$("resendConfirmationBtn");
+  const captchaToken=alfikCaptchaToken;
+  button.disabled=true;
+  message("accountMessage","Requesting a fresh confirmation email...");
+  try{
+    const {error}=await supabaseClient.auth.resend({type:"signup",email,options:{emailRedirectTo:ALFIK_URL,captchaToken}});
+    if(error)throw error;
+    message("accountMessage","If this email has an unconfirmed ALFIK account, a fresh confirmation email has been requested. Check your inbox and spam or junk folder. Use the newest email and open its link only once.");
+  }catch(error){
+    const detail=error.message||"Please try again in a little while.";
+    const friendly=/rate limit|too many requests|security purposes/i.test(detail)?"A confirmation email was requested recently. Please wait a little while before trying again.":detail;
+    message("accountMessage",friendly);
+  }finally{resetAlfikCaptcha();button.disabled=false;}
 });
 
 
