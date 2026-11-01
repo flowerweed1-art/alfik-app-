@@ -2,6 +2,7 @@
   const country=document.getElementById("animalVoiceCountry");
   const concern=document.getElementById("animalVoiceConcern");
   const urgency=document.getElementById("animalVoiceUrgency");
+  const species=document.getElementById("animalVoiceSpecies");
   const button=document.getElementById("animalVoiceFindHelp");
   const output=document.getElementById("animalVoiceGuidance");
   if(!country||!concern||!urgency||!button||!output)return;
@@ -27,10 +28,12 @@
     if(!concern.value){output.classList.remove("hidden");output.textContent="Please choose the type of concern first.";return;}
     const key=concern.value;
     const item=data[country.value][key];
+    const foundCat=concern.value==="stray"&&species&&species.value==="cat";
     output.replaceChildren();
     const h=document.createElement("h3");h.textContent=item[0];output.appendChild(h);
-    const p=document.createElement("p");p.textContent=item[1];output.appendChild(p);
+    const p=document.createElement("p");p.textContent=foundCat?"A found cat may be lost, frightened or simply roaming. Cats are not usually collected by dog wardens. Check for identification if it is safe, avoid taking the cat away unless it is injured or in danger, and contact a local cat rescue for advice.":item[1];output.appendChild(p);
     if(urgency.value==="yes"||concern.value==="urgent"){const w=document.createElement("p");w.textContent="If a serious incident or crime is happening now, or a person is in immediate danger, call 999. For an animal needing urgent treatment, contact an emergency vet or the relevant animal welfare organisation.";output.appendChild(w);const emergency=document.createElement("a");emergency.className="animal-voice-link";emergency.href="tel:999";emergency.textContent="Call 999 for an emergency";output.appendChild(emergency);}
+    if(foundCat){const cta=document.createElement("button");cta.type="button";cta.className="primary wide";cta.textContent="🐱 Find nearby cat rescues";cta.addEventListener("click",function(){if(window.alfikFindCatRescues){window.alfikFindCatRescues();}else{const message=document.createElement("p");message.textContent="The rescue directory is still loading. Please try again in a moment.";output.appendChild(message);}});output.appendChild(cta);}
     item[2].forEach(function(entry){const a=document.createElement("a");a.className="animal-voice-link";a.textContent=entry[0];a.href=entry[1];a.target="_blank";a.rel="noopener noreferrer";output.appendChild(a);});
     const note=document.createElement("p");note.className="note";note.textContent="You are leaving ALFIK to contact the organisation directly. ALFIK has not sent or stored your answers. The organisation’s own reporting and privacy rules apply.";output.appendChild(note);
     output.classList.remove("hidden");
