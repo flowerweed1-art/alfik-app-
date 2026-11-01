@@ -3119,6 +3119,7 @@ async function loadReports(){
       box.replaceChildren(element("p","Loading community reports... "+allReports.length+" loaded"));
     }
     activeReports=allReports;
+    window.alfikActiveReports=activeReports;
     applyFilters();
     renderAnimalReportsMap();
   }catch(error){
@@ -3464,6 +3465,7 @@ async function loadMyReports(){
   box.replaceChildren();
   if(error){box.appendChild(element("p","Could not load your reports: "+error.message));return;}
   myReports=data||[];
+  window.alfikMyReports=myReports;
   if(!myReports.length){box.appendChild(element("p","You haven't submitted any reports yet."));return;}
   myReports.forEach(report=>box.appendChild(makeReportCard(report,true)));
 }
@@ -3957,6 +3959,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
   if(menuButton)menuButton.addEventListener("click",shareAlfik);
 })();
 </script>
+<script src="alfik-sightings.js?v=20261101-live-sightings-1"></script>
 
 </body>
 </html>
