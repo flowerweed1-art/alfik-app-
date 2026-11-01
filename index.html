@@ -2112,8 +2112,7 @@ function addField(card,label,value){
 
 
 function alfikShareUrl(report){
-  const base=window.location.origin||"https://alfik.co.uk";
-  return base+"/?shareReport="+encodeURIComponent(report.id);
+  return "https://rrsccsswluacuvymuheo.supabase.co/functions/v1/alfik-share?id="+encodeURIComponent(report.id);
 }
 function alfikShareText(report){
   const lost=report.report_type==="lost";
