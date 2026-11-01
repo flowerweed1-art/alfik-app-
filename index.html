@@ -987,6 +987,19 @@ footer{
 <p id="accountMessage" class="message" role="status" aria-live="polite"></p>
 </section>
 
+<section id="registrationConfirmationSection" class="hidden" aria-labelledby="registrationConfirmationHeading">
+  <div class="feature-panel">
+    <h2 id="registrationConfirmationHeading">One last step: check your email</h2>
+    <p><strong>Your ALFIK registration has been submitted.</strong></p>
+    <p>We have requested an account confirmation email for:</p>
+    <p id="registrationConfirmationEmail" class="field-help"></p>
+    <p><strong>Please do not register again.</strong> Open the confirmation email and tap the link to activate your account. Then return to ALFIK and sign in.</p>
+    <p>If you cannot see the email, check your spam or junk folder. It can take a few minutes to arrive.</p>
+    <p class="note">If the email still does not arrive, return to the sign-in screen and use “Resend confirmation email”.</p>
+    <button class="primary wide" id="registrationBackToSignInBtn" type="button">Return to sign in</button>
+  </div>
+</section>
+
 <section id="passwordRecoverySection" class="hidden">
 <h2>Choose a new password</h2>
 <p>Enter your new ALFIK password below.</p>
@@ -3469,8 +3482,11 @@ $("signUpBtn").addEventListener("click",async()=>{
       message("accountMessage","Your account is ready. You are now signed in.");
       showSignedIn(data.session);
     }else{
-      message("accountMessage","Registration started successfully. Please check your inbox for the ALFIK confirmation email. Open the confirmation link to activate your account, then return here to sign in. If it isn't there, check your spam or junk folder too.");
       $("accountPassword").value="";
+      $("registrationConfirmationEmail").textContent=email;
+      $("accountSection").classList.add("hidden");
+      $("registrationConfirmationSection").classList.remove("hidden");
+      window.scrollTo({top:0,behavior:"smooth"});
     }
   }catch(error){message("accountMessage",error.message||"Could not create the account.");}
   finally{resetAlfikCaptcha();$("signUpBtn").disabled=false;}
@@ -3496,6 +3512,14 @@ $("resendConfirmationBtn").addEventListener("click",async()=>{
   }finally{resetAlfikCaptcha();button.disabled=false;}
 });
 
+
+$("registrationBackToSignInBtn").addEventListener("click",()=>{
+  $("registrationConfirmationSection").classList.add("hidden");
+  $("accountSection").classList.remove("hidden");
+  $("accountPassword").value="";
+  $("accountEmail").focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+});
 
 let passwordRecoveryMode=false;
 const ALFIK_PASSWORD_RESET_URL="https://alfik.co.uk/";
