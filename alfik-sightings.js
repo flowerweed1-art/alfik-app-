@@ -32,8 +32,9 @@
   function addField(form,title,control){
     form.appendChild(labelFor(title,control));
   }
-  function currentUser(){
-    return window.alfikCurrentUserId || null;
+  async function currentUser(){
+    const result=await supabaseClient.auth.getUser();
+    return result.data?.user?.id||null;
   }
 
   async function fetchSightings(reportId){
@@ -66,7 +67,7 @@
         map.setAttribute("role","img");
         map.setAttribute("aria-label","Private map of this sighting location");
         item.appendChild(map);
-        if(isOwner||s.submitted_by===currentUser()){
+        if(isOwner||s.submitted_by===await currentUser()){
           if(typeof L!=="undefined"){
             const mapInstance=L.map(map,{scrollWheelZoom:false,dragging:true,zoomControl:true}).setView([s.latitude,s.longitude],14);
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(mapInstance);
@@ -75,7 +76,7 @@
           }else map.textContent="Map unavailable. Location: "+s.latitude+", "+s.longitude;
         }else map.remove();
       }
-      if(isOwner && s.submitted_by!==currentUser()){
+      if(isOwner && s.submitted_by!==await currentUser()){
         const msg=node("button","🔒 Message this person privately","primary wide");
         msg.type="button";
         msg.addEventListener("click",()=>messageSighter(s.id,msg));
@@ -199,7 +200,7 @@
     if(card.dataset.sightingsWired==="true")return;
     const reportId=card.dataset.reportId;
     if(!reportId)return;
-    const report=(window.alfikActiveReports||[]).find(item=>String(item.id)===String(reportId));
+    const report=[...(window.alfikActiveReports||[]),...(window.alfikMyReports||[])].find(item=>String(item.id)===String(reportId));
     const own=Boolean(card.querySelector(".badge.own"));
     if(!report||report.report_type!=="lost"||report.status!=="active")return;
     card.dataset.sightingsWired="true";
