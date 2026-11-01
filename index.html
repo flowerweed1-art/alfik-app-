@@ -1210,7 +1210,8 @@ footer{
 <label for="dateSeen" id="dateSeenLabel">When was the animal last seen? *</label>
 <input id="dateSeen" type="date" required>
 <label for="photo">Add a photo (optional)</label>
-<input id="photo" type="file" accept="image/jpeg,image/png,image/webp">
+<input id="photo" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+<p id="photoSelectionNote" class="field-help">You can add up to 5 photos. JPG, PNG or WebP, maximum 5 MB each. Choose saved photos from your phone or take new ones.</p>
 <p class="note">A clear photo can help with recognition. JPG, PNG or WebP, maximum 5 MB. Photos are publicly viewable with the report.</p>
 <img id="photoPreview" class="animal-photo hidden" alt="Selected photo preview">
 <button id="removePhotoBtn" class="secondary wide hidden" type="button">Remove selected photo</button>
@@ -1705,6 +1706,7 @@ let currentUserId=null;
 let reportStatus="lost";
 let editingReportId=null;
 let editingPhotoUrl=null;
+let editingPhotoUrls=[];
 let editingOriginalStatus="active";
 let activeReports=[];
 let myReports=[];
@@ -1811,43 +1813,38 @@ if(notificationBell){
 }
 
 function clearPhotoPreview(){
-  if(previewUrl){
-    URL.revokeObjectURL(previewUrl);
-    previewUrl=null;
-  }
+  if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null;}
   $("photoPreview").removeAttribute("src");
   $("photoPreview").classList.add("hidden");
   $("removePhotoBtn").classList.add("hidden");
 }
-
 function resetPhoto(){
   photoInput.value="";
   clearPhotoPreview();
+  $("photoSelectionNote").textContent="You can add up to 5 photos. JPG, PNG or WebP, maximum 5 MB each. Choose saved photos from your phone or take new ones.";
 }
-
 photoInput.addEventListener("change",()=>{
   clearPhotoPreview();
-  const file=photoInput.files&&photoInput.files[0];
-  if(!file)return;
-
-  if(!ALLOWED_PHOTO_TYPES.includes(file.type)){
-    message("reportMessage","Choose a JPG, PNG or WebP image.");
+  const files=Array.from(photoInput.files||[]);
+  if(!files.length)return;
+  if(files.length>5){
+    message("reportMessage","Please choose no more than 5 photos.");
     photoInput.value="";
     return;
   }
-  if(file.size>MAX_PHOTO_BYTES){
-    message("reportMessage","The photo must be 5 MB or smaller.");
+  const invalid=files.find(file=>!ALLOWED_PHOTO_TYPES.includes(file.type)||file.size>MAX_PHOTO_BYTES);
+  if(invalid){
+    message("reportMessage",!ALLOWED_PHOTO_TYPES.includes(invalid.type)?"Choose JPG, PNG or WebP photos only.":"Each photo must be 5 MB or smaller.");
     photoInput.value="";
     return;
   }
-
-  previewUrl=URL.createObjectURL(file);
+  previewUrl=URL.createObjectURL(files[0]);
   $("photoPreview").src=previewUrl;
   $("photoPreview").classList.remove("hidden");
   $("removePhotoBtn").classList.remove("hidden");
+  $("photoSelectionNote").textContent=files.length+" photo"+(files.length===1?"":"s")+" selected. Up to 5 photos, maximum 5 MB each.";
   message("reportMessage","");
 });
-
 $("removePhotoBtn").addEventListener("click",resetPhoto);
 
 async function uploadAnimalPhoto(file,userId){
@@ -1933,6 +1930,7 @@ function startNewReport(type){
   $("reportAdvicePanel")?.classList.add("hidden");
   editingReportId=null;
   editingPhotoUrl=null;
+  editingPhotoUrls=[];
   editingOriginalStatus="active";
   reportStatus=type;
   reportForm.reset();
@@ -1949,6 +1947,7 @@ function startNewReport(type){
 function editReport(report){
   editingReportId=report.id;
   editingPhotoUrl=report.photo_url||null;
+  editingPhotoUrls=Array.isArray(report.photo_urls)&&report.photo_urls.length?report.photo_urls.slice(0,5):(report.photo_url?[report.photo_url]:[]);
   editingOriginalStatus=report.status||"active";
   reportStatus=report.report_type;
   setReportFormCopy(report.report_type);
@@ -1987,7 +1986,7 @@ $("reportForm").addEventListener("submit",async event=>{
   const description=$("description").value.trim();
   const location=$("location").value.trim();
   const dateSeen=$("dateSeen").value;
-  const file=photoInput.files?.[0];
+  const files=Array.from(photoInput.files||[]);
   const wasEditing=Boolean(editingReportId);
 
   if(!animal||!description||!location||!dateSeen){
@@ -2001,14 +2000,18 @@ $("reportForm").addEventListener("submit",async event=>{
   message("reportMessage","Please wait while your report is saved.");
 
   try{
-    let photoUrl=editingPhotoUrl;
-    if(file)photoUrl=await uploadAnimalPhoto(file,user.id);
+    let photoUrls=editingPhotoUrls.slice(0,5);
+    if(files.length){
+      const uploaded=await Promise.all(files.map(file=>uploadAnimalPhoto(file,user.id)));
+      photoUrls=[...photoUrls,...uploaded].slice(0,5);
+    }
+    const photoUrl=photoUrls[0]||editingPhotoUrl||null;
 
     let locationCoords=null;
     try{locationCoords=await geocodeReportLocation(location);}catch(_){}
     const report={
       report_type:reportStatus,animal_type:animal,animal_name:animalName||null,
-      description,location_text:location,date_seen:dateSeen,photo_url:photoUrl,
+      description,location_text:location,date_seen:dateSeen,photo_url:photoUrl,photo_urls:photoUrls,
       location_lat:locationCoords?locationCoords.lat:null,
       location_lon:locationCoords?locationCoords.lon:null,
       status:wasEditing?editingOriginalStatus:"active",owner_id:user.id
@@ -2032,6 +2035,7 @@ $("reportForm").addEventListener("submit",async event=>{
     reportForm.classList.add("hidden");
     editingReportId=null;
     editingPhotoUrl=null;
+    editingPhotoUrls=[];
     editingOriginalStatus="active";
 
     let privatePinSaveFailed=false;
@@ -2109,8 +2113,7 @@ function addField(card,label,value){
 
 
 function alfikShareUrl(report){
-  const base=window.location.origin||"https://alfik.co.uk";
-  return base+"/?shareReport="+encodeURIComponent(report.id);
+  return "https://rrsccsswluacuvymuheo.supabase.co/functions/v1/alfik-share?id="+encodeURIComponent(report.id);
 }
 function alfikShareText(report){
   const lost=report.report_type==="lost";
@@ -2277,7 +2280,8 @@ function makeReportCard(report,isOwn){
   badge.className="badge"+(isOwn?" own":"");
   card.appendChild(badge);
   card.appendChild(element("h3",reportTypeLabel(report.report_type)+" | "+(report.animal_type||"animal").toUpperCase()));
-  addPhoto(card,report.photo_url,"Photo of "+(report.animal_name||"reported animal"));
+  const reportPhotos=Array.isArray(report.photo_urls)&&report.photo_urls.length?report.photo_urls:(report.photo_url?[report.photo_url]:[]);
+  reportPhotos.slice(0,5).forEach((url,index)=>addPhoto(card,url,"Photo "+(index+1)+" of "+(report.animal_name||"reported animal")));
   addField(card,"Name",report.animal_name||"Unknown");
   addField(card,"Description",report.description);
   addField(card,"Location",report.location_text);
