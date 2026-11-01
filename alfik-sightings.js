@@ -96,7 +96,10 @@
       const {data,error}=await supabaseClient.rpc("alfik_start_sighting_conversation",{p_sighting_id:sightingId});
       if(error)throw error;
       window.alfikShowView("messagesView");
-      if(typeof window.loadPrivateConversations==="function")await window.loadPrivateConversations(data);
+      if(typeof window.loadPrivateConversations==="function"){
+        await new Promise(resolve=>setTimeout(resolve,120));
+        await window.loadPrivateConversations(data);
+      }
     }catch(error){
       alert("Could not open the private conversation: "+(error.message||"Please try again."));
     }finally{button.disabled=false;button.textContent=original;}
