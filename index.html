@@ -537,6 +537,13 @@ footer{background:#f8fbfe}
 .urgent-report-button small{display:block;margin-top:4px;font-size:.88rem;color:rgba(255,255,255,.9)}
 .urgent-report-arrow{margin-left:auto;font-size:2rem;line-height:1;color:#fff}
 @media(min-width:620px){.urgent-report-actions{grid-template-columns:1fr 1fr}}
+/* ALFIK Animal Voice */
+.animal-voice-hero{padding:20px;border-radius:16px;background:linear-gradient(135deg,#edf6fd,#fff);border:1px solid #cbdfee;margin-bottom:14px}
+.animal-voice-kicker{font-size:11px;font-weight:800;letter-spacing:1.5px;color:#1769aa}
+.animal-voice-hero h2{margin:8px 0;color:#123b63}
+.animal-voice-boundary{border-left:4px solid #1769aa;background:#f1f7fc}
+.animal-voice-guidance{margin-top:16px;padding:16px;border:1px solid #bcd5e8;border-radius:14px;background:#f5faff}
+.animal-voice-link{display:block;margin:10px 0;padding:12px;border:1px solid #c7dced;border-radius:10px;background:#fff;color:#14558b;font-weight:700;text-decoration:none}
 </style>
 
 </style>
@@ -1039,6 +1046,7 @@ footer{
 <nav id="alfikMainNav">
 <button class="secondary" data-view="homeView">Home</button>
 <button class="secondary" data-view="animalNewsView">🐾 Animal News</button>
+<button class="secondary" data-view="animalVoiceView">💙 Animal Welfare Help</button>
 <button class="secondary" type="button" onclick="window.location.href='/about-alfik.html'">About Us</button>
 <button class="secondary" data-view="reportsView">🔎 Find an animal</button>
 <button class="secondary" data-view="possibleMatchesView" data-account-types="public,rescue,veterinary">🐾 Possible Matches</button>
@@ -1090,6 +1098,18 @@ footer{
 <p class="note">Your preferences are saved on this device. The digest refreshes when you open Animal Newswire, daily or weekly. It does not send push or email alerts.</p></div>
 <div class="animal-news-feed-panel"><div class="animal-news-feed-heading"><h3>Your animal news</h3><button type="button" class="secondary" id="animalNewsRefresh">Refresh animal news</button></div><p id="animalNewsStatus" class="message" role="status" aria-live="polite">Switch on Animal Newswire and choose your area to get started.</p><div id="animalNewsResults" aria-live="polite"></div></div>
 <p class="note">ALFIK displays headlines, short feed descriptions and links to original publishers. It does not copy or store full articles or article images. News availability depends on public feeds and publisher permissions.</p>
+</section>
+<section id="animalVoiceView" class="hidden">
+<div class="animal-voice-hero"><span class="animal-voice-kicker">ALFIK ANIMAL VOICE</span><h2>💙 Animal Welfare Help</h2><p>Worried about an animal? We’ll help you find the right organisation to contact.</p></div>
+<div class="feature-panel animal-voice-boundary"><strong>Your privacy matters.</strong><p>You can use this guidance anonymously. ALFIK does not ask for your name, collect your report, receive photographs or videos, or investigate concerns. Your answers stay on this page and are not saved or sent to ALFIK.</p></div>
+<div class="feature-panel">
+<label for="animalVoiceCountry">Where is the animal?</label><select id="animalVoiceCountry"><option value="england">England</option><option value="scotland">Scotland</option></select>
+<label for="animalVoiceConcern">What are you concerned about?</label><select id="animalVoiceConcern"><option value="">Choose a concern</option><option value="neglect">Suspected cruelty or neglect</option><option value="injured">An injured or sick pet</option><option value="wildlife">Injured or distressed wildlife</option><option value="farm">Farm animal welfare</option><option value="stray">Stray or abandoned animal</option><option value="urgent">An incident happening now / immediate danger</option></select>
+<label for="animalVoiceUrgency">Is an animal in immediate danger right now?</label><select id="animalVoiceUrgency"><option value="unsure">I’m not sure</option><option value="yes">Yes</option><option value="no">No</option></select>
+<button class="primary wide" type="button" id="animalVoiceFindHelp">Show me where to get help</button>
+<div id="animalVoiceGuidance" class="animal-voice-guidance hidden" role="status" aria-live="polite"></div></div>
+<div class="feature-panel"><h3>Before you act</h3><ul><li>Do not confront anyone or trespass.</li><li>Do not put yourself or the animal at further risk.</li><li>Contact the relevant organisation directly and follow its instructions.</li><li>If you choose to make a report, the organisation may ask for details. Its own privacy and anonymous-reporting rules apply.</li></ul></div>
+<p class="note">ALFIK provides signposting only. It does not submit reports, provide emergency response, investigate allegations or guarantee that an organisation will take a particular action.</p>
 </section>
 <section id="homeView">
 <h2>Every animal matters.</h2>
@@ -1794,7 +1814,7 @@ const accountTypeLabels={
   veterinary:"Veterinary practice"
 };
 const roleViews={
-  public:["homeView","animalNewsView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView","petsView","lifelineView","billingView","adminView"],
+  public:["homeView","animalNewsView","animalVoiceView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView","petsView","lifelineView","billingView","adminView"],
   rescue:["homeView","animalNewsView","reportsView","possibleMatchesView","messagesView","accountView","rescueView","billingView","adminView"],
   veterinary:["homeView","animalNewsView","reportsView","possibleMatchesView","messagesView","accountView","vetView","billingView","adminView"]
 };
@@ -1816,7 +1836,7 @@ function showView(id){
   const allowedViews=roleViews[activeAccountType]||roleViews.public;
   if(!allowedViews.includes(id))id="homeView";
   [
-    "homeView","animalNewsView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView",
+    "homeView","animalNewsView","animalVoiceView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView",
     "petsView","rescueView","vetView","billingView","adminView","lifelineView"
   ].forEach(view=>{
     const section=$(view);
