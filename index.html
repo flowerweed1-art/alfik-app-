@@ -963,6 +963,35 @@ footer{
 .animal-news-feed-panel{background:#fff;border:1px solid #dce7f0;border-radius:15px;padding:16px;margin:14px 0}.animal-news-feed-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.animal-news-feed-heading h3{margin:0}
 .animal-news-card{padding:14px 0;border-bottom:1px solid #e1eaf2}.animal-news-card:last-child{border-bottom:0}.animal-news-card h3{margin:7px 0;color:#123b63;font-size:17px}.animal-news-card p{margin:6px 0}.animal-news-card a{display:inline-block;margin-top:7px;color:#1769aa;font-weight:700;text-decoration:none}.animal-news-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#61778a;font-size:12px}.animal-news-tag{display:inline-block;padding:3px 8px;border-radius:20px;background:#eaf4fc;color:#14558b;font-weight:700}.animal-news-count{font-weight:700;color:#123b63}
 @media(max-width:480px){.animal-news-category-grid{grid-template-columns:1fr}.animal-news-feed-heading button{width:100%}}
+
+/* Compact header and clearer menu hierarchy */
+header{padding:25px 16px 22px}
+header img{width:96px;max-width:38%;margin-bottom:8px;padding:6px}
+header h1{font-size:clamp(32px,6vw,44px);letter-spacing:5px}
+header p{margin-top:5px}
+header p:last-of-type{margin-top:8px;padding:6px 13px;font-size:13px}
+.menu-section-label{
+  grid-column:1/-1;
+  padding:7px 8px 2px;
+  margin-top:3px;
+  color:#6a8092;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1.15px;
+  line-height:1.3;
+}
+#alfikMainNav{align-items:stretch;gap:7px;padding:11px}
+#alfikMainNav button{min-height:45px;padding:10px 9px;font-size:13px;line-height:1.25}
+#alfikMainNav .menu-section-label:not(:first-child){border-top:1px solid #e5edf4;padding-top:11px;margin-top:5px}
+@media(max-width:520px){
+  header{padding:22px 13px 19px}
+  header img{width:84px;margin-bottom:6px}
+  header h1{font-size:36px;letter-spacing:4px}
+  header p:first-of-type{font-size:14px}
+  header p:last-of-type{font-size:12px;margin-top:7px}
+  #alfikMainNav{gap:6px;padding:9px}
+  #alfikMainNav button{min-height:43px;font-size:12.5px}
+}
 </style>
 </head>
 <body>
@@ -1043,24 +1072,26 @@ footer{
   <span id="alfikMenuToggleLabel">Hide menu</span>
   <span class="menu-toggle-hint">Choose what you want to see</span>
 </button>
-<nav id="alfikMainNav">
+<nav id="alfikMainNav" aria-label="Main navigation">
+<div class="menu-section-label">YOUR ALFIK</div>
 <button class="secondary" data-view="homeView">Home</button>
-<button class="secondary" data-view="animalNewsView">🐾 Animal News</button>
-<button class="secondary" data-view="animalVoiceView">💙 Animal Welfare Help</button>
-<button class="secondary" type="button" onclick="window.location.href='/about-alfik.html'">About Us</button>
+<button class="secondary" data-view="reportView" data-account-types="public">Report an animal</button>
 <button class="secondary" data-view="reportsView">🔎 Find an animal</button>
 <button class="secondary" data-view="possibleMatchesView" data-account-types="public,rescue,veterinary">🐾 Possible Matches</button>
-<button class="secondary" data-view="myView" data-account-types="public">My ALFIK</button>
-
-<button class="secondary" data-view="messagesView" data-account-types="public,rescue,veterinary">Private messages</button>
-<button class="secondary" data-view="reportView" data-account-types="public">Report an animal</button>
-<!-- Email alerts are temporarily hidden while ALFIK moves to in-app notifications. -->
 <button class="secondary" data-view="petsView" data-account-types="public">My pets</button>
+<button class="secondary" data-view="messagesView" data-account-types="public,rescue,veterinary">Private messages</button>
+<button class="secondary" data-view="myView" data-account-types="public">My ALFIK</button>
 <button class="secondary" data-view="rescueView" data-account-types="rescue">Rescue workspace</button>
 <button class="secondary" data-view="vetView" data-account-types="veterinary">Vet workspace</button>
+<div class="menu-section-label">ANIMAL HELP &amp; COMMUNITY</div>
+<button class="secondary" data-view="animalVoiceView">💙 Animal Welfare Help</button>
+<button class="secondary" data-view="lifelineView">🛟 ALFIK Lifeline</button>
+<button class="secondary" data-view="animalNewsView">🐾 Animal News</button>
 <button class="secondary" type="button" id="shareAlfikMenuButton">📣 Share ALFIK</button>
+<div class="menu-section-label">ACCOUNT &amp; INFORMATION</div>
 <button class="secondary" data-view="billingView" data-account-types="public,rescue,veterinary">Plans</button>
 <button class="secondary" data-view="accountView" data-account-types="public,rescue,veterinary">Account</button>
+<button class="secondary" type="button" onclick="window.location.href='/about-alfik.html'">About Us</button>
 <button class="secondary" data-view="adminView" data-account-types="public,rescue,veterinary">Admin Tools</button>
 </nav>
 <script>
