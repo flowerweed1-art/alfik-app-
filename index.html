@@ -1085,6 +1085,7 @@ header p:last-of-type{margin-top:8px;padding:6px 13px;font-size:13px}
 <button class="secondary" data-view="vetView" data-account-types="veterinary">Vet workspace</button>
 <div class="menu-section-label">ANIMAL HELP &amp; COMMUNITY</div>
 <button class="secondary" data-view="animalVoiceView">💙 Animal Welfare Help</button>
+<button class="secondary" data-view="microchipFinderView">🔎 Check a microchip</button>
 <button class="secondary" data-view="animalNewsView">🐾 Animal News</button>
 <button class="secondary" type="button" id="shareAlfikMenuButton">📣 Share ALFIK</button>
 <div class="menu-section-label">ACCOUNT &amp; INFORMATION</div>
@@ -1141,6 +1142,34 @@ header p:last-of-type{margin-top:8px;padding:6px 13px;font-size:13px}
 <div id="animalVoiceGuidance" class="animal-voice-guidance hidden" role="status" aria-live="polite"></div></div>
 <div class="feature-panel"><h3>Before you act</h3><ul><li>Do not confront anyone or trespass.</li><li>Do not put yourself or the animal at further risk.</li><li>Contact the relevant organisation directly and follow its instructions.</li><li>If you choose to make a report, the organisation may ask for details. Its own privacy and anonymous-reporting rules apply.</li></ul></div>
 <p class="note">ALFIK provides signposting only. It does not submit reports, provide emergency response, investigate allegations or guarantee that an organisation will take a particular action.</p>
+</section>
+<section id="microchipFinderView" class="hidden">
+  <div class="animal-voice-hero">
+    <span class="animal-voice-kicker">ALFIK REUNIFICATION TOOL</span>
+    <h2>🔎 Microchip Finder</h2>
+    <p>Find out which UK microchip database holds a pet's registration, so you know who to contact next.</p>
+  </div>
+  <div class="feature-panel">
+    <h3>Check a chip for free</h3>
+    <p>Have the microchip number ready. The Check-a-Chip service searches compliant UK microchip databases and helps identify where the chip is registered.</p>
+    <a class="button primary wide" href="https://www.check-a-chip.co.uk/" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;padding:13px 16px;border-radius:12px;font-weight:750;margin:12px 0;">Open Check-a-Chip ↗</a>
+    <p class="note">The checker opens on the Check-a-Chip website. Enter the chip number there, not in ALFIK. ALFIK does not collect or store microchip numbers.</p>
+  </div>
+  <div class="feature-panel">
+    <h3>What happens after the check?</h3>
+    <ol>
+      <li>Check-a-Chip tells you which compliant database appears to hold the registration.</li>
+      <li>Contact that database to check or update your own pet's details.</li>
+      <li>If you have found an animal, contact a vet, rescue centre or local authority animal warden for help with safe reunification and access to keeper details.</li>
+    </ol>
+    <p class="note">The checker identifies the database. It does not itself change registration details or guarantee that keeper details are current. Access to private keeper information is controlled by the relevant database.</p>
+  </div>
+  <div class="feature-panel">
+    <h3>Can't find the chip number?</h3>
+    <p>A vet, rescue centre or trained animal professional can scan the animal. A phone cannot read a standard pet microchip.</p>
+    <p>For an animal you've found, please keep them safe and seek help from a vet or appropriate local animal welfare service.</p>
+  </div>
+  <p class="note">Check-a-Chip is an independent external service operated by PETtrac. ALFIK is not affiliated with or responsible for its website, search results or database records.</p>
 </section>
 <section id="homeView">
 <h2>Every animal matters.</h2>
@@ -1845,7 +1874,7 @@ const accountTypeLabels={
   veterinary:"Veterinary practice"
 };
 const roleViews={
-  public:["homeView","animalNewsView","animalVoiceView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView","petsView","lifelineView","billingView","adminView"],
+  public:["homeView","animalNewsView","animalVoiceView","microchipFinderView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView","petsView","lifelineView","billingView","adminView"],
   rescue:["homeView","animalNewsView","animalVoiceView","reportsView","possibleMatchesView","messagesView","accountView","rescueView","billingView","adminView"],
   veterinary:["homeView","animalNewsView","animalVoiceView","reportsView","possibleMatchesView","messagesView","accountView","vetView","billingView","adminView"]
 };
@@ -1867,7 +1896,7 @@ function showView(id){
   const allowedViews=roleViews[activeAccountType]||roleViews.public;
   if(!allowedViews.includes(id))id="homeView";
   [
-    "homeView","animalNewsView","animalVoiceView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView",
+    "homeView","animalNewsView","animalVoiceView","microchipFinderView","reportView","reportsView","possibleMatchesView","myView","messagesView","emailView","accountView",
     "petsView","rescueView","vetView","billingView","adminView","lifelineView"
   ].forEach(view=>{
     const section=$(view);
