@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123b63">
+<meta name="description" content="Thank you for supporting ALFIK. Your generosity helps us keep improving animal reunification and welfare support.">
+<link rel="canonical" href="https://alfik.co.uk/thank-you.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ALFIK">
+<meta property="og:title" content="Thank you for supporting ALFIK">
+<meta property="og:description" content="Your support helps animals find their way home.">
+<title>Thank You | ALFIK</title>
+<style>
+:root{color-scheme:light;--blue:#1769aa;--navy:#123b63;--ink:#183047;--muted:#5c7183;--line:#d6e5f2;--pale:#eef6fc}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:var(--ink);background:linear-gradient(180deg,#eaf4fc 0%,#f7fbff 48%,#fff 100%)}
+main{width:min(100% - 32px,720px);margin:0 auto;padding:34px 0 48px}
+header{text-align:center;padding:12px 12px 24px}
+.logo{width:104px;height:auto;display:block;margin:0 auto 12px}
+.brand{font-size:1.05rem;font-weight:800;letter-spacing:.22em;color:var(--navy);margin:0}
+.tagline{margin:3px 0 0;color:var(--muted);font-size:.94rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:clamp(22px,5vw,42px);box-shadow:0 12px 34px rgba(18,59,99,.09);text-align:center}
+.paw{font-size:2.8rem;line-height:1.2;margin:0 0 12px}
+h1{font-size:clamp(1.8rem,5vw,2.45rem);line-height:1.15;color:var(--navy);margin:0 0 14px}
+.lead{font-size:1.08rem;color:#38566f;margin:0 auto 22px;max-width:560px}
+.thanks{text-align:left;background:var(--pale);border:1px solid #d9e9f5;border-radius:14px;padding:18px 20px;margin:24px 0}
+.thanks p{margin:0 0 12px}.thanks p:last-child{margin:0}
+.feature{border-top:1px solid var(--line);margin-top:26px;padding-top:22px}
+.feature-kicker{font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--blue);margin:0 0 6px}
+.feature h2{font-size:1.25rem;color:var(--navy);margin:0 0 6px}
+.feature p{color:var(--muted);margin:0 auto;max-width:540px}
+.actions{display:grid;gap:10px;margin-top:26px}
+.button{display:block;text-decoration:none;border-radius:12px;padding:14px 18px;font-weight:800}
+.primary{background:linear-gradient(135deg,var(--blue),var(--navy));color:white}
+.secondary{background:#fff;border:1px solid #c6dbea;color:var(--navy)}
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding:22px 10px 0}
+footer p{margin:4px 0}
+@media(min-width:520px){.actions{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<img class="logo" src="/icons/icon-512.png" alt="ALFIK logo">
+<p class="brand">ALFIK</p>
+<p class="tagline">Helping animals find their way home 🐾</p>
+</header>
+<section class="card" aria-labelledby="thanks-title">
+<p class="paw" aria-hidden="true">💙🐾</p>
+<h1 id="thanks-title">Thank you for supporting ALFIK</h1>
+<p class="lead">Your generosity helps us keep building a kinder, more connected way to help lost animals find their way home.</p>
+<div class="thanks">
+<p><strong>Every contribution is appreciated.</strong></p>
+<p>ALFIK is volunteer-led. Donations help us maintain and improve the platform, develop practical animal-welfare tools and make our reunification service available to the people who need it.</p>
+<p>Thank you for being part of the ALFIK community.</p>
+</div>
+<div class="feature" aria-live="polite">
+<p class="feature-kicker">Made possible by a community that cares</p>
+<h2 id="feature-title">Animal reunification</h2>
+<p id="feature-copy">Lost and found reports, sightings and matching tools help bring the right information together.</p>
+</div>
+<div class="actions">
+<a class="button primary" href="https://alfik.co.uk/">Return to ALFIK</a>
+<a class="button secondary" href="https://www.facebook.com/groups/animalslostandfoundinkent/">Join our community</a>
+</div>
+</section>
+<footer>
+<p><strong>Animals Lost and Found in Kent Ltd</strong></p>
+<p>Volunteer-led • Donations are voluntary</p>
+<p>Helping animals find their way home 🐾</p>
+</footer>
+</main>
+<script>
+(function(){
+  const features=[
+    ["Animal reunification","Lost and found reports, sightings and matching tools help bring the right information together."],
+    ["ALFIK Lifeline","A directory that helps people find animal-welfare and practical support when they need it."],
+    ["Animal Voice","Clear signposting helps people find the right organisation when an animal may need help."],
+    ["Microchip Finder","A shortcut to an independent checker that helps identify which UK database holds a pet's microchip registration."],
+    ["Local animal help","Tools such as the cat rescue finder help people discover relevant support in their area."]
+  ];
+  const item=features[Math.floor(Math.random()*features.length)];
+  document.getElementById("feature-title").textContent=item[0];
+  document.getElementById("feature-copy").textContent=item[1];
+})();
+</script>
+</body>
+</html>
