@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123b63">
+<meta name="description" content="Support ALFIK's volunteer-led animal reunification and welfare work with a voluntary one-off donation.">
+<link rel="canonical" href="https://alfik.co.uk/donate.html">
+<title>Support ALFIK | Donate</title>
+<style>
+:root{--blue:#1769aa;--navy:#123b63;--ink:#183047;--muted:#5c7183;--line:#d6e5f2;--pale:#eef6fc}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:var(--ink);background:linear-gradient(180deg,#eaf4fc,#fff)}
+main{width:min(100% - 32px,700px);margin:auto;padding:30px 0 48px}
+header{text-align:center;padding:8px 12px 22px}
+.logo{width:100px;height:auto;display:block;margin:0 auto 10px}
+.brand{font-weight:800;letter-spacing:.22em;color:var(--navy);margin:0}
+.tagline{color:var(--muted);margin:2px 0}
+.card{background:white;border:1px solid var(--line);border-radius:20px;padding:clamp(20px,5vw,36px);box-shadow:0 10px 30px rgba(18,59,99,.08)}
+h1{color:var(--navy);text-align:center;line-height:1.2;margin:0 0 12px;font-size:clamp(1.7rem,5vw,2.3rem)}
+.intro{text-align:center;color:#38566f;font-size:1.05rem}
+.points{background:var(--pale);border:1px solid #d9e9f5;border-radius:13px;padding:16px 20px;margin:22px 0}
+.points p{margin:0 0 10px}.points p:last-child{margin:0}
+#paypal-container-ZYCGZKTJKCBU6{min-height:70px;margin:22px auto 8px;max-width:460px}
+.note{font-size:.88rem;color:var(--muted);text-align:center}
+.back{display:block;text-align:center;margin:22px auto 0;color:var(--blue);font-weight:700;text-decoration:none}
+footer{text-align:center;color:var(--muted);font-size:.84rem;padding:20px 8px}
+</style>
+<script src="https://www.paypal.com/sdk/js?client-id=BAAtHuXk1tF8SKddBl8-Z0wtqP2PmWZbk_hGF8bIn--E3xdJq2lbahkTh35Xaanq-JdTpoI10O8J8mxlF4&components=hosted-buttons&disable-funding=venmo&currency=GBP"></script>
+</head>
+<body>
+<main>
+<header>
+<img class="logo" src="/icons/icon-512.png" alt="ALFIK logo">
+<p class="brand">ALFIK</p>
+<p class="tagline">Helping animals find their way home</p>
+</header>
+<section class="card">
+<h1>Support ALFIK</h1>
+<p class="intro">Help us keep building practical tools that reunite lost animals with the people who love them and support animal welfare.</p>
+<div class="points">
+<p><strong>ALFIK is volunteer-led.</strong></p>
+<p>Donations help us maintain and improve the platform, develop animal-welfare tools and keep our reunification service available to the people who need it.</p>
+<p>Every contribution is voluntary and appreciated. Thank you for being part of our community.</p>
+</div>
+<div id="paypal-container-ZYCGZKTJKCBU6" aria-label="PayPal donation checkout"></div>
+<p class="note">Donations are voluntary. ALFIK does not charge people to use its animal reunification services.</p>
+<a class="back" href="https://alfik.co.uk/">Return to ALFIK</a>
+</section>
+<footer>Animals Lost and Found in Kent Ltd • Volunteer-led</footer>
+</main>
+<script>
+if (window.paypal && paypal.HostedButtons) {
+  paypal.HostedButtons({hostedButtonId:"ZYCGZKTJKCBU6"}).render("#paypal-container-ZYCGZKTJKCBU6");
+} else {
+  document.getElementById("paypal-container-ZYCGZKTJKCBU6").textContent="PayPal checkout could not load. Please try again later.";
+}
+</script>
+</body>
+</html>
