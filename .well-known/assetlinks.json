@@ -1,0 +1,17 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "uk.co.alfik.app",
+      "sha256_cert_fingerprints": [
+        "4A:6B:55:1D:1C:72:3C:FF:60:D1:81:92:F6:99:42:36:A0:57:22:32:88:10:1A:08:86:CE:1B:8E:B3:BC:2D:14",
+        "A5:15:E6:F6:A8:A2:70:25:2B:B4:46:71:44:79:72:26:11:6E:51:21:33:AA:B8:5A:6B:DF:B6:8C:3C:53:50:34",
+        "53:F7:F4:D9:E1:92:8F:02:A7:71:35:4E:88:FD:6E:82:F7:82:7C:D7:0C:6F:C9:64:DC:16:79:CD:E3:9A:5E:F9"
+      ]
+    }
+  }
+]
